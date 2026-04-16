@@ -237,6 +237,83 @@
     }
     .tri-wrap label:hover .tri-box { border-color: var(--accent); color: var(--text); }
 
+    /* ── Dashboard ── */
+    .scenario-tabs { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px; }
+    .scenario-tab {
+      padding: 8px 16px; border-radius: var(--radius); font-size: 12px; font-weight: 600;
+      letter-spacing: .06em; text-transform: uppercase; cursor: pointer;
+      background: var(--surface); border: 1px solid var(--border); color: var(--text-sec);
+      transition: all .18s;
+    }
+    .scenario-tab:hover { border-color: var(--text-sec); color: var(--text); }
+    .scenario-tab.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+    .scenario-desc {
+      background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 14px 18px; margin-bottom: 32px; color: var(--text-sec);
+    }
+    .dash-snapshot {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px;
+      margin-bottom: 40px;
+    }
+    .snap-card {
+      background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 20px 16px; text-align: center;
+    }
+    .snap-num { font-family: 'Playfair Display', serif; font-size: 28px; font-weight: 700; color: var(--accent); line-height: 1.2; }
+    .snap-label { font-size: 12px; font-weight: 600; color: var(--text); margin-top: 6px; line-height: 1.4; }
+    .snap-sub { font-size: 11px; color: var(--text-sec); margin-top: 4px; line-height: 1.4; }
+    .dash-section {
+      background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 24px; margin-bottom: 20px;
+    }
+    .dash-section-title {
+      font-family: 'Inter', sans-serif; font-weight: 600; font-size: 13px;
+      letter-spacing: .05em; text-transform: uppercase; color: var(--text); margin-bottom: 8px;
+    }
+    .dash-section-desc { font-size: 13px; color: var(--text-sec); line-height: 1.6; margin-bottom: 20px; }
+    .dash-se-legend { display:flex; align-items:center; gap:6px; flex-wrap:wrap; font-size:12px; color:var(--text-sec); margin-bottom:16px; }
+    .legend-dot { display:inline-block; width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+    .dash-se-grid { display:grid; grid-template-columns: 180px 1fr 48px; gap:6px 12px; align-items:center; }
+    .dash-cv-grid { grid-template-columns: 160px 1fr 0px; }
+    .dash-row-label, .cv-row-label { font-size:13px; color:var(--text); line-height:1.4; }
+    .dash-bars { display:flex; flex-direction:column; gap:4px; }
+    .dash-bar-group { display:flex; align-items:center; gap:8px; }
+    .dash-bar-label { font-size:10px; color:var(--text-sec); min-width:28px; }
+    .dash-bar-track { flex:1; background:var(--border); border-radius:2px; height:10px; overflow:hidden; }
+    .dash-bar-fill { height:100%; border-radius:2px; transition:width .4s ease; }
+    .dash-bar-val { font-size:12px; color:var(--text-sec); min-width:28px; text-align:right; }
+    .dash-delta { font-size:13px; font-weight:600; text-align:right; }
+    .dash-delta.pos { color: var(--success); }
+    .dash-delta.neg { color: #c07050; }
+    .commit-bar-wrap { display:flex; align-items:center; gap:12px; margin-bottom:10px; }
+    .commit-bar-label { font-size:12px; color:var(--text); min-width:90px; line-height:1.3; }
+    .commit-bar-sub { font-size:10px; color:var(--text-sec); font-weight:400; }
+    .commit-deltas { display:flex; flex-wrap:wrap; gap:12px; margin-top:16px; border-top:1px solid var(--border); padding-top:14px; }
+    .commit-delta-item { display:flex; align-items:center; gap:8px; }
+    .commit-delta-val { font-size:16px; font-weight:700; min-width:40px; }
+    .commit-delta-val.pos { color: var(--success); }
+    .commit-delta-val.neg { color: #c07050; }
+    .commit-delta-label { font-size:12px; color:var(--text-sec); }
+    .dash-motiv-legend { display:flex; justify-content:space-between; font-size:11px; color:var(--text-sec); margin-bottom:14px; font-style:italic; flex-wrap:wrap; gap:4px; }
+    .barrier-grid { display:flex; flex-direction:column; gap:10px; }
+    .barrier-row { display:grid; grid-template-columns: 160px 1fr 52px; gap:8px; align-items:center; }
+    .barrier-label { font-size:12px; color:var(--text); line-height:1.4; }
+    .barrier-bars { display:flex; flex-direction:column; gap:4px; }
+    .barrier-bar-wrap { display:flex; align-items:center; gap:8px; }
+    .barrier-pct { font-size:11px; color:var(--text-sec); min-width:30px; }
+    .barrier-diff { font-size:12px; font-weight:600; text-align:right; }
+    .placement-row { display:flex; align-items:center; margin-bottom:10px; }
+    .placement-dim-label { font-size:12px; color:var(--text); min-width:180px; line-height:1.3; }
+    .career-dir-row { display:flex; align-items:center; gap:12px; margin-bottom:10px; }
+    .career-dir-tp { font-size:12px; color:var(--text-sec); min-width:160px; }
+    .career-dir-bars { flex:1; }
+    @media (max-width: 520px) {
+      .dash-se-grid { grid-template-columns: 1fr; }
+      .barrier-row { grid-template-columns: 1fr; }
+      .placement-dim-label { min-width: 120px; }
+      .career-dir-tp { min-width: 100px; }
+    }
+
     /* ── NPS ── */
     .nps-wrap {
       display: flex;
@@ -1265,6 +1342,25 @@ function getT1Pages() {
         </div>
       `,
     },
+    // Page 10 – Career Direction (baseline, no branching)
+    {
+      id: 't1p12',
+      html: `
+        <h2 style="margin-bottom: 24px;">Career Direction</h2>
+        <div class="q-block">
+          <div class="q-label">Are you currently pursuing a high-impact career as your primary path?</div>
+          <div class="check-list" style="gap: 8px;">
+            ${['Yes', 'No', 'Still deciding'].map(opt => `
+              <label class="${(a['t1-q11'] || '') === opt ? 'checked' : ''}" data-group="t1-q11" data-val="${opt}">
+                <input type="radio" name="t1-q11" value="${opt}" ${(a['t1-q11'] || '') === opt ? 'checked' : ''} style="display:none" />
+                <span class="check-indicator"></span>
+                ${opt}
+              </label>
+            `).join('')}
+          </div>
+        </div>
+      `,
+    },
   ];
 }
 
@@ -1299,6 +1395,18 @@ function getT2Pages() {
         <div class="q-block">
           <div class="q-label" style="margin-bottom:16px;"><em>Has your answer to "what does a successful career look like to you" changed since before the orientation? If so, how?</em></div>
           <textarea id="t2-q3" placeholder="Describe any shifts in your thinking about what a successful career means to you...">${a['t2-q3'] || ''}</textarea>
+        </div>
+      `,
+    },
+    // Page 2b – Career Values ranking (post-orientation)
+    {
+      id: 't2p2b',
+      html: `
+        <h2 style="margin-bottom: 8px;">Career Values — Updated</h2>
+        <p style="color:var(--text-sec); font-size:14px; margin-bottom:24px;">Same as before the orientation — drag to rank the following in order of importance to you in a career right now.</p>
+        <div class="q-block">
+          <div class="q-label">Career values ranking — updated</div>
+          ${renderRankList('t2-rank', a['t2-rank'] || CAREER_VALUES)}
         </div>
       `,
     },
@@ -1738,14 +1846,446 @@ function renderComplete() {
 // ─────────────────────────────────────────────
 // RESULTS STUB
 // ─────────────────────────────────────────────
-function renderResults() {
+// ─────────────────────────────────────────────
+// DASHBOARD — SIMULATED DATA
+// ─────────────────────────────────────────────
+const DASH_SCENARIOS = {
+  s1: {
+    label: 'Scenario 1 — Program Success',
+    desc: 'Fellows show strong, broad gains in confidence, internalized motivation, and values alignment. Most are in high-impact roles six months out.',
+    snapshot: {
+      n: 18, t1Completion: 100, t2Completion: 94, t3Completion: 89, t4Completion: 83,
+      recMean: 8.7, recDist: [0,0,0,0,1,1,2,3,5,4,2], // 0-10
+      readiness: 6.1,
+      careerDirT1: { Yes: 15, No: 22, Deciding: 63 },
+      careerDirT4: { Yes: 67, No: 11, Deciding: 22 },
+    },
+    selfEfficacy: {
+      items: ['Evaluate career options','Navigate org structures','Build relevant skills','Network strategically','Assess cause importance'],
+      t1: [3.8, 4.1, 4.3, 3.6, 3.5],
+      t2: [5.6, 5.4, 5.7, 5.2, 5.5],
+    },
+    commitment: { t1now: 4.8, t2then: 4.1, t2now: 6.2 },
+    motivation:  { t1now: 2.6, t2then: 2.2, t2now: 4.3,
+      labels: ['External','Introjected','Identified','Integrated','Intrinsic'] },
+    careerValues: {
+      names: ['Altruism','Prestige','Economic Return','Intellectual Stimulation','Independence','Achievement'],
+      t1:  [2.1, 3.8, 3.5, 2.8, 4.2, 4.6],
+      t2:  [1.4, 4.5, 4.3, 2.3, 3.9, 3.6],
+      t4:  [1.2, 5.1, 5.0, 2.0, 3.5, 3.2],
+    },
+    barriers: {
+      labels: ['Unclear job paths','Credential gaps','Financial pressure','Geographic limits','Network gaps','Org culture fit','Lack of mentors'],
+      anticipated: [45, 38, 55, 22, 40, 18, 30],
+      experienced: [40, 30, 48, 25, 35, 20, 25],
+    },
+    placement: {
+      dims: ['Mentorship quality','Role alignment','Learning & growth','Org mission clarity','Day-to-day meaningfulness'],
+      dist: [
+        [0,1,1,6,10], // dim 1: [1-star, 2-star, 3-star, 4-star, 5-star] counts
+        [0,0,2,7,9],
+        [0,1,2,5,10],
+        [0,0,1,5,12],
+        [0,1,1,6,10],
+      ],
+    },
+  },
+  s2: {
+    label: 'Scenario 2 — Mixed Results (Diagnostic)',
+    desc: 'Uneven gains highlight which sessions and skills need attention. Barriers data reveals gaps between what fellows expected and what they encountered.',
+    snapshot: {
+      n: 18, t1Completion: 100, t2Completion: 94, t3Completion: 78, t4Completion: 67,
+      recMean: 7.2, recDist: [0,0,1,1,2,3,3,4,3,1,0],
+      readiness: 4.9,
+      careerDirT1: { Yes: 20, No: 25, Deciding: 55 },
+      careerDirT4: { Yes: 50, No: 20, Deciding: 30 },
+    },
+    selfEfficacy: {
+      items: ['Evaluate career options','Navigate org structures','Build relevant skills','Network strategically','Assess cause importance'],
+      t1: [3.9, 4.0, 4.2, 3.7, 3.4],
+      t2: [5.3, 4.2, 5.4, 3.9, 5.1],
+    },
+    commitment: { t1now: 5.1, t2then: 4.5, t2now: 5.8 },
+    motivation:  { t1now: 2.8, t2then: 2.4, t2now: 3.5,
+      labels: ['External','Introjected','Identified','Integrated','Intrinsic'] },
+    careerValues: {
+      names: ['Altruism','Prestige','Economic Return','Intellectual Stimulation','Independence','Achievement'],
+      t1:  [2.0, 3.7, 3.4, 2.9, 4.3, 4.7],
+      t2:  [1.8, 3.9, 3.6, 2.6, 4.0, 4.1],
+      t4:  [1.9, 3.8, 3.5, 2.7, 3.8, 4.3],
+    },
+    barriers: {
+      labels: ['Unclear job paths','Credential gaps','Financial pressure','Geographic limits','Network gaps','Org culture fit','Lack of mentors'],
+      anticipated: [35, 42, 50, 20, 38, 15, 28],
+      experienced: [58, 28, 45, 38, 42, 35, 50],
+    },
+    placement: {
+      dims: ['Mentorship quality','Role alignment','Learning & growth','Org mission clarity','Day-to-day meaningfulness'],
+      dist: [
+        [1,3,4,5,5],
+        [1,2,5,4,6],
+        [0,2,5,5,6],
+        [0,1,3,7,7],
+        [2,3,5,4,4],
+      ],
+    },
+  },
+  s3: {
+    label: 'Scenario 3 — Unclear Narrative',
+    desc: 'Modest or inconsistent gains make causal attribution difficult. High dropout at T3/T4 complicates interpretation. Self-efficacy dips by follow-up.',
+    snapshot: {
+      n: 18, t1Completion: 100, t2Completion: 89, t3Completion: 61, t4Completion: 44,
+      recMean: 6.1, recDist: [1,1,2,2,3,3,3,2,1,0,0],
+      readiness: 4.2,
+      careerDirT1: { Yes: 25, No: 28, Deciding: 47 },
+      careerDirT4: { Yes: 44, No: 28, Deciding: 28 },
+    },
+    selfEfficacy: {
+      items: ['Evaluate career options','Navigate org structures','Build relevant skills','Network strategically','Assess cause importance'],
+      t1: [4.0, 4.2, 4.1, 3.8, 3.6],
+      t2: [4.5, 4.0, 4.6, 3.5, 4.2],
+    },
+    commitment: { t1now: 5.3, t2then: 5.0, t2now: 5.5 },
+    motivation:  { t1now: 3.0, t2then: 2.9, t2now: 3.3,
+      labels: ['External','Introjected','Identified','Integrated','Intrinsic'] },
+    careerValues: {
+      names: ['Altruism','Prestige','Economic Return','Intellectual Stimulation','Independence','Achievement'],
+      t1:  [2.2, 3.6, 3.3, 3.0, 4.1, 4.8],
+      t2:  [2.4, 3.3, 3.2, 2.9, 4.0, 4.2],
+      t4:  [2.6, 3.0, 3.1, 2.8, 4.2, 4.3],
+    },
+    barriers: {
+      labels: ['Unclear job paths','Credential gaps','Financial pressure','Geographic limits','Network gaps','Org culture fit','Lack of mentors'],
+      anticipated: [40, 35, 48, 25, 35, 20, 32],
+      experienced: [62, 22, 30, 55, 25, 48, 60],
+    },
+    placement: {
+      dims: ['Mentorship quality','Role alignment','Learning & growth','Org mission clarity','Day-to-day meaningfulness'],
+      dist: [
+        [2,4,5,4,3],
+        [3,4,4,3,4],
+        [1,4,6,4,3],
+        [1,3,4,5,5],
+        [3,5,4,3,3],
+      ],
+    },
+  },
+};
+
+let dashScenario = 's1';
+
+function dashBar(val, max, color) {
+  const pct = Math.round((val / max) * 100);
+  return `<div style="flex:1; background:var(--border); border-radius:2px; height:8px; overflow:hidden;">
+    <div style="width:${pct}%; height:100%; background:${color}; border-radius:2px;"></div>
+  </div>`;
+}
+
+function renderDashSnapshot(s) {
+  const snap = s.snapshot;
+  const recAvg = snap.recMean.toFixed(1);
+  const dirChange = (snap.careerDirT4.Yes - snap.careerDirT1.Yes);
+  const dirSign = dirChange >= 0 ? '+' : '';
   return `
-    <button class="back-link" id="back-home-results">Home</button>
-    <h2 style="margin: 24px 0 8px;">Simulated Results</h2>
-    <div class="results-stub">
-      <p style="margin-bottom: 12px; font-size: 14px;">This section will display simulated evaluation results for demonstration purposes.</p>
-      <p style="font-size: 13px; color: var(--text-sec);">Coming soon.</p>
+    <div class="dash-snapshot">
+      <div class="snap-card">
+        <div class="snap-num">${snap.n}</div>
+        <div class="snap-label">Fellows in Cohort</div>
+      </div>
+      <div class="snap-card">
+        <div class="snap-num">${snap.t4Completion}%</div>
+        <div class="snap-label">Completed All Four Touchpoints</div>
+        <div class="snap-sub">T1 ${snap.t1Completion}% · T2 ${snap.t2Completion}% · T3 ${snap.t3Completion}% · T4 ${snap.t4Completion}%</div>
+      </div>
+      <div class="snap-card">
+        <div class="snap-num">${recAvg}<span style="font-size:14px;font-weight:400;color:var(--text-sec)">/10</span></div>
+        <div class="snap-label">Avg. Program Recommendation</div>
+        <div class="snap-sub">How likely to recommend SMA to a peer</div>
+      </div>
+      <div class="snap-card">
+        <div class="snap-num">${dirSign}${dirChange}pp</div>
+        <div class="snap-label">High-Impact Career Direction</div>
+        <div class="snap-sub">Change in % "Yes" from T1 to T4</div>
+      </div>
+      <div class="snap-card">
+        <div class="snap-num">${snap.readiness.toFixed(1)}<span style="font-size:14px;font-weight:400;color:var(--text-sec)">/7</span></div>
+        <div class="snap-label">Readiness for Placement</div>
+        <div class="snap-sub">Cohort average at T2</div>
+      </div>
     </div>
+  `;
+}
+
+function renderDashSelfEfficacy(s) {
+  const { items, t1, t2 } = s.selfEfficacy;
+  const rows = items.map((item, i) => {
+    const delta = (t2[i] - t1[i]).toFixed(1);
+    const sign = delta >= 0 ? '+' : '';
+    const t1pct = Math.round((t1[i] / 7) * 100);
+    const t2pct = Math.round((t2[i] / 7) * 100);
+    return `
+      <div class="dash-row-label">${item}</div>
+      <div class="dash-bars">
+        <div class="dash-bar-group">
+          <div class="dash-bar-label">Pre (T1)</div>
+          <div class="dash-bar-track"><div class="dash-bar-fill" style="width:${t1pct}%; background:var(--text-sec);"></div></div>
+          <div class="dash-bar-val">${t1[i].toFixed(1)}</div>
+        </div>
+        <div class="dash-bar-group">
+          <div class="dash-bar-label">Post (T2)</div>
+          <div class="dash-bar-track"><div class="dash-bar-fill" style="width:${t2pct}%; background:var(--accent);"></div></div>
+          <div class="dash-bar-val">${t2[i].toFixed(1)}</div>
+        </div>
+      </div>
+      <div class="dash-delta ${parseFloat(delta) >= 0 ? 'pos' : 'neg'}">${sign}${delta}</div>
+    `;
+  }).join('');
+  return `
+    <div class="dash-section">
+      <h3 class="dash-section-title">Self-Efficacy: Before &amp; After Orientation</h3>
+      <p class="dash-section-desc">Cohort average on 1–7 scale for each confidence item. Measures whether orientation increased fellows' sense of capability to pursue high-impact work.</p>
+      <div class="dash-se-legend"><span class="legend-dot" style="background:var(--text-sec)"></span>Pre-orientation (T1) &nbsp;&nbsp; <span class="legend-dot" style="background:var(--accent)"></span>Post-orientation (T2)</div>
+      <div class="dash-se-grid">${rows}</div>
+    </div>
+  `;
+}
+
+function renderDashCommitment(s) {
+  const { t1now, t2then, t2now } = s.commitment;
+  const naiveDelta = (t2now - t1now).toFixed(1);
+  const corrDelta  = (t2now - t2then).toFixed(1);
+  const refShift   = (t2then - t1now).toFixed(1);
+  const max = 7;
+  function bar(val, color, label, sub) {
+    const pct = Math.round((val / max) * 100);
+    return `
+      <div class="commit-bar-wrap">
+        <div class="commit-bar-label">${label}<br><span class="commit-bar-sub">${sub}</span></div>
+        <div class="dash-bar-track" style="flex:1;"><div class="dash-bar-fill" style="width:${pct}%; background:${color};"></div></div>
+        <div class="dash-bar-val">${val.toFixed(1)}</div>
+      </div>
+    `;
+  }
+  return `
+    <div class="dash-section">
+      <h3 class="dash-section-title">Commitment to High-Impact Work — With Reference Shift Correction</h3>
+      <p class="dash-section-desc">After orientation, fellows' internal benchmark for "commitment" may shift — a naïve T1→T2 comparison can misrepresent real change. The corrected gain uses fellows' retrospective T2 rating of their pre-orientation self (T2-Then) as the baseline.</p>
+      ${bar(t1now,  '#5a5a5a', 'T1 — Now', 'Naïve pre-orientation score')}
+      ${bar(t2then, '#8a7a6a', 'T2 — Then', 'Retrospective pre-orientation (corrected baseline)')}
+      ${bar(t2now,  'var(--accent)', 'T2 — Now', 'Post-orientation score')}
+      <div class="commit-deltas">
+        <div class="commit-delta-item">
+          <span class="commit-delta-val ${parseFloat(naiveDelta)>=0?'pos':'neg'}">${parseFloat(naiveDelta)>=0?'+':''}${naiveDelta}</span>
+          <span class="commit-delta-label">Naïve gain (T1-Now → T2-Now)</span>
+        </div>
+        <div class="commit-delta-item">
+          <span class="commit-delta-val ${parseFloat(corrDelta)>=0?'pos':'neg'}">${parseFloat(corrDelta)>=0?'+':''}${corrDelta}</span>
+          <span class="commit-delta-label">Corrected gain (T2-Then → T2-Now)</span>
+        </div>
+        <div class="commit-delta-item">
+          <span class="commit-delta-val ${parseFloat(refShift)>=0?'pos':'neg'}">${parseFloat(refShift)>=0?'+':''}${refShift}</span>
+          <span class="commit-delta-label">Reference shift (how much the scale moved)</span>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function renderDashMotivation(s) {
+  const { t1now, t2then, t2now, labels } = s.motivation;
+  const naiveDelta = (t2now - t1now).toFixed(2);
+  const corrDelta  = (t2now - t2then).toFixed(2);
+  const max = 5;
+  function mBar(val, color, label, sub) {
+    const pct = Math.round((val / max) * 100);
+    const idx = Math.round(val) - 1;
+    const catLabel = labels[Math.min(Math.max(idx,0),4)];
+    return `
+      <div class="commit-bar-wrap">
+        <div class="commit-bar-label">${label}<br><span class="commit-bar-sub">${sub}</span></div>
+        <div class="dash-bar-track" style="flex:1;"><div class="dash-bar-fill" style="width:${pct}%; background:${color};"></div></div>
+        <div class="dash-bar-val">${val.toFixed(1)} <span style="font-size:11px;color:var(--text-sec);">(~${catLabel})</span></div>
+      </div>
+    `;
+  }
+  return `
+    <div class="dash-section">
+      <h3 class="dash-section-title">Motivation Quality — Ordinal SDT Score With Reference Shift Correction</h3>
+      <p class="dash-section-desc">Fellows select the motivation type (from External=1 to Intrinsic=5) that best describes them. A rightward shift signals internalization of the mission. Retrospective T2-Then rating corrects for reference shift.</p>
+      <div class="dash-motiv-legend">
+        <span>External (1)</span><span>→ Introjected (2) → Identified (3) → Integrated (4) →</span><span>Intrinsic (5)</span>
+      </div>
+      ${mBar(t1now,  '#5a5a5a', 'T1 — Now', 'Naïve pre-orientation score')}
+      ${mBar(t2then, '#8a7a6a', 'T2 — Then', 'Retrospective pre-orientation (corrected baseline)')}
+      ${mBar(t2now,  'var(--accent)', 'T2 — Now', 'Post-orientation score')}
+      <div class="commit-deltas">
+        <div class="commit-delta-item">
+          <span class="commit-delta-val ${parseFloat(naiveDelta)>=0?'pos':'neg'}">${parseFloat(naiveDelta)>=0?'+':''}${naiveDelta}</span>
+          <span class="commit-delta-label">Naïve shift (T1-Now → T2-Now)</span>
+        </div>
+        <div class="commit-delta-item">
+          <span class="commit-delta-val ${parseFloat(corrDelta)>=0?'pos':'neg'}">${parseFloat(corrDelta)>=0?'+':''}${corrDelta}</span>
+          <span class="commit-delta-label">Corrected shift (T2-Then → T2-Now)</span>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function renderDashCareerValues(s) {
+  const { names, t1, t2, t4 } = s.careerValues;
+  // Convert avg rank (1=best, 6=worst) to priority score (higher = more valued)
+  // priority = 7 - avgRank, scaled 0–100 where 6 = 100% and 1 = ~17%
+  const toPct = (rank) => Math.round(((7 - rank) / 5) * 100);
+  const rows = names.map((name, i) => {
+    return `
+      <div class="cv-row-label">${name}</div>
+      <div class="dash-bars">
+        <div class="dash-bar-group">
+          <div class="dash-bar-label">T1</div>
+          <div class="dash-bar-track"><div class="dash-bar-fill" style="width:${toPct(t1[i])}%; background:#5a5a5a;"></div></div>
+          <div class="dash-bar-val" style="font-size:11px;">Rank ${t1[i].toFixed(1)}</div>
+        </div>
+        <div class="dash-bar-group">
+          <div class="dash-bar-label">T2</div>
+          <div class="dash-bar-track"><div class="dash-bar-fill" style="width:${toPct(t2[i])}%; background:#8a6a4a;"></div></div>
+          <div class="dash-bar-val" style="font-size:11px;">Rank ${t2[i].toFixed(1)}</div>
+        </div>
+        <div class="dash-bar-group">
+          <div class="dash-bar-label">T4</div>
+          <div class="dash-bar-track"><div class="dash-bar-fill" style="width:${toPct(t4[i])}%; background:var(--accent);"></div></div>
+          <div class="dash-bar-val" style="font-size:11px;">Rank ${t4[i].toFixed(1)}</div>
+        </div>
+      </div>
+    `;
+  }).join('');
+  return `
+    <div class="dash-section">
+      <h3 class="dash-section-title">Career Values Ranking — T1 · T2 · T4</h3>
+      <p class="dash-section-desc">Cohort average rank for each value (1 = highest priority, 6 = lowest). Bar length reflects relative priority — longer bars mean higher importance. Tracks whether orientation and internship shift what fellows say they care about.</p>
+      <div class="dash-se-legend"><span class="legend-dot" style="background:#5a5a5a"></span>Pre-orientation (T1) &nbsp;&nbsp; <span class="legend-dot" style="background:#8a6a4a"></span>Post-orientation (T2) &nbsp;&nbsp; <span class="legend-dot" style="background:var(--accent)"></span>Six-month follow-up (T4)</div>
+      <div class="dash-se-grid dash-cv-grid">${rows}</div>
+    </div>
+  `;
+}
+
+function renderDashBarriers(s) {
+  const { labels, anticipated, experienced } = s.barriers;
+  const rows = labels.map((label, i) => {
+    const ant = anticipated[i];
+    const exp = experienced[i];
+    const diff = exp - ant;
+    const sign = diff >= 0 ? '+' : '';
+    const diffColor = Math.abs(diff) >= 15 ? (diff > 0 ? '#c07050' : '#4a7c59') : 'var(--text-sec)';
+    return `
+      <div class="barrier-row">
+        <div class="barrier-label">${label}</div>
+        <div class="barrier-bars">
+          <div class="barrier-bar-wrap">
+            <div class="dash-bar-track"><div class="dash-bar-fill" style="width:${ant}%; background:#5a5a5a;"></div></div>
+            <div class="barrier-pct">${ant}%</div>
+          </div>
+          <div class="barrier-bar-wrap">
+            <div class="dash-bar-track"><div class="dash-bar-fill" style="width:${exp}%; background:var(--accent);"></div></div>
+            <div class="barrier-pct">${exp}%</div>
+          </div>
+        </div>
+        <div class="barrier-diff" style="color:${diffColor};">${sign}${diff}pp</div>
+      </div>
+    `;
+  }).join('');
+  return `
+    <div class="dash-section">
+      <h3 class="dash-section-title">Anticipated vs. Experienced Barriers</h3>
+      <p class="dash-section-desc">% of fellows selecting each barrier at T2 (anticipated) vs T3 (experienced). Large gaps reveal where orientation over- or under-prepares fellows for what they'll actually face.</p>
+      <div class="dash-se-legend"><span class="legend-dot" style="background:#5a5a5a"></span>Anticipated (T2) &nbsp;&nbsp; <span class="legend-dot" style="background:var(--accent)"></span>Experienced (T3) &nbsp;&nbsp; <span style="font-size:11px;color:var(--text-sec);">Highlighted gaps ≥ 15pp</span></div>
+      <div class="barrier-grid">${rows}</div>
+    </div>
+  `;
+}
+
+function renderDashPlacement(s) {
+  const { dims, dist } = s.placement;
+  const total = dist[0].reduce((a, b) => a + b, 0);
+  const starLabels = ['1 ★','2 ★','3 ★','4 ★','5 ★'];
+  const starColors = ['#6b3030','#7a5030','#7a7030','#4a6a50','#3a6a4a'];
+  const rows = dims.map((dim, i) => {
+    const bars = dist[i].map((count, j) => {
+      const pct = Math.round((count / total) * 100);
+      return `<div title="${starLabels[j]}: ${count} fellows (${pct}%)" style="flex:${count || 0.1}; background:${starColors[j]}; height:18px; border-radius:1px; margin-right:2px;"></div>`;
+    }).join('');
+    const avg = dist[i].reduce((sum, c, j) => sum + c * (j+1), 0) / total;
+    return `
+      <div class="placement-row">
+        <div class="placement-dim-label">${dim}</div>
+        <div style="display:flex; flex:1; margin: 0 12px; border-radius:2px; overflow:hidden;">${bars}</div>
+        <div style="font-size:12px; color:var(--text-sec); min-width:32px; text-align:right;">${avg.toFixed(1)}</div>
+      </div>
+    `;
+  }).join('');
+  return `
+    <div class="dash-section">
+      <h3 class="dash-section-title">Placement Quality — BARS Ratings (T3)</h3>
+      <p class="dash-section-desc">Distribution of cohort ratings across five placement quality dimensions. Color runs from low (dark red) to high (green). Average score shown at right.</p>
+      <div class="dash-se-legend">${starColors.map((c,i)=>`<span class="legend-dot" style="background:${c}"></span>${starLabels[i]}`).join(' &nbsp;')}</div>
+      <div style="margin-top:16px;">${rows}</div>
+    </div>
+  `;
+}
+
+function renderDashCareerDir(s) {
+  const { careerDirT1, careerDirT4 } = s.snapshot;
+  function dirBar(data, label) {
+    return `
+      <div class="career-dir-row">
+        <div class="career-dir-tp">${label}</div>
+        <div class="career-dir-bars">
+          <div style="display:flex; height:28px; border-radius:2px; overflow:hidden; width:100%;">
+            <div style="flex:${data.Yes}; background:var(--success); display:flex; align-items:center; justify-content:center; font-size:11px; color:#fff; font-weight:600;" title="Yes: ${data.Yes}%">${data.Yes >= 10 ? data.Yes+'%' : ''}</div>
+            <div style="flex:${data.Deciding}; background:#5a5a4a; display:flex; align-items:center; justify-content:center; font-size:11px; color:#ddd; font-weight:600; margin:0 2px;" title="Still deciding: ${data.Deciding}%">${data.Deciding >= 15 ? data.Deciding+'%' : ''}</div>
+            <div style="flex:${data.No}; background:#5a3030; display:flex; align-items:center; justify-content:center; font-size:11px; color:#ddd; font-weight:600;" title="No: ${data.No}%">${data.No >= 10 ? data.No+'%' : ''}</div>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+  return `
+    <div class="dash-section">
+      <h3 class="dash-section-title">Career Direction — T1 vs. T4</h3>
+      <p class="dash-section-desc">"Are you currently pursuing a high-impact career as your primary path?" Comparing baseline intent (T1) against six-month outcome (T4) shows whether the program moved fellows toward high-impact paths.</p>
+      <div class="dash-se-legend"><span class="legend-dot" style="background:var(--success)"></span>Yes &nbsp;&nbsp; <span class="legend-dot" style="background:#5a5a4a"></span>Still deciding &nbsp;&nbsp; <span class="legend-dot" style="background:#5a3030"></span>No</div>
+      <div style="margin-top:16px;">
+        ${dirBar(careerDirT1, 'T1 — Pre-orientation')}
+        ${dirBar(careerDirT4, 'T4 — Six-month follow-up')}
+      </div>
+    </div>
+  `;
+}
+
+function renderResults() {
+  const s = DASH_SCENARIOS[dashScenario];
+  const scenarioTabs = Object.entries(DASH_SCENARIOS).map(([key, sc]) => `
+    <button class="scenario-tab ${dashScenario === key ? 'active' : ''}" data-scenario="${key}">${sc.label.split(' — ')[0]}</button>
+  `).join('');
+  return `
+    <button class="back-link" id="back-home-results">← Home</button>
+    <h2 style="margin: 24px 0 8px;">Program Evaluation Dashboard</h2>
+    <p style="color:var(--text-sec); font-size:14px; margin-bottom:28px; line-height:1.6;">Simulated cohort data illustrating how the evaluation instrument answers questions about program effectiveness. Toggle between three scenarios to see how different outcome patterns read.</p>
+
+    <div class="scenario-tabs">${scenarioTabs}</div>
+    <div class="scenario-desc">
+      <strong style="color:var(--text); font-size:13px;">${s.label}</strong>
+      <p style="font-size:13px; margin-top:4px;">${s.desc}</p>
+    </div>
+
+    ${renderDashSnapshot(s)}
+    ${renderDashSelfEfficacy(s)}
+    ${renderDashCommitment(s)}
+    ${renderDashMotivation(s)}
+    ${renderDashCareerValues(s)}
+    ${renderDashBarriers(s)}
+    ${renderDashPlacement(s)}
+    ${renderDashCareerDir(s)}
   `;
 }
 
@@ -2048,6 +2588,14 @@ function attachHandlers() {
   // Results back
   const backHomeR = document.getElementById('back-home-results');
   if (backHomeR) backHomeR.addEventListener('click', () => { state.screen = 'home'; render(); });
+
+  // Scenario tabs
+  document.querySelectorAll('.scenario-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      dashScenario = tab.dataset.scenario;
+      render();
+    });
+  });
 
   // Complete back
   const btnHomeC = document.getElementById('btn-home-complete');
