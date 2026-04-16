@@ -274,13 +274,18 @@
     .dash-se-legend { display:flex; align-items:center; gap:6px; flex-wrap:wrap; font-size:12px; color:var(--text-sec); margin-bottom:16px; }
     .legend-dot { display:inline-block; width:10px; height:10px; border-radius:50%; flex-shrink:0; }
     .dash-se-grid { display:grid; grid-template-columns: 180px 1fr 48px; gap:6px 12px; align-items:center; }
-    .dash-cv-grid { grid-template-columns: 160px 1fr 0px; }
-    .dash-row-label, .cv-row-label { font-size:13px; color:var(--text); line-height:1.4; }
+    .cv-value-block { margin-bottom:20px; }
+    .cv-value-block:last-child { margin-bottom:0; }
+    .dash-row-label, .cv-row-label { font-size:13px; color:var(--text); line-height:1.4; margin-bottom:6px; }
     .dash-bars { display:flex; flex-direction:column; gap:4px; }
     .dash-bar-group { display:flex; align-items:center; gap:8px; }
     .dash-bar-label { font-size:10px; color:var(--text-sec); min-width:28px; }
-    .dash-bar-track { flex:1; background:var(--border); border-radius:2px; height:10px; overflow:hidden; }
+    .dash-bar-track { flex:1; background:var(--border); border-radius:2px; height:10px; overflow:hidden; position:relative; }
     .dash-bar-fill { height:100%; border-radius:2px; transition:width .4s ease; }
+    .dash-tick { position:absolute; top:0; bottom:0; width:1px; background:rgba(255,255,255,0.18); pointer-events:none; }
+    .dash-motiv-legend span { text-align:center; line-height:1.4; }
+    .dash-motiv-legend span:first-child { text-align:left; }
+    .dash-motiv-legend span:last-child { text-align:right; }
     .dash-bar-val { font-size:12px; color:var(--text-sec); min-width:28px; text-align:right; }
     .dash-delta { font-size:13px; font-weight:600; text-align:right; }
     .dash-delta.pos { color: var(--success); }
@@ -1981,6 +1986,14 @@ function dashBar(val, max, color) {
   </div>`;
 }
 
+function renderTicks(n) {
+  let html = '';
+  for (let i = 1; i < n; i++) {
+    html += `<div class="dash-tick" style="left:${(i / n * 100).toFixed(2)}%;"></div>`;
+  }
+  return html;
+}
+
 function renderDashSnapshot(s) {
   const snap = s.snapshot;
   const recAvg = snap.recMean.toFixed(1);
@@ -2028,12 +2041,12 @@ function renderDashSelfEfficacy(s) {
       <div class="dash-bars">
         <div class="dash-bar-group">
           <div class="dash-bar-label">Pre (T1)</div>
-          <div class="dash-bar-track"><div class="dash-bar-fill" style="width:${t1pct}%; background:var(--text-sec);"></div></div>
+          <div class="dash-bar-track"><div class="dash-bar-fill" style="width:${t1pct}%; background:var(--text-sec);"></div>${renderTicks(7)}</div>
           <div class="dash-bar-val">${t1[i].toFixed(1)}</div>
         </div>
         <div class="dash-bar-group">
           <div class="dash-bar-label">Post (T2)</div>
-          <div class="dash-bar-track"><div class="dash-bar-fill" style="width:${t2pct}%; background:var(--accent);"></div></div>
+          <div class="dash-bar-track"><div class="dash-bar-fill" style="width:${t2pct}%; background:var(--accent);"></div>${renderTicks(7)}</div>
           <div class="dash-bar-val">${t2[i].toFixed(1)}</div>
         </div>
       </div>
@@ -2061,7 +2074,7 @@ function renderDashCommitment(s) {
     return `
       <div class="commit-bar-wrap">
         <div class="commit-bar-label">${label}<br><span class="commit-bar-sub">${sub}</span></div>
-        <div class="dash-bar-track" style="flex:1;"><div class="dash-bar-fill" style="width:${pct}%; background:${color};"></div></div>
+        <div class="dash-bar-track" style="flex:1;"><div class="dash-bar-fill" style="width:${pct}%; background:${color};"></div>${renderTicks(7)}</div>
         <div class="dash-bar-val">${val.toFixed(1)}</div>
       </div>
     `;
@@ -2103,7 +2116,7 @@ function renderDashMotivation(s) {
     return `
       <div class="commit-bar-wrap">
         <div class="commit-bar-label">${label}<br><span class="commit-bar-sub">${sub}</span></div>
-        <div class="dash-bar-track" style="flex:1;"><div class="dash-bar-fill" style="width:${pct}%; background:${color};"></div></div>
+        <div class="dash-bar-track" style="flex:1;"><div class="dash-bar-fill" style="width:${pct}%; background:${color};"></div>${renderTicks(5)}</div>
         <div class="dash-bar-val">${val.toFixed(1)} <span style="font-size:11px;color:var(--text-sec);">(~${catLabel})</span></div>
       </div>
     `;
@@ -2113,7 +2126,11 @@ function renderDashMotivation(s) {
       <h3 class="dash-section-title">Motivation Quality — Ordinal SDT Score With Reference Shift Correction</h3>
       <p class="dash-section-desc">Fellows select the motivation type (from External=1 to Intrinsic=5) that best describes them. A rightward shift signals internalization of the mission. Retrospective T2-Then rating corrects for reference shift.</p>
       <div class="dash-motiv-legend">
-        <span>External (1)</span><span>→ Introjected (2) → Identified (3) → Integrated (4) →</span><span>Intrinsic (5)</span>
+        <span>External<br>(1)</span>
+        <span>Introjected<br>(2)</span>
+        <span>Identified<br>(3)</span>
+        <span>Integrated<br>(4)</span>
+        <span>Intrinsic<br>(5)</span>
       </div>
       ${mBar(t1now,  '#5a5a5a', 'T1 — Now', 'Naïve pre-orientation score')}
       ${mBar(t2then, '#8a7a6a', 'T2 — Then', 'Retrospective pre-orientation (corrected baseline)')}
@@ -2141,22 +2158,24 @@ function renderDashCareerValues(s) {
   const rows = showIndices.map(i => {
     const name = names[i];
     return `
-      <div class="cv-row-label">${name}</div>
-      <div class="dash-bars">
-        <div class="dash-bar-group">
-          <div class="dash-bar-label">T1</div>
-          <div class="dash-bar-track"><div class="dash-bar-fill" style="width:${toPct(t1[i])}%; background:#5a5a5a;"></div></div>
-          <div class="dash-bar-val" style="font-size:11px;">Rank ${t1[i].toFixed(1)}</div>
-        </div>
-        <div class="dash-bar-group">
-          <div class="dash-bar-label">T2</div>
-          <div class="dash-bar-track"><div class="dash-bar-fill" style="width:${toPct(t2[i])}%; background:#8a6a4a;"></div></div>
-          <div class="dash-bar-val" style="font-size:11px;">Rank ${t2[i].toFixed(1)}</div>
-        </div>
-        <div class="dash-bar-group">
-          <div class="dash-bar-label">T4</div>
-          <div class="dash-bar-track"><div class="dash-bar-fill" style="width:${toPct(t4[i])}%; background:var(--accent);"></div></div>
-          <div class="dash-bar-val" style="font-size:11px;">Rank ${t4[i].toFixed(1)}</div>
+      <div class="cv-value-block">
+        <div class="cv-row-label">${name}</div>
+        <div class="dash-bars">
+          <div class="dash-bar-group">
+            <div class="dash-bar-label">T1</div>
+            <div class="dash-bar-track"><div class="dash-bar-fill" style="width:${toPct(t1[i])}%; background:#5a5a5a;"></div>${renderTicks(6)}</div>
+            <div class="dash-bar-val" style="font-size:11px;">Rank ${t1[i].toFixed(1)}</div>
+          </div>
+          <div class="dash-bar-group">
+            <div class="dash-bar-label">T2</div>
+            <div class="dash-bar-track"><div class="dash-bar-fill" style="width:${toPct(t2[i])}%; background:#8a6a4a;"></div>${renderTicks(6)}</div>
+            <div class="dash-bar-val" style="font-size:11px;">Rank ${t2[i].toFixed(1)}</div>
+          </div>
+          <div class="dash-bar-group">
+            <div class="dash-bar-label">T4</div>
+            <div class="dash-bar-track"><div class="dash-bar-fill" style="width:${toPct(t4[i])}%; background:var(--accent);"></div>${renderTicks(6)}</div>
+            <div class="dash-bar-val" style="font-size:11px;">Rank ${t4[i].toFixed(1)}</div>
+          </div>
         </div>
       </div>
     `;
@@ -2166,7 +2185,7 @@ function renderDashCareerValues(s) {
       <h3 class="dash-section-title">Career Values Ranking — T1 · T2 · T4</h3>
       <p class="dash-section-desc">Cohort average rank for each value (1 = highest priority, 6 = lowest). Bar length reflects relative priority — longer bars mean higher importance. Tracks whether orientation and internship shift what fellows say they care about.</p>
       <div class="dash-se-legend"><span class="legend-dot" style="background:#5a5a5a"></span>Pre-orientation (T1) &nbsp;&nbsp; <span class="legend-dot" style="background:#8a6a4a"></span>Post-orientation (T2) &nbsp;&nbsp; <span class="legend-dot" style="background:var(--accent)"></span>Six-month follow-up (T4)</div>
-      <div class="dash-se-grid dash-cv-grid">${rows}</div>
+      <div>${rows}</div>
     </div>
   `;
 }
