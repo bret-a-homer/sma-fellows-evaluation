@@ -1338,9 +1338,24 @@ function getT2Pages() {
         </div>
       `,
     },
-    // Page 9 – Placement Readiness (with full anchors)
+    // Page 9 – Anticipated Barriers (precedes Readiness)
     {
       id: 't2p9',
+      html: `
+        <h2 style="margin-bottom: 8px;">Anticipated Barriers</h2>
+        <p style="color:var(--text-sec); font-size:14px; margin-bottom:24px; line-height:1.6;">
+          Think about the placement you're heading into.
+        </p>
+        <div class="q-block">
+          <div class="q-label" style="margin-bottom:16px;"><em>Which of the following do you anticipate as your biggest challenges? Select up to 2.</em></div>
+          ${renderChecklist('t2-barriers', PLACEMENT_BARRIERS, a['t2-barriers'] || [], 2, a['t2-barriers-other'] || '')}
+          <div class="constrain-note" id="constrain-note-t2-barriers">Select up to 2 concerns.</div>
+        </div>
+      `,
+    },
+    // Page 10 – Placement Readiness (with full anchors)
+    {
+      id: 't2p10',
       html: `
         <h2 style="margin-bottom: 8px;">Readiness for Your Placement</h2>
         <p style="color:var(--text-sec); font-size:14px; margin-bottom:24px; line-height:1.6;">
@@ -1361,29 +1376,14 @@ function getT2Pages() {
         </div>
       `,
     },
-    // Page 10 – Career Capital Goals
+    // Page 11 – Career Capital Goals
     {
-      id: 't2p10',
+      id: 't2p11',
       html: `
         <h2 style="margin-bottom: 24px;">Career Capital Goals</h2>
         <div class="q-block">
           <div class="q-label" style="margin-bottom:16px;"><em>What do you most hope to gain from your placement in terms of career capital? What would make it a success?</em></div>
           <textarea id="t2-q7" placeholder="Describe the skills, networks, credentials, or experiences you hope to build...">${a['t2-q7'] || ''}</textarea>
-        </div>
-      `,
-    },
-    // Page 11 – Anticipated Barriers (moved from T1, expanded)
-    {
-      id: 't2p11',
-      html: `
-        <h2 style="margin-bottom: 8px;">Anticipated Barriers</h2>
-        <p style="color:var(--text-sec); font-size:14px; margin-bottom:24px; line-height:1.6;">
-          Think about the placement you're heading into.
-        </p>
-        <div class="q-block">
-          <div class="q-label" style="margin-bottom:16px;"><em>Which of the following do you anticipate as your biggest challenges? Select up to 2.</em></div>
-          ${renderChecklist('t2-barriers', PLACEMENT_BARRIERS, a['t2-barriers'] || [], 2, a['t2-barriers-other'] || '')}
-          <div class="constrain-note" id="constrain-note-t2-barriers">Select up to 2 concerns.</div>
         </div>
       `,
     },
@@ -1490,11 +1490,11 @@ function getFollowUpPages(tp) {
         </div>
       `,
     },
-    // Page 2 – Experience Barriers
+    // Page 2 – Experienced Barriers
     {
       id: tp + 'p2',
       html: `
-        <h2 style="margin-bottom: 8px;">Experience Barriers</h2>
+        <h2 style="margin-bottom: 8px;">Experienced Barriers</h2>
         <p style="color:var(--text-sec); font-size:14px; margin-bottom:24px; line-height:1.6;">
           Reflect on the challenges you actually encountered during your placement.
         </p>
