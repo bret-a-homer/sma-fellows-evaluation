@@ -363,6 +363,60 @@
     }
     .cause-radio-cell label:hover { border-color: var(--accent); }
 
+    /* ── Self-efficacy table ── */
+    .se-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    .se-table th {
+      font-size: 10px;
+      color: var(--text-sec);
+      padding: 8px 10px;
+      text-align: center;
+      border-bottom: 1px solid var(--border);
+      vertical-align: bottom;
+      min-width: 88px;
+    }
+    .se-table th.se-item-col {
+      text-align: left;
+      min-width: 190px;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      color: var(--text-sec);
+    }
+    .se-num {
+      display: block;
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 5px;
+      line-height: 1;
+    }
+    .se-anchor-label {
+      display: block;
+      font-size: 10px;
+      line-height: 1.35;
+      color: var(--text-sec);
+    }
+    .se-table td {
+      padding: 13px 10px;
+      border-bottom: 1px solid var(--border);
+      font-size: 13px;
+      color: var(--text);
+      vertical-align: middle;
+    }
+    .se-table td.se-item-cell {
+      font-weight: 500;
+      color: var(--text);
+      text-align: left;
+      padding-left: 0;
+      line-height: 1.45;
+    }
+    .se-table tr:last-child td { border-bottom: none; }
+    .se-table tr:hover td { background: rgba(255,255,255,.02); }
+
     /* ── Drag-drop ranking ── */
     .rank-list { display: flex; flex-direction: column; gap: 6px; }
     .rank-item {
@@ -683,6 +737,24 @@ const CAUSE_AREAS = [
   'Climate change and energy transition',
 ];
 
+const SELF_EFFICACY_ITEMS = [
+  'Developing a theory of change',
+  'Evaluating a theory of change',
+  'Considering counterfactual tradeoffs for different altruistic pursuits',
+  'Finding high-impact, altruistic career opportunities',
+  'Establishing professional contacts to advance a career in high-impact altruism',
+];
+
+const SELF_EFFICACY_ANCHORS = [
+  { n: 1, label: "I wouldn't know where to begin" },
+  { n: 2, label: 'I could attempt this but would need step-by-step guidance' },
+  { n: 3, label: 'I could make some progress with significant support' },
+  { n: 4, label: 'I could do this with moderate guidance' },
+  { n: 5, label: 'I could do this mostly on my own' },
+  { n: 6, label: 'I could do this confidently and independently' },
+  { n: 7, label: 'I could do this expertly — and help others develop this skill' },
+];
+
 const CAREER_VALUES = [
   { name: 'Altruism',                desc: 'Work that lets you make a direct difference in other people\'s lives and contribute to the well-being of others' },
   { name: 'Prestige',                desc: 'Work that earns you recognition and respect — where others see your career as impressive and important' },
@@ -913,6 +985,20 @@ function getT1Pages() {
         </div>
       `,
     },
+    // Page 9 – Self-efficacy grid (pre-test)
+    {
+      id: 't1p9',
+      html: `
+        <h2 style="margin-bottom: 8px;">Skill Confidence</h2>
+        <p style="color:var(--text-sec); font-size:14px; margin-bottom:24px;">
+          For each skill below, rate how confident you are in your current ability to do it well. Use the full scale — there are no right answers.
+        </p>
+        <div class="q-block">
+          <div class="q-label" style="margin-bottom:16px;">How confident are you in your ability to do each of the following?</div>
+          ${renderSelfEfficacyGrid('t1-se', a)}
+        </div>
+      `,
+    },
   ];
 }
 
@@ -1009,6 +1095,21 @@ function getT2Pages() {
           <div class="q-label">Q8. Do you believe your career thinking is significantly shaped by the peers you are most in contact with?</div>
           ${renderTriRadio('t2-q8', a['t2-q8'] || '')}
           <div class="q-note">Same question as before the orientation.</div>
+        </div>
+      `,
+    },
+    // Page 9 – Self-efficacy grid (post-test)
+    {
+      id: 't2p9',
+      html: `
+        <h2 style="margin-bottom: 8px;">Skill Confidence — Updated</h2>
+        <p style="color:var(--text-sec); font-size:14px; margin-bottom:24px;">
+          Same questions as before the orientation. Rate how confident you feel in each skill now, after the program.
+        </p>
+        <div class="q-block">
+          <div class="q-label" style="margin-bottom:16px;">How confident are you in your ability to do each of the following?</div>
+          ${renderSelfEfficacyGrid('t2-se', a)}
+          <div class="q-note" style="margin-top:16px;">Same scale as before the orientation — try to reflect your current ability honestly.</div>
         </div>
       `,
     },
@@ -1290,6 +1391,40 @@ function renderChecklist(name, items, selected, max, otherVal) {
           ${isOther ? `<input type="text" class="other-input" id="${name}-other" placeholder="Please specify..." value="${otherVal || ''}" style="display:${isChecked ? 'block' : 'none'}" />` : ''}
         `;
       }).join('')}
+    </div>
+  `;
+}
+
+// Self-efficacy grid
+function renderSelfEfficacyGrid(prefix, answers) {
+  return `
+    <div style="overflow-x: auto;">
+      <table class="se-table">
+        <thead>
+          <tr>
+            <th class="se-item-col">Skill area</th>
+            ${SELF_EFFICACY_ANCHORS.map(a => `
+              <th>
+                <span class="se-num">${a.n}</span>
+                <span class="se-anchor-label">${a.label}</span>
+              </th>
+            `).join('')}
+          </tr>
+        </thead>
+        <tbody>
+          ${SELF_EFFICACY_ITEMS.map((item, i) => `
+            <tr>
+              <td class="se-item-cell">${item}</td>
+              ${SELF_EFFICACY_ANCHORS.map(anchor => `
+                <td class="cause-radio-cell">
+                  <input type="radio" name="${prefix}-${i}" id="${prefix}-${i}-${anchor.n}" value="${anchor.n}" ${answers[`${prefix}-${i}`] == anchor.n ? 'checked' : ''} />
+                  <label for="${prefix}-${i}-${anchor.n}"></label>
+                </td>
+              `).join('')}
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
     </div>
   `;
 }
