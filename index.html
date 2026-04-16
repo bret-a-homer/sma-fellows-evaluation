@@ -1,0 +1,1776 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SMA Harvard Fellows Program — Evaluation Tool</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0d0d0d;
+      --surface: #161616;
+      --surface2: #1e1e1e;
+      --text: #f2ede4;
+      --text-sec: #9e9a91;
+      --accent: #c9622f;
+      --accent-hover: #b0521f;
+      --border: #2a2a2a;
+      --success: #4a7c59;
+      --radius: 3px;
+      --max-w: 680px;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', sans-serif;
+      font-size: 15px;
+      line-height: 1.65;
+      min-height: 100vh;
+    }
+
+    /* ── Layout ── */
+    #app {
+      max-width: var(--max-w);
+      margin: 0 auto;
+      padding: 48px 24px 80px;
+    }
+
+    /* ── Typography ── */
+    h1 { font-family: 'Playfair Display', serif; font-weight: 700; font-size: clamp(28px, 5vw, 42px); line-height: 1.2; }
+    h2 { font-family: 'Playfair Display', serif; font-weight: 600; font-size: clamp(20px, 4vw, 28px); line-height: 1.3; }
+    h3 { font-family: 'Inter', sans-serif; font-weight: 600; font-size: 15px; letter-spacing: .04em; text-transform: uppercase; color: var(--text-sec); }
+    p { color: var(--text-sec); }
+    em { color: var(--text-sec); font-style: italic; font-size: 13px; }
+
+    /* ── Buttons ── */
+    .btn {
+      display: inline-block;
+      padding: 12px 28px;
+      border-radius: var(--radius);
+      font-family: 'Inter', sans-serif;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      cursor: pointer;
+      border: none;
+      transition: background .18s, opacity .18s;
+      text-decoration: none;
+      line-height: 1;
+    }
+    .btn-primary { background: var(--accent); color: #fff; }
+    .btn-primary:hover { background: var(--accent-hover); }
+    .btn-ghost {
+      background: transparent;
+      color: var(--text-sec);
+      border: 1px solid var(--border);
+    }
+    .btn-ghost:hover { border-color: var(--text-sec); color: var(--text); }
+    .btn-sm { padding: 8px 18px; font-size: 11px; }
+    .btn-success { background: var(--success); color: #fff; }
+    .btn-success:hover { background: #3d6a4a; }
+
+    /* ── Cards ── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+    }
+    .card + .card { margin-top: 12px; }
+
+    /* ── Progress bar ── */
+    .progress-wrap {
+      width: 100%;
+      height: 3px;
+      background: var(--border);
+      margin-bottom: 32px;
+      border-radius: 999px;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      background: var(--accent);
+      border-radius: 999px;
+      transition: width .3s ease;
+    }
+
+    /* ── Page meta ── */
+    .page-meta {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: var(--text-sec);
+      margin-bottom: 28px;
+    }
+
+    /* ── Question wrappers ── */
+    .q-block { margin-bottom: 32px; }
+    .q-label {
+      font-family: 'Inter', sans-serif;
+      font-weight: 500;
+      font-size: 15px;
+      color: var(--text);
+      margin-bottom: 16px;
+      line-height: 1.5;
+    }
+    .q-note {
+      font-size: 12px;
+      color: var(--text-sec);
+      font-style: italic;
+      margin-top: 8px;
+    }
+
+    /* ── Textarea ── */
+    textarea {
+      width: 100%;
+      min-height: 120px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      font-family: 'Inter', sans-serif;
+      font-size: 14px;
+      line-height: 1.6;
+      padding: 14px 16px;
+      resize: vertical;
+      transition: border-color .18s;
+      outline: none;
+    }
+    textarea:focus { border-color: var(--accent); }
+    textarea::placeholder { color: var(--text-sec); opacity: .7; }
+
+    /* ── Likert / Radio button groups ── */
+    .likert-wrap {
+      display: flex;
+      gap: 6px;
+      align-items: stretch;
+      margin-bottom: 8px;
+    }
+    .likert-wrap label {
+      flex: 1;
+      position: relative;
+      cursor: pointer;
+    }
+    .likert-wrap input[type="radio"] { position: absolute; opacity: 0; width: 0; height: 0; }
+    .likert-box {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 44px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-sec);
+      background: var(--surface);
+      transition: all .15s;
+      user-select: none;
+    }
+    .likert-wrap input:checked + .likert-box {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+    .likert-wrap label:hover .likert-box { border-color: var(--accent); color: var(--text); }
+    .likert-anchors {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      color: var(--text-sec);
+      margin-top: 6px;
+    }
+
+    /* ── Three-option horizontal radio (Yes/Somewhat/No) ── */
+    .tri-wrap {
+      display: flex;
+      gap: 8px;
+    }
+    .tri-wrap label {
+      flex: 1;
+      position: relative;
+      cursor: pointer;
+    }
+    .tri-wrap input[type="radio"] { position: absolute; opacity: 0; width: 0; height: 0; }
+    .tri-box {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 10px 6px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-sec);
+      background: var(--surface);
+      transition: all .15s;
+      user-select: none;
+      text-align: center;
+    }
+    .tri-wrap input:checked + .tri-box {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+    .tri-wrap label:hover .tri-box { border-color: var(--accent); color: var(--text); }
+
+    /* ── NPS ── */
+    .nps-wrap {
+      display: flex;
+      gap: 4px;
+    }
+    .nps-wrap label {
+      flex: 1;
+      position: relative;
+      cursor: pointer;
+    }
+    .nps-wrap input[type="radio"] { position: absolute; opacity: 0; width: 0; height: 0; }
+    .nps-box {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 44px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-sec);
+      background: var(--surface);
+      transition: all .15s;
+      user-select: none;
+    }
+    .nps-wrap input:checked + .nps-box {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+    .nps-wrap label:hover .nps-box { border-color: var(--accent); color: var(--text); }
+    .nps-anchors {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      color: var(--text-sec);
+      margin-top: 6px;
+    }
+
+    /* ── Checklist ── */
+    .check-list { display: flex; flex-direction: column; gap: 8px; }
+    .check-list label {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      cursor: pointer;
+      transition: border-color .15s;
+      font-size: 14px;
+      color: var(--text-sec);
+    }
+    .check-list label:hover { border-color: var(--accent); color: var(--text); }
+    .check-list label.checked { border-color: var(--accent); color: var(--text); }
+    .check-list input[type="checkbox"] { display: none; }
+    .check-indicator {
+      width: 18px;
+      height: 18px;
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all .15s;
+    }
+    label.checked .check-indicator {
+      background: var(--accent);
+      border-color: var(--accent);
+    }
+    .check-indicator::after {
+      content: '';
+      width: 5px;
+      height: 9px;
+      border-right: 2px solid #fff;
+      border-bottom: 2px solid #fff;
+      transform: rotate(45deg) translate(-1px, -1px);
+      display: none;
+    }
+    label.checked .check-indicator::after { display: block; }
+    .constrain-note {
+      font-size: 12px;
+      color: var(--accent);
+      margin-top: 8px;
+      display: none;
+    }
+
+    /* ── Cause area grid ── */
+    .cause-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    .cause-table th {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      color: var(--text-sec);
+      padding: 10px 12px;
+      text-align: center;
+      border-bottom: 1px solid var(--border);
+    }
+    .cause-table th:first-child { text-align: left; }
+    .cause-table td {
+      padding: 12px;
+      border-bottom: 1px solid var(--border);
+      font-size: 13px;
+      color: var(--text-sec);
+      vertical-align: middle;
+    }
+    .cause-table td:first-child { padding-left: 4px; }
+    .cause-table tr:last-child td { border-bottom: none; }
+    .cause-table tr:hover td { background: rgba(255,255,255,.02); }
+    .cause-radio-cell { text-align: center; }
+    .cause-radio-cell input[type="radio"] { display: none; }
+    .cause-radio-cell label {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 22px;
+      height: 22px;
+      border: 1px solid var(--border);
+      border-radius: 50%;
+      cursor: pointer;
+      transition: all .15s;
+    }
+    .cause-radio-cell input:checked + label {
+      background: var(--accent);
+      border-color: var(--accent);
+    }
+    .cause-radio-cell input:checked + label::after {
+      content: '';
+      width: 8px;
+      height: 8px;
+      background: #fff;
+      border-radius: 50%;
+    }
+    .cause-radio-cell label:hover { border-color: var(--accent); }
+
+    /* ── Drag-drop ranking ── */
+    .rank-list { display: flex; flex-direction: column; gap: 6px; }
+    .rank-item {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 14px 16px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      cursor: grab;
+      user-select: none;
+      transition: border-color .15s, background .15s, box-shadow .15s;
+    }
+    .rank-item:active { cursor: grabbing; }
+    .rank-item.dragging {
+      opacity: .5;
+      border-color: var(--accent);
+    }
+    .rank-item.drag-over {
+      border-color: var(--accent);
+      background: rgba(201, 98, 47, .08);
+    }
+    .rank-handle {
+      color: var(--text-sec);
+      font-size: 16px;
+      line-height: 1;
+      flex-shrink: 0;
+    }
+    .rank-num {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-sec);
+      width: 18px;
+      flex-shrink: 0;
+      letter-spacing: .05em;
+    }
+    .rank-label {
+      font-size: 14px;
+      color: var(--text);
+      flex: 1;
+    }
+
+    /* ── Numeric input ── */
+    .number-input {
+      width: 100%;
+      max-width: 160px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      font-family: 'Inter', sans-serif;
+      font-size: 15px;
+      padding: 10px 14px;
+      outline: none;
+      transition: border-color .18s;
+      -moz-appearance: textfield;
+    }
+    .number-input:focus { border-color: var(--accent); }
+    .number-input::-webkit-inner-spin-button,
+    .number-input::-webkit-outer-spin-button { -webkit-appearance: none; }
+
+    /* ── Yes/No conditional ── */
+    .yn-wrap { display: flex; gap: 8px; margin-bottom: 12px; }
+    .yn-wrap label { position: relative; cursor: pointer; }
+    .yn-wrap input[type="radio"] { position: absolute; opacity: 0; width: 0; height: 0; }
+    .yn-box {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 10px 28px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-sec);
+      background: var(--surface);
+      transition: all .15s;
+      user-select: none;
+    }
+    .yn-wrap input:checked + .yn-box {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+    .yn-wrap label:hover .yn-box { border-color: var(--accent); color: var(--text); }
+    .conditional-reveal { margin-top: 12px; }
+
+    /* ── Dynamic list builder ── */
+    .dyn-row {
+      display: grid;
+      grid-template-columns: 1fr auto auto auto;
+      gap: 8px;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    .dyn-row input[type="text"] {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      font-family: 'Inter', sans-serif;
+      font-size: 13px;
+      padding: 9px 12px;
+      outline: none;
+      transition: border-color .18s;
+      width: 100%;
+    }
+    .dyn-row input[type="text"]:focus { border-color: var(--accent); }
+    .dyn-row select {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text-sec);
+      font-family: 'Inter', sans-serif;
+      font-size: 12px;
+      padding: 9px 10px;
+      outline: none;
+      cursor: pointer;
+      transition: border-color .18s;
+      appearance: none;
+      -webkit-appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath fill='%239e9a91' d='M5 6L0 0h10z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 10px center;
+      padding-right: 28px;
+    }
+    .dyn-row select:focus { border-color: var(--accent); }
+    .dyn-remove {
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text-sec);
+      cursor: pointer;
+      padding: 8px 10px;
+      font-size: 14px;
+      line-height: 1;
+      transition: all .15s;
+      flex-shrink: 0;
+    }
+    .dyn-remove:hover { border-color: #7a3030; color: #e06060; }
+
+    /* ── Other text input ── */
+    .other-input {
+      margin-top: 8px;
+      padding: 10px 14px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      font-family: 'Inter', sans-serif;
+      font-size: 14px;
+      width: 100%;
+      outline: none;
+      transition: border-color .18s;
+    }
+    .other-input:focus { border-color: var(--accent); }
+    .other-input::placeholder { color: var(--text-sec); opacity: .7; }
+
+    /* ── Navigation ── */
+    .nav-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 40px;
+      gap: 12px;
+    }
+    .back-link {
+      color: var(--text-sec);
+      font-size: 13px;
+      cursor: pointer;
+      text-decoration: none;
+      transition: color .15s;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: none;
+      border: none;
+      font-family: 'Inter', sans-serif;
+    }
+    .back-link:hover { color: var(--text); }
+    .back-link::before { content: '←'; }
+
+    /* ── Divider ── */
+    .divider {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 32px 0;
+    }
+
+    /* ── Home screen ── */
+    .home-eyebrow {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 16px;
+    }
+    .home-subtitle {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(15px, 2.5vw, 18px);
+      color: var(--text-sec);
+      margin-top: 10px;
+      font-style: italic;
+    }
+    .home-actions { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 36px; }
+    .home-small { margin-top: 24px; }
+
+    /* ── Touchpoint cards ── */
+    .tp-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      cursor: pointer;
+      transition: border-color .18s, background .18s;
+      margin-bottom: 12px;
+    }
+    .tp-card:hover { border-color: var(--accent); background: rgba(201,98,47,.05); }
+    .tp-header { display: flex; align-items: baseline; gap: 12px; margin-bottom: 8px; }
+    .tp-tag {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      background: var(--accent);
+      color: #fff;
+      padding: 3px 8px;
+      border-radius: var(--radius);
+    }
+    .tp-name {
+      font-family: 'Playfair Display', serif;
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--text);
+    }
+    .tp-time { font-size: 12px; color: var(--text-sec); margin-bottom: 6px; }
+    .tp-desc { font-size: 13px; color: var(--text-sec); line-height: 1.55; }
+
+    /* ── Completion ── */
+    .completion-icon {
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background: rgba(74,124,89,.15);
+      border: 1px solid var(--success);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      margin-bottom: 24px;
+    }
+
+    /* ── Results stub ── */
+    .results-stub {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 48px 32px;
+      text-align: center;
+      margin-top: 32px;
+    }
+
+    /* ── Mobile ── */
+    @media (max-width: 640px) {
+      #app { padding: 32px 16px 60px; }
+      .nps-wrap { gap: 2px; }
+      .nps-box { height: 38px; font-size: 11px; }
+      .likert-wrap { gap: 3px; }
+      .likert-box { height: 40px; font-size: 12px; }
+      .dyn-row {
+        grid-template-columns: 1fr 1fr;
+        grid-template-rows: auto auto;
+      }
+      .dyn-row input[type="text"] { grid-column: 1 / -1; }
+      .cause-table th, .cause-table td { padding: 8px 6px; font-size: 12px; }
+      .home-actions { flex-direction: column; }
+      .btn { width: 100%; text-align: center; }
+    }
+  </style>
+</head>
+<body>
+<div id="app"></div>
+
+<script>
+// ─────────────────────────────────────────────
+// STATE
+// ─────────────────────────────────────────────
+const state = {
+  screen: 'home',        // home | touchpoint | assessment | complete | results
+  touchpoint: null,      // 't1' | 't2' | 't3'
+  page: 0,
+  answers: { t1: {}, t2: {}, t3: {} },
+  branchChoice: null,    // for T3 Q11
+};
+
+// ─────────────────────────────────────────────
+// DATA
+// ─────────────────────────────────────────────
+const CAUSE_AREAS = [
+  'Global health and development',
+  'Animal welfare and alternative proteins',
+  'AI safety and governance',
+  'Biosecurity and pandemic preparedness',
+  'Nuclear risk reduction',
+  'Climate change and energy transition',
+];
+
+const CAREER_VALUES = [
+  'Impact on the world',
+  'Income',
+  'Prestige and status',
+  'Intellectual challenge',
+  'Work-life balance',
+  'Social belonging',
+];
+
+const T1_BEHAVIORAL = [
+  'Attended an EA or SMA event in the past 12 months',
+  'Read or listened to EA-adjacent content (books, podcasts, articles)',
+  'Had a serious career conversation with someone from an EA-aligned org',
+  'Applied to, or seriously researched, a high-impact job or fellowship',
+];
+
+const T1_BARRIERS = [
+  'Uncertainty about which cause area to focus on',
+  'Concern about financial security or income',
+  'Pressure from family or peers to take a conventional path',
+  'Lack of relevant skills or credentials',
+  'Uncertainty about whether I can make a real difference',
+  'Other',
+];
+
+const TOUCHPOINTS = [
+  {
+    id: 't1',
+    tag: 'T1',
+    name: 'Pre-program',
+    time: '~12–15 min',
+    desc: 'Establish your baseline career values and intentions before the program begins.',
+  },
+  {
+    id: 't2',
+    tag: 'T2',
+    name: 'Post-orientation',
+    time: '~13–14 min',
+    desc: 'Capture how the orientation shifted your thinking and readiness.',
+  },
+  {
+    id: 't3',
+    tag: 'T3',
+    name: 'Six-month follow-up',
+    time: '~15–20 min',
+    desc: 'Reflect on outcomes, career direction, and program impact.',
+  },
+];
+
+// ─────────────────────────────────────────────
+// RENDER ROUTER
+// ─────────────────────────────────────────────
+function render() {
+  const app = document.getElementById('app');
+  if (state.screen === 'home') app.innerHTML = renderHome();
+  else if (state.screen === 'touchpoint') app.innerHTML = renderTouchpoint();
+  else if (state.screen === 'assessment') app.innerHTML = renderAssessment();
+  else if (state.screen === 'complete') app.innerHTML = renderComplete();
+  else if (state.screen === 'results') app.innerHTML = renderResults();
+  attachHandlers();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ─────────────────────────────────────────────
+// HOME
+// ─────────────────────────────────────────────
+function renderHome() {
+  return `
+    <div class="home-eyebrow">School for Moral Ambition</div>
+    <h1>School for Moral Ambition</h1>
+    <div class="home-subtitle">Harvard Fellows Program — Evaluation Tool</div>
+    <hr class="divider" />
+    <p>This tool collects structured assessments from fellows at three points throughout the program. Please complete each touchpoint honestly — your responses inform how we improve the program over time.</p>
+    <div class="home-actions">
+      <button class="btn btn-primary" id="btn-begin">Begin Assessment</button>
+      <button class="btn btn-ghost" id="btn-results">View Simulated Results</button>
+    </div>
+    <div class="home-small"><em>Internal use only — Cohort 1, 2026</em></div>
+  `;
+}
+
+// ─────────────────────────────────────────────
+// TOUCHPOINT SELECTOR
+// ─────────────────────────────────────────────
+function renderTouchpoint() {
+  const cards = TOUCHPOINTS.map(tp => `
+    <div class="tp-card" data-tp="${tp.id}">
+      <div class="tp-header">
+        <span class="tp-tag">${tp.tag}</span>
+        <span class="tp-name">${tp.name}</span>
+      </div>
+      <div class="tp-time">${tp.time}</div>
+      <div class="tp-desc">${tp.desc}</div>
+    </div>
+  `).join('');
+
+  return `
+    <button class="back-link" id="back-home">Home</button>
+    <h2 style="margin: 24px 0 8px;">Which assessment are you completing?</h2>
+    <p style="margin-bottom: 28px;">Select the touchpoint that corresponds to where you are in the program.</p>
+    ${cards}
+  `;
+}
+
+// ─────────────────────────────────────────────
+// ASSESSMENT PAGES
+// ─────────────────────────────────────────────
+function getPages() {
+  if (state.touchpoint === 't1') return getT1Pages();
+  if (state.touchpoint === 't2') return getT2Pages();
+  if (state.touchpoint === 't3') return getT3Pages();
+  return [];
+}
+
+function renderAssessment() {
+  const pages = getPages();
+  const total = pages.length;
+  const current = state.page;
+  const page = pages[current];
+  const pct = ((current + 1) / (total + 1)) * 100;
+  const tpLabel = state.touchpoint === 't1' ? 'T1 — Pre-program' : state.touchpoint === 't2' ? 'T2 — Post-orientation' : 'T3 — Six-month follow-up';
+
+  return `
+    <div class="progress-wrap"><div class="progress-fill" style="width:${pct}%"></div></div>
+    <div class="page-meta">${tpLabel} &nbsp;|&nbsp; Page ${current + 1} of ${total}</div>
+    ${page.html}
+    <div class="nav-row">
+      <button class="back-link" id="btn-back">${current === 0 ? 'Select Assessment' : 'Back'}</button>
+      <button class="btn btn-primary" id="btn-next">${current === total - 1 ? 'Submit' : 'Continue'}</button>
+    </div>
+  `;
+}
+
+// ─────────────────────────────────────────────
+// T1 PAGES
+// ─────────────────────────────────────────────
+function getT1Pages() {
+  const a = state.answers.t1;
+  return [
+    // Page 1 – Drag-drop ranking
+    {
+      id: 't1p1',
+      html: `
+        <h2 style="margin-bottom: 24px;">Career Values</h2>
+        <div class="q-block">
+          <div class="q-label">Q1. Rank the following career values from most to least important to you right now. Drag to reorder.</div>
+          ${renderRankList('t1-rank', a['t1-rank'] || CAREER_VALUES.slice())}
+        </div>
+      `,
+    },
+    // Page 2 – Textarea
+    {
+      id: 't1p2',
+      html: `
+        <h2 style="margin-bottom: 24px;">Career Vision</h2>
+        <div class="q-block">
+          <div class="q-label">Q2. In 2–3 sentences, describe what a successful career looks like to you right now.</div>
+          <textarea id="t1-q2" placeholder="Describe your vision of a successful career...">${a['t1-q2'] || ''}</textarea>
+        </div>
+      `,
+    },
+    // Page 3 – Textarea with note
+    {
+      id: 't1p3',
+      html: `
+        <h2 style="margin-bottom: 24px;">Organizations & Roles</h2>
+        <div class="q-block">
+          <div class="q-label">Q3. Name the organizations or roles you are most actively considering at this moment.</div>
+          <textarea id="t1-q3" placeholder="List specific organizations, roles, or types of work you're considering...">${a['t1-q3'] || ''}</textarea>
+          <div class="q-note">Be as specific as possible — name actual organizations or roles if you can.</div>
+        </div>
+      `,
+    },
+    // Page 4 – Multi-select checklist
+    {
+      id: 't1p4',
+      html: `
+        <h2 style="margin-bottom: 24px;">Recent Behaviors</h2>
+        <div class="q-block">
+          <div class="q-label">Q4. Which of the following have you done in the past 12 months? Select all that apply.</div>
+          ${renderChecklist('t1-q4', T1_BEHAVIORAL, a['t1-q4'] || [], false)}
+        </div>
+      `,
+    },
+    // Page 5 – Constrained multi-select (max 2)
+    {
+      id: 't1p5',
+      html: `
+        <h2 style="margin-bottom: 24px;">Anticipated Barriers</h2>
+        <div class="q-block">
+          <div class="q-label">Q5. What are the one or two biggest barriers you anticipate in pursuing a high-impact career? Select up to 2.</div>
+          ${renderChecklist('t1-q5', T1_BARRIERS, a['t1-q5'] || [], 2, a['t1-q5-other'] || '')}
+          <div class="constrain-note" id="constrain-note-t1-q5">Select up to 2 concerns.</div>
+        </div>
+      `,
+    },
+    // Page 6 – Cause area grid
+    {
+      id: 't1p6',
+      html: `
+        <h2 style="margin-bottom: 24px;">Cause Area Familiarity</h2>
+        <div class="q-block">
+          <div class="q-label">Q6. For each cause area below, indicate your current level of familiarity or engagement.</div>
+          ${renderCauseGrid('t1-q6', a['t1-q6'] || {})}
+        </div>
+      `,
+    },
+    // Page 7 – Three-option radio
+    {
+      id: 't1p7',
+      html: `
+        <h2 style="margin-bottom: 24px;">Peer Influence</h2>
+        <div class="q-block">
+          <div class="q-label">Q7. Do you believe your career thinking is significantly shaped by the peers you are most in contact with?</div>
+          ${renderTriRadio('t1-q7', a['t1-q7'] || '')}
+        </div>
+      `,
+    },
+    // Page 8 – Conditional numeric
+    {
+      id: 't1p8',
+      html: `
+        <h2 style="margin-bottom: 24px;">Peer Conversations</h2>
+        <div class="q-block">
+          <div class="q-label">Q8. In the past month, have you had any substantive conversations with peers about career direction or impact?</div>
+          ${renderConditionalNumeric('t1-q8', a['t1-q8-yn'] || '', a['t1-q8-num'] || '', 'How many such conversations did you have?', 'Number of conversations')}
+        </div>
+      `,
+    },
+  ];
+}
+
+// ─────────────────────────────────────────────
+// T2 PAGES
+// ─────────────────────────────────────────────
+function getT2Pages() {
+  const a = state.answers.t2;
+  return [
+    // Page 1 – 7-pt Likert
+    {
+      id: 't2p1',
+      html: `
+        <h2 style="margin-bottom: 24px;">Commitment to Impact</h2>
+        <div class="q-block">
+          <div class="q-label">Q1. How committed are you right now to pursuing a high-impact career?</div>
+          ${renderLikert('t2-q1', a['t2-q1'] || '', 'Not at all committed', 'Fully committed')}
+        </div>
+      `,
+    },
+    // Page 2 – Retrospective Likert
+    {
+      id: 't2p2',
+      html: `
+        <h2 style="margin-bottom: 24px;">Retrospective Commitment</h2>
+        <div class="q-block">
+          <div class="q-label">Q2. Thinking back to before the orientation began, how committed were you then to pursuing a high-impact career?</div>
+          ${renderLikert('t2-q2', a['t2-q2'] || '', 'Not at all committed', 'Fully committed')}
+          <div class="q-note">Recall your mindset from before the orientation started, not how you feel now.</div>
+        </div>
+      `,
+    },
+    // Page 3 – Textarea
+    {
+      id: 't2p3',
+      html: `
+        <h2 style="margin-bottom: 24px;">Shifted Perspective</h2>
+        <div class="q-block">
+          <div class="q-label">Q3. Has your answer to "what does a successful career look like to you" changed since before the orientation? If so, how?</div>
+          <textarea id="t2-q3" placeholder="Describe any shifts in your thinking about what a successful career means to you...">${a['t2-q3'] || ''}</textarea>
+        </div>
+      `,
+    },
+    // Page 4 – Textarea
+    {
+      id: 't2p4',
+      html: `
+        <h2 style="margin-bottom: 24px;">Most Impactful Sessions</h2>
+        <div class="q-block">
+          <div class="q-label">Q4. Which one or two sessions most shifted how you think about your career, and why?</div>
+          <textarea id="t2-q4" placeholder="Name the sessions and describe what shifted for you...">${a['t2-q4'] || ''}</textarea>
+        </div>
+      `,
+    },
+    // Page 5 – Cause area grid
+    {
+      id: 't2p5',
+      html: `
+        <h2 style="margin-bottom: 24px;">Cause Area Familiarity</h2>
+        <div class="q-block">
+          <div class="q-label">Q5. For each cause area, indicate your current level of familiarity or engagement. (Same question as T1 — we're tracking change.)</div>
+          ${renderCauseGrid('t2-q5', a['t2-q5'] || {})}
+        </div>
+      `,
+    },
+    // Page 6 – Likert
+    {
+      id: 't2p6',
+      html: `
+        <h2 style="margin-bottom: 24px;">Placement Readiness</h2>
+        <div class="q-block">
+          <div class="q-label">Q6. How prepared do you feel to add genuine value in your fellowship placement?</div>
+          ${renderLikert('t2-q6', a['t2-q6'] || '', 'Not at all prepared', 'Fully prepared')}
+        </div>
+      `,
+    },
+    // Page 7 – Textarea
+    {
+      id: 't2p7',
+      html: `
+        <h2 style="margin-bottom: 24px;">Career Capital Goals</h2>
+        <div class="q-block">
+          <div class="q-label">Q7. What do you most hope to gain from your placement in terms of career capital?</div>
+          <textarea id="t2-q7" placeholder="Describe the skills, networks, credentials, or experiences you hope to build...">${a['t2-q7'] || ''}</textarea>
+        </div>
+      `,
+    },
+    // Page 8 – Tri-radio with note
+    {
+      id: 't2p8',
+      html: `
+        <h2 style="margin-bottom: 24px;">Peer Influence</h2>
+        <div class="q-block">
+          <div class="q-label">Q8. Do you believe your career thinking is significantly shaped by the peers you are most in contact with?</div>
+          ${renderTriRadio('t2-q8', a['t2-q8'] || '')}
+          <div class="q-note">Same question as before the orientation.</div>
+        </div>
+      `,
+    },
+  ];
+}
+
+// ─────────────────────────────────────────────
+// T3 PAGES
+// ─────────────────────────────────────────────
+function getT3Pages() {
+  const a = state.answers.t3;
+  const branch = state.branchChoice;
+
+  const standardPages = [
+    // Page 1 – Three stacked Likerts
+    {
+      id: 't3p1',
+      html: `
+        <h2 style="margin-bottom: 24px;">Program Quality</h2>
+        <div class="q-block">
+          <div class="q-label" style="margin-bottom: 20px;">Q1. Rate the program on each dimension.</div>
+          <div style="margin-bottom: 24px;">
+            <div class="q-label" style="font-size:13px; color: var(--text-sec); margin-bottom:10px;">Intellectual rigor</div>
+            ${renderLikert('t3-q1a', a['t3-q1a'] || '', 'Not at all rigorous', 'Extremely rigorous')}
+          </div>
+          <div style="margin-bottom: 24px;">
+            <div class="q-label" style="font-size:13px; color: var(--text-sec); margin-bottom:10px;">Professional development value</div>
+            ${renderLikert('t3-q1b', a['t3-q1b'] || '', 'No value', 'Exceptional value')}
+          </div>
+          <div>
+            <div class="q-label" style="font-size:13px; color: var(--text-sec); margin-bottom:10px;">Meaningfulness of impact</div>
+            ${renderLikert('t3-q1c', a['t3-q1c'] || '', 'Not at all meaningful', 'Extremely meaningful')}
+          </div>
+        </div>
+      `,
+    },
+    // Page 2 – Textarea
+    {
+      id: 't3p2',
+      html: `
+        <h2 style="margin-bottom: 24px;">Career Capital Delivery</h2>
+        <div class="q-block">
+          <div class="q-label">Q2. Did your placement deliver on what you hoped for in terms of career capital? Explain.</div>
+          <textarea id="t3-q2" placeholder="Reflect honestly — what was delivered, what fell short, and why...">${a['t3-q2'] || ''}</textarea>
+        </div>
+      `,
+    },
+    // Page 3 – NPS
+    {
+      id: 't3p3',
+      html: `
+        <h2 style="margin-bottom: 24px;">Program Recommendation</h2>
+        <div class="q-block">
+          <div class="q-label">Q3. How likely are you to recommend SMA to a peer?</div>
+          ${renderNPS('t3-q3', a['t3-q3'] || '')}
+        </div>
+      `,
+    },
+    // Page 4 – Textarea
+    {
+      id: 't3p4',
+      html: `
+        <h2 style="margin-bottom: 24px;">Most Valuable Aspect</h2>
+        <div class="q-block">
+          <div class="q-label">Q4. What was the single most valuable thing about the SMA program for you?</div>
+          <textarea id="t3-q4" placeholder="Describe the one thing you valued most...">${a['t3-q4'] || ''}</textarea>
+        </div>
+      `,
+    },
+    // Page 5 – Textarea
+    {
+      id: 't3p5',
+      html: `
+        <h2 style="margin-bottom: 24px;">Suggested Improvement</h2>
+        <div class="q-block">
+          <div class="q-label">Q5. What is the one thing you would change about the program?</div>
+          <textarea id="t3-q5" placeholder="Be specific — what would make the program meaningfully better?">${a['t3-q5'] || ''}</textarea>
+        </div>
+      `,
+    },
+    // Page 6 – Drag-drop ranking
+    {
+      id: 't3p6',
+      html: `
+        <h2 style="margin-bottom: 24px;">Career Values — Revisited</h2>
+        <div class="q-block">
+          <div class="q-label">Q6. Rank the following career values from most to least important to you right now. Drag to reorder.</div>
+          ${renderRankList('t3-rank', a['t3-rank'] || CAREER_VALUES.slice())}
+        </div>
+      `,
+    },
+    // Page 7 – Textarea with note
+    {
+      id: 't3p7',
+      html: `
+        <h2 style="margin-bottom: 24px;">Career Vision — Revisited</h2>
+        <div class="q-block">
+          <div class="q-label">Q7. In 2–3 sentences, describe what a successful career looks like to you right now.</div>
+          <textarea id="t3-q7" placeholder="Describe your current vision of a successful career...">${a['t3-q7'] || ''}</textarea>
+          <div class="q-note">Same question as before the program.</div>
+        </div>
+      `,
+    },
+    // Page 8 – Numeric input
+    {
+      id: 't3p8',
+      html: `
+        <h2 style="margin-bottom: 24px;">Peer Conversations</h2>
+        <div class="q-block">
+          <div class="q-label">Q8. Since the program ended, how many substantive conversations have you had with peers about career direction or impact?</div>
+          <input type="number" class="number-input" id="t3-q8" min="0" value="${a['t3-q8'] || ''}" placeholder="0" />
+        </div>
+      `,
+    },
+    // Page 9 – Textarea
+    {
+      id: 't3p9',
+      html: `
+        <h2 style="margin-bottom: 24px;">Most Significant Conversation</h2>
+        <div class="q-block">
+          <div class="q-label">Q9. Describe the most significant career conversation you have had with a peer since the program ended. What was discussed and what came of it?</div>
+          <textarea id="t3-q9" placeholder="Who did you talk with (no names needed), what was the substance, and what impact did it have on you or them?">${a['t3-q9'] || ''}</textarea>
+        </div>
+      `,
+    },
+    // Page 10 – Dynamic list builder
+    {
+      id: 't3p10',
+      html: `
+        <h2 style="margin-bottom: 24px;">Roles & Applications</h2>
+        <div class="q-block">
+          <div class="q-label">Q10. List the roles or positions you have applied to, received offers for, or accepted since the program began.</div>
+          <div id="dyn-list-container">
+            ${renderDynRows(a['t3-q10'] || [{ role: '', status: '', sector: '' }])}
+          </div>
+          <button class="btn btn-ghost btn-sm" id="dyn-add" style="margin-top: 10px;">+ Add another role</button>
+        </div>
+      `,
+    },
+    // Page 11 – Branching question
+    {
+      id: 't3p11',
+      html: `
+        <h2 style="margin-bottom: 24px;">Career Direction</h2>
+        <div class="q-block">
+          <div class="q-label">Q11. Are you currently pursuing a high-impact career as your primary path?</div>
+          <div class="check-list" style="gap: 8px;">
+            ${['Yes', 'No', 'Still deciding'].map(opt => `
+              <label class="${(a['t3-q11'] || '') === opt ? 'checked' : ''}" data-group="t3-q11" data-val="${opt}">
+                <input type="radio" name="t3-q11" value="${opt}" ${(a['t3-q11'] || '') === opt ? 'checked' : ''} style="display:none" />
+                <span class="check-indicator"></span>
+                ${opt}
+              </label>
+            `).join('')}
+          </div>
+        </div>
+      `,
+    },
+  ];
+
+  // Conditional pages
+  if (branch === 'No') {
+    standardPages.push({
+      id: 't3p12a',
+      html: `
+        <h2 style="margin-bottom: 24px;">Career Direction Factors</h2>
+        <div class="q-block">
+          <div class="q-label">Q12. What factors most influenced your career direction this year?</div>
+          <textarea id="t3-q12a" placeholder="Describe the key factors — personal, professional, financial, or otherwise — that shaped where you are heading...">${a['t3-q12a'] || ''}</textarea>
+        </div>
+      `,
+    });
+  } else if (branch === 'Yes') {
+    standardPages.push({
+      id: 't3p12b',
+      html: `
+        <h2 style="margin-bottom: 24px;">Influences on Your Path</h2>
+        <div class="q-block">
+          <div class="q-label">Q12. What most influenced your decision to pursue this path? What role, if any, did SMA play?</div>
+          <textarea id="t3-q12b" placeholder="Describe what shaped your decision, and be candid about SMA's role — whether central, minor, or indirect...">${a['t3-q12b'] || ''}</textarea>
+        </div>
+      `,
+    });
+  }
+
+  return standardPages;
+}
+
+// ─────────────────────────────────────────────
+// COMPLETE
+// ─────────────────────────────────────────────
+function renderComplete() {
+  const labels = { t1: 'T1 — Pre-program', t2: 'T2 — Post-orientation', t3: 'T3 — Six-month follow-up' };
+  return `
+    <div class="completion-icon">&#10003;</div>
+    <h2 style="margin-bottom: 12px;">Thank you.</h2>
+    <p>Your responses for <strong style="color:var(--text)">${labels[state.touchpoint]}</strong> have been recorded.</p>
+    <p style="margin-top: 12px;">If you have questions about the program evaluation, please reach out to the SMA research team.</p>
+    <div style="margin-top: 36px;">
+      <button class="btn btn-primary" id="btn-home-complete">Return to Home</button>
+    </div>
+  `;
+}
+
+// ─────────────────────────────────────────────
+// RESULTS STUB
+// ─────────────────────────────────────────────
+function renderResults() {
+  return `
+    <button class="back-link" id="back-home-results">Home</button>
+    <h2 style="margin: 24px 0 8px;">Simulated Results</h2>
+    <div class="results-stub">
+      <p style="margin-bottom: 12px; font-size: 14px;">This section will display simulated evaluation results for demonstration purposes.</p>
+      <p style="font-size: 13px; color: var(--text-sec);">Coming soon.</p>
+    </div>
+  `;
+}
+
+// ─────────────────────────────────────────────
+// COMPONENT RENDERERS
+// ─────────────────────────────────────────────
+
+// 7-point Likert
+function renderLikert(name, selected, anchorLeft, anchorRight) {
+  const boxes = [1,2,3,4,5,6,7].map(n => `
+    <label>
+      <input type="radio" name="${name}" value="${n}" ${selected == n ? 'checked' : ''} />
+      <span class="likert-box">${n}</span>
+    </label>
+  `).join('');
+  return `
+    <div class="likert-wrap">${boxes}</div>
+    <div class="likert-anchors"><span>${anchorLeft}</span><span>${anchorRight}</span></div>
+  `;
+}
+
+// Three-option horizontal radio (Yes / Somewhat / No)
+function renderTriRadio(name, selected) {
+  return `
+    <div class="tri-wrap">
+      ${['Yes', 'Somewhat', 'No'].map(opt => `
+        <label>
+          <input type="radio" name="${name}" value="${opt}" ${selected === opt ? 'checked' : ''} />
+          <span class="tri-box">${opt}</span>
+        </label>
+      `).join('')}
+    </div>
+  `;
+}
+
+// NPS 0-10
+function renderNPS(name, selected) {
+  const boxes = [0,1,2,3,4,5,6,7,8,9,10].map(n => `
+    <label>
+      <input type="radio" name="${name}" value="${n}" ${selected == n ? 'checked' : ''} />
+      <span class="nps-box">${n}</span>
+    </label>
+  `).join('');
+  return `
+    <div class="nps-wrap">${boxes}</div>
+    <div class="nps-anchors"><span>Not at all likely</span><span>Extremely likely</span></div>
+  `;
+}
+
+// Checklist (multi-select or constrained)
+function renderChecklist(name, items, selected, max, otherVal) {
+  return `
+    <div class="check-list" id="cl-${name}">
+      ${items.map((item, i) => {
+        const isChecked = selected.includes(item);
+        const isOther = item === 'Other';
+        return `
+          <label class="${isChecked ? 'checked' : ''}" data-group="${name}" data-val="${item}" data-max="${max || 0}">
+            <input type="checkbox" name="${name}" value="${item}" ${isChecked ? 'checked' : ''} />
+            <span class="check-indicator"></span>
+            ${item}
+          </label>
+          ${isOther ? `<input type="text" class="other-input" id="${name}-other" placeholder="Please specify..." value="${otherVal || ''}" style="display:${isChecked ? 'block' : 'none'}" />` : ''}
+        `;
+      }).join('')}
+    </div>
+  `;
+}
+
+// Cause area grid
+function renderCauseGrid(name, selected) {
+  const cols = ['Not familiar', 'Somewhat familiar', 'Actively engaged'];
+  const rows = CAUSE_AREAS.map((area, i) => `
+    <tr>
+      <td>${area}</td>
+      ${cols.map((col, j) => `
+        <td class="cause-radio-cell">
+          <input type="radio" name="${name}-${i}" id="${name}-${i}-${j}" value="${col}" ${(selected[i] || '') === col ? 'checked' : ''} />
+          <label for="${name}-${i}-${j}"></label>
+        </td>
+      `).join('')}
+    </tr>
+  `).join('');
+
+  return `
+    <div style="overflow-x: auto;">
+      <table class="cause-table">
+        <thead>
+          <tr>
+            <th>Cause Area</th>
+            ${cols.map(c => `<th>${c}</th>`).join('')}
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>
+  `;
+}
+
+// Conditional numeric (Yes/No → number input)
+function renderConditionalNumeric(name, yn, num, label, placeholder) {
+  return `
+    <div class="yn-wrap">
+      ${['Yes', 'No'].map(opt => `
+        <label>
+          <input type="radio" name="${name}-yn" value="${opt}" ${yn === opt ? 'checked' : ''} />
+          <span class="yn-box">${opt}</span>
+        </label>
+      `).join('')}
+    </div>
+    <div class="conditional-reveal" id="${name}-cond" style="display:${yn === 'Yes' ? 'block' : 'none'}">
+      <div class="q-label" style="font-size:13px; color: var(--text-sec); margin-bottom: 8px;">${label}</div>
+      <input type="number" class="number-input" id="${name}-num" min="0" value="${num || ''}" placeholder="${placeholder}" />
+    </div>
+  `;
+}
+
+// Drag-drop ranking list
+function renderRankList(name, items) {
+  return `
+    <div class="rank-list" id="rl-${name}" data-name="${name}">
+      ${items.map((item, i) => `
+        <div class="rank-item" draggable="true" data-index="${i}" data-label="${item}">
+          <span class="rank-handle">⠿</span>
+          <span class="rank-num">#${i+1}</span>
+          <span class="rank-label">${item}</span>
+        </div>
+      `).join('')}
+    </div>
+  `;
+}
+
+// Dynamic list builder rows
+function renderDynRows(rows) {
+  const statusOpts = ['Applied', 'Offer received', 'Accepted', 'Declined'];
+  const sectorOpts = ['High-impact nonprofit/policy', 'Conventional consulting/finance/tech', 'Undecided', 'Other'];
+  return rows.map((row, i) => `
+    <div class="dyn-row" data-dyn-index="${i}">
+      <input type="text" placeholder="Role / Organization" value="${row.role || ''}" data-field="role" data-idx="${i}" />
+      <select data-field="status" data-idx="${i}">
+        <option value="">Status</option>
+        ${statusOpts.map(o => `<option value="${o}" ${row.status === o ? 'selected' : ''}>${o}</option>`).join('')}
+      </select>
+      <select data-field="sector" data-idx="${i}">
+        <option value="">Sector</option>
+        ${sectorOpts.map(o => `<option value="${o}" ${row.sector === o ? 'selected' : ''}>${o}</option>`).join('')}
+      </select>
+      <button class="dyn-remove" data-remove="${i}" title="Remove">&#10005;</button>
+    </div>
+  `).join('');
+}
+
+// ─────────────────────────────────────────────
+// EVENT HANDLERS
+// ─────────────────────────────────────────────
+function attachHandlers() {
+  // Home
+  const btnBegin = document.getElementById('btn-begin');
+  if (btnBegin) btnBegin.addEventListener('click', () => { state.screen = 'touchpoint'; render(); });
+
+  const btnResults = document.getElementById('btn-results');
+  if (btnResults) btnResults.addEventListener('click', () => { state.screen = 'results'; render(); });
+
+  // Touchpoint selector
+  const backHome = document.getElementById('back-home');
+  if (backHome) backHome.addEventListener('click', () => { state.screen = 'home'; render(); });
+
+  document.querySelectorAll('.tp-card').forEach(card => {
+    card.addEventListener('click', () => {
+      state.touchpoint = card.dataset.tp;
+      state.page = 0;
+      state.branchChoice = null;
+      state.screen = 'assessment';
+      render();
+    });
+  });
+
+  // Results back
+  const backHomeR = document.getElementById('back-home-results');
+  if (backHomeR) backHomeR.addEventListener('click', () => { state.screen = 'home'; render(); });
+
+  // Complete back
+  const btnHomeC = document.getElementById('btn-home-complete');
+  if (btnHomeC) btnHomeC.addEventListener('click', () => { state.screen = 'home'; render(); });
+
+  // Assessment navigation
+  const btnNext = document.getElementById('btn-next');
+  if (btnNext) btnNext.addEventListener('click', () => handleNext());
+
+  const btnBack = document.getElementById('btn-back');
+  if (btnBack) btnBack.addEventListener('click', () => handleBack());
+
+  // Checklist handlers
+  document.querySelectorAll('[data-group]').forEach(label => {
+    label.addEventListener('click', (e) => {
+      const group = label.dataset.group;
+      const val = label.dataset.val;
+      const max = parseInt(label.dataset.max) || 0;
+
+      // Radio-style single select (tri, likert use native radio)
+      if (label.tagName === 'LABEL' && label.querySelector('input[type="radio"]')) {
+        return; // handled by native radio
+      }
+
+      // Checkbox multi-select
+      if (label.querySelector('input[type="checkbox"]')) {
+        e.preventDefault();
+        const tp = state.touchpoint;
+        const a = state.answers[tp];
+        const current = a[group] || [];
+
+        if (current.includes(val)) {
+          a[group] = current.filter(v => v !== val);
+          label.classList.remove('checked');
+          if (val === 'Other') {
+            const otherInp = document.getElementById(`${group}-other`);
+            if (otherInp) otherInp.style.display = 'none';
+          }
+        } else {
+          if (max > 0 && current.length >= max) {
+            const note = document.getElementById(`constrain-note-${group}`);
+            if (note) { note.style.display = 'block'; setTimeout(() => note.style.display = 'none', 2500); }
+            return;
+          }
+          a[group] = [...current, val];
+          label.classList.add('checked');
+          if (val === 'Other') {
+            const otherInp = document.getElementById(`${group}-other`);
+            if (otherInp) otherInp.style.display = 'block';
+          }
+        }
+      }
+    });
+  });
+
+  // Conditional numeric Yes/No
+  document.querySelectorAll('.yn-wrap input[type="radio"]').forEach(radio => {
+    radio.addEventListener('change', () => {
+      const name = radio.name; // e.g. "t1-q8-yn"
+      const baseName = name.replace('-yn', '');
+      const cond = document.getElementById(`${baseName}-cond`);
+      if (cond) cond.style.display = radio.value === 'Yes' ? 'block' : 'none';
+    });
+  });
+
+  // Dynamic list builder
+  const dynAdd = document.getElementById('dyn-add');
+  if (dynAdd) dynAdd.addEventListener('click', () => {
+    const a = state.answers.t3;
+    if (!a['t3-q10']) a['t3-q10'] = [{ role: '', status: '', sector: '' }];
+    saveDynRows();
+    a['t3-q10'].push({ role: '', status: '', sector: '' });
+    const container = document.getElementById('dyn-list-container');
+    if (container) container.innerHTML = renderDynRows(a['t3-q10']);
+    attachDynHandlers();
+  });
+
+  attachDynHandlers();
+  attachDragHandlers();
+
+  // T3 Q11 branching radio (uses check-list style but is radio)
+  document.querySelectorAll('input[name="t3-q11"]').forEach(radio => {
+    radio.addEventListener('change', () => {
+      state.answers.t3['t3-q11'] = radio.value;
+      state.branchChoice = radio.value;
+      // Update label styling
+      document.querySelectorAll('[data-group="t3-q11"]').forEach(lbl => {
+        lbl.classList.toggle('checked', lbl.dataset.val === radio.value);
+      });
+    });
+  });
+}
+
+function attachDynHandlers() {
+  document.querySelectorAll('.dyn-remove').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const idx = parseInt(btn.dataset.remove);
+      const a = state.answers.t3;
+      if (!a['t3-q10']) return;
+      saveDynRows();
+      if (a['t3-q10'].length > 1) {
+        a['t3-q10'].splice(idx, 1);
+        const container = document.getElementById('dyn-list-container');
+        if (container) container.innerHTML = renderDynRows(a['t3-q10']);
+        attachDynHandlers();
+      }
+    });
+  });
+
+  document.querySelectorAll('.dyn-row input[type="text"]').forEach(inp => {
+    inp.addEventListener('input', () => saveDynRows());
+  });
+  document.querySelectorAll('.dyn-row select').forEach(sel => {
+    sel.addEventListener('change', () => saveDynRows());
+  });
+}
+
+function saveDynRows() {
+  const rows = [];
+  document.querySelectorAll('.dyn-row').forEach(row => {
+    const roleInp = row.querySelector('input[type="text"]');
+    const selects = row.querySelectorAll('select');
+    rows.push({
+      role: roleInp ? roleInp.value : '',
+      status: selects[0] ? selects[0].value : '',
+      sector: selects[1] ? selects[1].value : '',
+    });
+  });
+  state.answers.t3['t3-q10'] = rows;
+}
+
+// ─────────────────────────────────────────────
+// DRAG-DROP RANKING
+// ─────────────────────────────────────────────
+function attachDragHandlers() {
+  document.querySelectorAll('.rank-list').forEach(list => {
+    const name = list.dataset.name;
+    let dragSrc = null;
+
+    function getItems() { return Array.from(list.querySelectorAll('.rank-item')); }
+
+    function updateRanks() {
+      getItems().forEach((item, i) => {
+        item.querySelector('.rank-num').textContent = `#${i+1}`;
+        item.dataset.index = i;
+      });
+      const tp = state.touchpoint;
+      const a = state.answers[tp];
+      a[name] = getItems().map(item => item.dataset.label);
+    }
+
+    // Desktop drag-and-drop
+    list.addEventListener('dragstart', e => {
+      dragSrc = e.target.closest('.rank-item');
+      if (dragSrc) dragSrc.classList.add('dragging');
+    });
+    list.addEventListener('dragend', e => {
+      const item = e.target.closest('.rank-item');
+      if (item) item.classList.remove('dragging');
+      list.querySelectorAll('.rank-item').forEach(i => i.classList.remove('drag-over'));
+    });
+    list.addEventListener('dragover', e => {
+      e.preventDefault();
+      const target = e.target.closest('.rank-item');
+      if (target && target !== dragSrc) {
+        list.querySelectorAll('.rank-item').forEach(i => i.classList.remove('drag-over'));
+        target.classList.add('drag-over');
+      }
+    });
+    list.addEventListener('drop', e => {
+      e.preventDefault();
+      const target = e.target.closest('.rank-item');
+      if (target && dragSrc && target !== dragSrc) {
+        const items = getItems();
+        const srcIdx = items.indexOf(dragSrc);
+        const tgtIdx = items.indexOf(target);
+        if (srcIdx < tgtIdx) list.insertBefore(dragSrc, target.nextSibling);
+        else list.insertBefore(dragSrc, target);
+        list.querySelectorAll('.rank-item').forEach(i => i.classList.remove('drag-over'));
+        updateRanks();
+      }
+    });
+
+    // Touch drag-and-drop
+    let touchDragSrc = null;
+    let touchClone = null;
+    let touchStartY = 0;
+    let touchOffsetY = 0;
+
+    list.addEventListener('touchstart', e => {
+      const item = e.target.closest('.rank-item');
+      if (!item) return;
+      touchDragSrc = item;
+      touchStartY = e.touches[0].clientY;
+      const rect = item.getBoundingClientRect();
+      touchOffsetY = touchStartY - rect.top;
+      touchClone = item.cloneNode(true);
+      touchClone.style.cssText = `
+        position: fixed;
+        left: ${rect.left}px;
+        top: ${rect.top}px;
+        width: ${rect.width}px;
+        opacity: 0.85;
+        pointer-events: none;
+        z-index: 9999;
+        background: var(--surface2);
+        border: 1px solid var(--accent);
+        border-radius: 3px;
+        transition: none;
+      `;
+      document.body.appendChild(touchClone);
+      item.classList.add('dragging');
+    }, { passive: true });
+
+    list.addEventListener('touchmove', e => {
+      if (!touchDragSrc || !touchClone) return;
+      e.preventDefault();
+      const touch = e.touches[0];
+      const y = touch.clientY - touchOffsetY;
+      touchClone.style.top = y + 'px';
+      // find target
+      touchClone.style.display = 'none';
+      const el = document.elementFromPoint(touch.clientX, touch.clientY);
+      touchClone.style.display = '';
+      const target = el && el.closest('.rank-item');
+      list.querySelectorAll('.rank-item').forEach(i => i.classList.remove('drag-over'));
+      if (target && target !== touchDragSrc) target.classList.add('drag-over');
+    }, { passive: false });
+
+    list.addEventListener('touchend', e => {
+      if (!touchDragSrc || !touchClone) return;
+      const touch = e.changedTouches[0];
+      touchClone.remove();
+      touchClone = null;
+      touchDragSrc.classList.remove('dragging');
+      list.querySelectorAll('.rank-item').forEach(i => i.classList.remove('drag-over'));
+      touchClone = null;
+      const el = document.elementFromPoint(touch.clientX, touch.clientY);
+      const target = el && el.closest('.rank-item');
+      if (target && target !== touchDragSrc) {
+        const items = getItems();
+        const srcIdx = items.indexOf(touchDragSrc);
+        const tgtIdx = items.indexOf(target);
+        if (srcIdx < tgtIdx) list.insertBefore(touchDragSrc, target.nextSibling);
+        else list.insertBefore(touchDragSrc, target);
+        updateRanks();
+      }
+      touchDragSrc = null;
+    });
+  });
+}
+
+// ─────────────────────────────────────────────
+// NAVIGATION LOGIC
+// ─────────────────────────────────────────────
+function collectPageAnswers() {
+  const tp = state.touchpoint;
+  const a = state.answers[tp];
+  const pages = getPages();
+  const page = pages[state.page];
+
+  // Collect all radio inputs
+  document.querySelectorAll('input[type="radio"]:checked').forEach(r => {
+    a[r.name] = r.value;
+    // Handle YN
+    if (r.name.endsWith('-yn')) {
+      const base = r.name.replace('-yn', '');
+      a[`${base}-yn`] = r.value;
+    }
+    // Handle branching
+    if (r.name === 't3-q11') {
+      state.branchChoice = r.value;
+    }
+  });
+
+  // Collect all textareas
+  document.querySelectorAll('textarea').forEach(ta => {
+    if (ta.id) a[ta.id] = ta.value;
+  });
+
+  // Collect number inputs
+  document.querySelectorAll('input[type="number"]').forEach(inp => {
+    if (inp.id) a[inp.id] = inp.value;
+  });
+
+  // Collect "other" text inputs
+  document.querySelectorAll('input.other-input').forEach(inp => {
+    if (inp.id) a[inp.id] = inp.value;
+  });
+
+  // Collect dynamic rows
+  const dynContainer = document.getElementById('dyn-list-container');
+  if (dynContainer) saveDynRows();
+
+  // Collect cause grid
+  CAUSE_AREAS.forEach((area, i) => {
+    ['t1-q6', 't2-q5', 't3-qa'].forEach(base => {
+      const checked = document.querySelector(`input[name="${base}-${i}"]:checked`);
+      if (checked) {
+        if (!a[base]) a[base] = {};
+        a[base][i] = checked.value;
+      }
+    });
+    // Detect actual cause grid names
+    document.querySelectorAll(`input[name$="-${i}"]:checked`).forEach(r => {
+      const base = r.name.replace(`-${i}`, '');
+      if (base.includes('q6') || base.includes('q5') || base.includes('t3-q')) {
+        if (!a[base]) a[base] = {};
+        a[base][i] = r.value;
+      }
+    });
+  });
+
+  // More robust: collect all radio groups
+  const radioGroups = {};
+  document.querySelectorAll('input[type="radio"]').forEach(r => {
+    radioGroups[r.name] = true;
+  });
+  Object.keys(radioGroups).forEach(gname => {
+    const checked = document.querySelector(`input[name="${gname}"]:checked`);
+    if (checked) {
+      // Cause grid pattern: ends with -0 through -5
+      if (/^.*-\d+$/.test(gname)) {
+        const parts = gname.match(/^(.+)-(\d+)$/);
+        if (parts) {
+          const base = parts[1];
+          const idx = parseInt(parts[2]);
+          if (!a[base]) a[base] = {};
+          a[base][idx] = checked.value;
+        }
+      } else {
+        a[gname] = checked.value;
+      }
+    }
+  });
+}
+
+function handleNext() {
+  collectPageAnswers();
+  const pages = getPages();
+
+  // Special: T3 Q11 branching
+  if (state.touchpoint === 't3' && state.page === 10) {
+    const q11 = state.answers.t3['t3-q11'];
+    if (q11 === 'Still deciding') {
+      state.screen = 'complete';
+      render();
+      return;
+    }
+    state.branchChoice = q11;
+    // Pages will now include the conditional page
+    state.page++;
+    render();
+    return;
+  }
+
+  if (state.page >= pages.length - 1) {
+    state.screen = 'complete';
+    render();
+  } else {
+    state.page++;
+    render();
+  }
+}
+
+function handleBack() {
+  if (state.page === 0) {
+    state.screen = 'touchpoint';
+    render();
+  } else {
+    state.page--;
+    render();
+  }
+}
+
+// ─────────────────────────────────────────────
+// INIT
+// ─────────────────────────────────────────────
+render();
+</script>
+</body>
+</html>
