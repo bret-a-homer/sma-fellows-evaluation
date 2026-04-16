@@ -929,12 +929,22 @@ const T1_BEHAVIORAL = [
   'Applied to, or seriously researched, a high-impact job or fellowship',
 ];
 
-const T1_BARRIERS = [
-  'Uncertainty about which cause area to focus on',
+// Barriers list — used in T2 (anticipated) and T3/T4 (experienced)
+const PLACEMENT_BARRIERS = [
   'Concern about financial security or income',
   'Pressure from family or peers to take a conventional path',
+  'Uncertainty about which cause area to focus on',
   'Lack of relevant skills or credentials',
-  'Uncertainty about whether I can make a real difference',
+  'Navigating a new organizational culture',
+  'Managing up to my supervisor',
+  'Producing high-quality work quickly',
+  'Understanding the policy or political landscape',
+  'Building relationships with senior stakeholders',
+  'Understanding nonprofit funding and sustainability',
+  'Having an impact despite being there short-term',
+  'Dealing with ambiguity in my role',
+  'Presenting my work to leadership',
+  'Maintaining work-life balance',
   'Other',
 ];
 
@@ -1144,18 +1154,6 @@ function getT1Pages() {
         <div class="q-block">
           <div class="q-label">Which of the following have you done in the past 12 months? Select all that apply.</div>
           ${renderChecklist('t1-q4', T1_BEHAVIORAL, a['t1-q4'] || [], false)}
-        </div>
-      `,
-    },
-    // Page 5 – Constrained multi-select (max 2)
-    {
-      id: 't1p7',
-      html: `
-        <h2 style="margin-bottom: 24px;">Anticipated Barriers</h2>
-        <div class="q-block">
-          <div class="q-label">What are the one or two biggest barriers you anticipate in pursuing a high-impact career? Select up to 2.</div>
-          ${renderChecklist('t1-q5', T1_BARRIERS, a['t1-q5'] || [], 2, a['t1-q5-other'] || '')}
-          <div class="constrain-note" id="constrain-note-t1-q5">Select up to 2 concerns.</div>
         </div>
       `,
     },
@@ -1374,9 +1372,24 @@ function getT2Pages() {
         </div>
       `,
     },
-    // Page 11 – Peer Influence
+    // Page 11 – Anticipated Barriers (moved from T1, expanded)
     {
       id: 't2p11',
+      html: `
+        <h2 style="margin-bottom: 8px;">Anticipated Barriers</h2>
+        <p style="color:var(--text-sec); font-size:14px; margin-bottom:24px; line-height:1.6;">
+          Think about the placement you're heading into.
+        </p>
+        <div class="q-block">
+          <div class="q-label" style="margin-bottom:16px;"><em>Which of the following do you anticipate as your biggest challenges? Select up to 2.</em></div>
+          ${renderChecklist('t2-barriers', PLACEMENT_BARRIERS, a['t2-barriers'] || [], 2, a['t2-barriers-other'] || '')}
+          <div class="constrain-note" id="constrain-note-t2-barriers">Select up to 2 concerns.</div>
+        </div>
+      `,
+    },
+    // Page 12 – Peer Influence
+    {
+      id: 't2p12',
       html: `
         <h2 style="margin-bottom: 8px;">Peer Influence</h2>
         <p style="color:var(--text-sec); font-size:14px; margin-bottom:24px; line-height:1.6;">
@@ -1477,9 +1490,29 @@ function getFollowUpPages(tp) {
         </div>
       `,
     },
-    // Page 2 – Textarea
+    // Page 2 – Experience Barriers
     {
       id: tp + 'p2',
+      html: `
+        <h2 style="margin-bottom: 8px;">Experience Barriers</h2>
+        <p style="color:var(--text-sec); font-size:14px; margin-bottom:24px; line-height:1.6;">
+          Reflect on the challenges you actually encountered during your placement.
+        </p>
+        <div class="q-block">
+          <div class="q-label" style="margin-bottom:16px;"><em>Which of the following were significant barriers or challenges for you during the placement? Select up to 2.</em></div>
+          ${renderChecklist(tp + '-barriers', PLACEMENT_BARRIERS, a[tp + '-barriers'] || [], 2, a[tp + '-barriers-other'] || '')}
+          <div class="constrain-note" id="constrain-note-${tp}-barriers">Select up to 2.</div>
+        </div>
+        <div class="q-block" style="margin-top:24px;">
+          <div class="q-label" style="margin-bottom:8px;">Additional context</div>
+          <p style="font-style:italic; color:var(--text-sec); font-size:13px; margin-bottom:10px;">If you faced challenges not listed above, or want to add context on what you selected, please describe them here.</p>
+          <textarea id="${tp}-barriers-detail" placeholder="Optional — describe any barriers not captured above, or add context on what you selected..." style="min-height:90px;">${a[tp + '-barriers-detail'] || ''}</textarea>
+        </div>
+      `,
+    },
+    // Page 3 – Career Capital Delivery (was page 2)
+    {
+      id: tp + 'p2b',
       html: `
         <h2 style="margin-bottom: 24px;">Career Capital Delivery</h2>
         <div class="q-block">
