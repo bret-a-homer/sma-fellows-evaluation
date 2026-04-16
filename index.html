@@ -1304,9 +1304,21 @@ function getT2Pages() {
         </div>
       `,
     },
-    // Page 7 – Skill Confidence (post-test, moved to follow Most Impactful Sessions)
+    // Page 7 – Cause Area Familiarity
     {
       id: 't2p7',
+      html: `
+        <h2 style="margin-bottom: 24px;">Cause Area Familiarity</h2>
+        <div class="q-block">
+          <div class="q-label">For each cause area, indicate your current level of familiarity or engagement.</div>
+          <div class="q-note" style="margin-bottom:16px;">Same question as before the orientation — we're tracking change.</div>
+          ${renderCauseGrid('t2-q5', a['t2-q5'] || {})}
+        </div>
+      `,
+    },
+    // Page 8 – Skill Confidence (post-test, follows Cause Area Familiarity)
+    {
+      id: 't2p8',
       html: `
         <h2 style="margin-bottom: 8px;">Skill Confidence — Updated</h2>
         <p style="color:var(--text-sec); font-size:14px; margin-bottom:24px;">
@@ -1316,18 +1328,6 @@ function getT2Pages() {
           <div class="q-label" style="margin-bottom:16px;">How confident are you in your ability to do each of the following?</div>
           ${renderSelfEfficacyGrid('t2-se', a)}
           <div class="q-note" style="margin-top:16px;">Same scale as before the orientation — try to reflect your current ability honestly.</div>
-        </div>
-      `,
-    },
-    // Page 8 – Cause Area Familiarity
-    {
-      id: 't2p8',
-      html: `
-        <h2 style="margin-bottom: 24px;">Cause Area Familiarity</h2>
-        <div class="q-block">
-          <div class="q-label">For each cause area, indicate your current level of familiarity or engagement.</div>
-          <div class="q-note" style="margin-bottom:16px;">Same question as before the orientation — we're tracking change.</div>
-          ${renderCauseGrid('t2-q5', a['t2-q5'] || {})}
         </div>
       `,
     },
