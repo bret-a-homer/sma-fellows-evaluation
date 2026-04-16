@@ -1092,9 +1092,32 @@ function getT1Pages() {
         </div>
       `,
     },
-    // Page 3 – Textarea with note
+    // Page 4 – Commitment to High-Impact Work (pre-test)
     {
-      id: 't1p3',
+      id: 't1p4',
+      html: `
+        <h2 style="margin-bottom: 8px;">Commitment to High-Impact Work</h2>
+        <p style="color:var(--text-sec); font-size:14px; margin-bottom:24px; line-height:1.6;">
+          Use the full scale — there are no right answers.
+        </p>
+        <div class="q-block">
+          <div class="q-label" style="margin-bottom:20px;"><em>How committed are you right now to pursuing a high-impact career?</em></div>
+          ${renderLikert('t1-commit', a['t1-commit'] || '', 'Not at all committed', 'Fully committed')}
+          <div class="likert-point-labels">
+            <span>1 — I have no real commitment to this — I'm exploring it out of curiosity or circumstance</span>
+            <span>2 — I have a faint pull toward it, but it's not a serious priority for me right now</span>
+            <span>3 — I'm interested and open to it, but haven't made any meaningful moves in this direction</span>
+            <span>4 — I'm moderately committed — I think about it seriously and have taken some steps, but I'm not set on it</span>
+            <span>5 — I'm fairly committed — this is a meaningful priority and I'm actively working toward it</span>
+            <span>6 — I'm strongly committed — I've made real choices in this direction and intend to continue</span>
+            <span>7 — I'm fully committed — pursuing high-impact work is central to how I'm planning my career</span>
+          </div>
+        </div>
+      `,
+    },
+    // Page 5 – Orgs & Roles
+    {
+      id: 't1p5',
       html: `
         <h2 style="margin-bottom: 24px;">Organizations & Roles</h2>
         <div class="q-block">
@@ -1106,7 +1129,7 @@ function getT1Pages() {
     },
     // Page 4 – Multi-select checklist
     {
-      id: 't1p4',
+      id: 't1p6',
       html: `
         <h2 style="margin-bottom: 24px;">Recent Behaviors</h2>
         <div class="q-block">
@@ -1117,7 +1140,7 @@ function getT1Pages() {
     },
     // Page 5 – Constrained multi-select (max 2)
     {
-      id: 't1p5',
+      id: 't1p7',
       html: `
         <h2 style="margin-bottom: 24px;">Anticipated Barriers</h2>
         <div class="q-block">
@@ -1129,7 +1152,7 @@ function getT1Pages() {
     },
     // Page 6 – Cause area grid
     {
-      id: 't1p6',
+      id: 't1p8',
       html: `
         <h2 style="margin-bottom: 24px;">Cause Area Familiarity</h2>
         <div class="q-block">
@@ -1140,7 +1163,7 @@ function getT1Pages() {
     },
     // Page 7 – Peer influence (7-pt Likert)
     {
-      id: 't1p7',
+      id: 't1p9',
       html: `
         <h2 style="margin-bottom: 8px;">Peer Influence</h2>
         <p style="color:var(--text-sec); font-size:14px; margin-bottom:24px; line-height:1.6;">
@@ -1163,7 +1186,7 @@ function getT1Pages() {
     },
     // Page 8 – Conditional numeric
     {
-      id: 't1p8',
+      id: 't1p10',
       html: `
         <h2 style="margin-bottom: 24px;">Peer Conversations</h2>
         <div class="q-block">
@@ -1174,7 +1197,7 @@ function getT1Pages() {
     },
     // Page 9 – Self-efficacy grid (pre-test)
     {
-      id: 't1p9',
+      id: 't1p11',
       html: `
         <h2 style="margin-bottom: 8px;">Skill Confidence</h2>
         <p style="color:var(--text-sec); font-size:14px; margin-bottom:24px;">
@@ -1195,9 +1218,35 @@ function getT1Pages() {
 function getT2Pages() {
   const a = state.answers.t2;
   return [
-    // Page 1 – Commitment Now + Then (merged)
+    // Page 1 – Vision of Success (open-ended, mirrors T1 p1)
     {
       id: 't2p1',
+      html: `
+        <h2 style="margin-bottom: 8px;">Your Vision of Success</h2>
+        <p style="color:var(--text-sec); font-size:14px; margin-bottom:24px; line-height:1.6;">
+          Same question as before the orientation — answer based on where you are right now.
+        </p>
+        <div class="q-block">
+          <div class="q-label" style="margin-bottom:16px;"><em>In 2–3 sentences, describe what a successful career looks like to you right now.</em></div>
+          <textarea id="t2-vision" placeholder="Describe your vision of a successful career...">${a['t2-vision'] || ''}</textarea>
+          <div class="q-note" style="margin-top:10px;">Same question as before the orientation.</div>
+        </div>
+      `,
+    },
+    // Page 2 – Shifted Perspective (follows Vision of Success)
+    {
+      id: 't2p2',
+      html: `
+        <h2 style="margin-bottom: 24px;">Has Your Thinking Shifted?</h2>
+        <div class="q-block">
+          <div class="q-label" style="margin-bottom:16px;"><em>Has your answer to "what does a successful career look like to you" changed since before the orientation? If so, how?</em></div>
+          <textarea id="t2-q3" placeholder="Describe any shifts in your thinking about what a successful career means to you...">${a['t2-q3'] || ''}</textarea>
+        </div>
+      `,
+    },
+    // Page 3 – Commitment Now + Then (merged)
+    {
+      id: 't2p3',
       html: `
         <h2 style="margin-bottom: 8px;">Commitment to High-Impact Work</h2>
         <p style="color:var(--text-sec); font-size:14px; margin-bottom:28px; line-height:1.6;">Answer both questions using the same scale.</p>
@@ -1214,9 +1263,9 @@ function getT2Pages() {
         </div>
       `,
     },
-    // Page 2 – Motivation regulation scale (randomised order, post-test)
+    // Page 4 – Motivation — Now (static order)
     {
-      id: 't2p2',
+      id: 't2p4',
       html: `
         <h2 style="margin-bottom: 8px;">Your Motivation — Now</h2>
         <p style="color:var(--text-sec); font-size:14px; margin-bottom:24px; line-height:1.6;">
@@ -1224,14 +1273,14 @@ function getT2Pages() {
         </p>
         <div class="q-block">
           <div class="q-label" style="margin-bottom:16px;"><em>Which best describes your pursuit of a high-impact altruistic career?</em></div>
-          ${renderMotivationScale('t2-motiv-now', a)}
+          ${renderMotivationScale('t2-motiv-now', a, false)}
           <div class="q-note" style="margin-top:16px;">Same question as before the orientation — answer based on how you feel now.</div>
         </div>
       `,
     },
-    // Page 3 – Motivation — Then (retrospective)
+    // Page 5 – Motivation — Then (static order, retrospective)
     {
-      id: 't2p3',
+      id: 't2p5',
       html: `
         <h2 style="margin-bottom: 8px;">Your Motivation — Then</h2>
         <p style="color:var(--text-sec); font-size:14px; margin-bottom:24px; line-height:1.6;">
@@ -1239,69 +1288,86 @@ function getT2Pages() {
         </p>
         <div class="q-block">
           <div class="q-label" style="margin-bottom:16px;"><em>Which best described your pursuit of a high-impact altruistic career before the orientation?</em></div>
-          ${renderMotivationScale('t2-motiv-then', a)}
+          ${renderMotivationScale('t2-motiv-then', a, false)}
           <div class="q-note" style="margin-top:16px;">Try to recall how you actually felt at the time — not how you think you should have felt, or how you feel now.</div>
         </div>
       `,
     },
-    // Page 5 – Textarea
+    // Page 6 – Most Impactful Sessions
     {
-      id: 't2p3',
-      html: `
-        <h2 style="margin-bottom: 24px;">Shifted Perspective</h2>
-        <div class="q-block">
-          <div class="q-label">Has your answer to "what does a successful career look like to you" changed since before the orientation? If so, how?</div>
-          <textarea id="t2-q3" placeholder="Describe any shifts in your thinking about what a successful career means to you...">${a['t2-q3'] || ''}</textarea>
-        </div>
-      `,
-    },
-    // Page 4 – Textarea
-    {
-      id: 't2p4',
+      id: 't2p6',
       html: `
         <h2 style="margin-bottom: 24px;">Most Impactful Sessions</h2>
         <div class="q-block">
-          <div class="q-label">Which one or two sessions most shifted how you think about your career, and why?</div>
+          <div class="q-label" style="margin-bottom:16px;"><em>Which one or two sessions most shifted how you think about your career, and why?</em></div>
           <textarea id="t2-q4" placeholder="Name the sessions and describe what shifted for you...">${a['t2-q4'] || ''}</textarea>
         </div>
       `,
     },
-    // Page 5 – Cause area grid
+    // Page 7 – Skill Confidence (post-test, moved to follow Most Impactful Sessions)
     {
-      id: 't2p5',
+      id: 't2p7',
+      html: `
+        <h2 style="margin-bottom: 8px;">Skill Confidence — Updated</h2>
+        <p style="color:var(--text-sec); font-size:14px; margin-bottom:24px;">
+          Same questions as before the orientation. Rate how confident you feel in each skill now, after the program.
+        </p>
+        <div class="q-block">
+          <div class="q-label" style="margin-bottom:16px;">How confident are you in your ability to do each of the following?</div>
+          ${renderSelfEfficacyGrid('t2-se', a)}
+          <div class="q-note" style="margin-top:16px;">Same scale as before the orientation — try to reflect your current ability honestly.</div>
+        </div>
+      `,
+    },
+    // Page 8 – Cause Area Familiarity
+    {
+      id: 't2p8',
       html: `
         <h2 style="margin-bottom: 24px;">Cause Area Familiarity</h2>
         <div class="q-block">
-          <div class="q-label">For each cause area, indicate your current level of familiarity or engagement. (Same question as T1 — we're tracking change.)</div>
+          <div class="q-label">For each cause area, indicate your current level of familiarity or engagement.</div>
+          <div class="q-note" style="margin-bottom:16px;">Same question as before the orientation — we're tracking change.</div>
           ${renderCauseGrid('t2-q5', a['t2-q5'] || {})}
         </div>
       `,
     },
-    // Page 6 – Likert
+    // Page 9 – Placement Readiness (with full anchors)
     {
-      id: 't2p6',
+      id: 't2p9',
       html: `
-        <h2 style="margin-bottom: 24px;">Placement Readiness</h2>
+        <h2 style="margin-bottom: 8px;">Readiness for Your Placement</h2>
+        <p style="color:var(--text-sec); font-size:14px; margin-bottom:24px; line-height:1.6;">
+          Think about the specific placement you're heading into.
+        </p>
         <div class="q-block">
-          <div class="q-label">How prepared do you feel to add genuine value in your fellowship placement?</div>
+          <div class="q-label" style="margin-bottom:20px;"><em>How prepared do you feel to add genuine value in your fellowship placement?</em></div>
           ${renderLikert('t2-q6', a['t2-q6'] || '', 'Not at all prepared', 'Fully prepared')}
+          <div class="likert-point-labels">
+            <span>1 — I feel completely unprepared — I don't know where I'd start or what I'd contribute</span>
+            <span>2 — I feel very underprepared and expect to need significant handholding to do anything useful</span>
+            <span>3 — I have some relevant background but major gaps — I'd need a lot of guidance early on</span>
+            <span>4 — I feel moderately prepared — ready to contribute in some ways but expecting regular guidance</span>
+            <span>5 — I feel fairly prepared and expect to add real value with modest support from my supervisor</span>
+            <span>6 — I feel well-prepared and confident I can contribute meaningfully from early in the placement</span>
+            <span>7 — I feel fully prepared — I expect to hit the ground running and add genuine value from day one</span>
+          </div>
         </div>
       `,
     },
-    // Page 7 – Textarea
+    // Page 10 – Career Capital Goals
     {
-      id: 't2p7',
+      id: 't2p10',
       html: `
         <h2 style="margin-bottom: 24px;">Career Capital Goals</h2>
         <div class="q-block">
-          <div class="q-label">What do you most hope to gain from your placement in terms of career capital?</div>
+          <div class="q-label" style="margin-bottom:16px;"><em>What do you most hope to gain from your placement in terms of career capital? What would make it a success?</em></div>
           <textarea id="t2-q7" placeholder="Describe the skills, networks, credentials, or experiences you hope to build...">${a['t2-q7'] || ''}</textarea>
         </div>
       `,
     },
-    // Page 8 – Tri-radio with note
+    // Page 11 – Peer Influence
     {
-      id: 't2p8',
+      id: 't2p11',
       html: `
         <h2 style="margin-bottom: 8px;">Peer Influence</h2>
         <p style="color:var(--text-sec); font-size:14px; margin-bottom:24px; line-height:1.6;">
@@ -1320,21 +1386,6 @@ function getT2Pages() {
             <span>7 — I constantly and deliberately work to shape peers' thinking on careers and impact</span>
           </div>
           <div class="q-note" style="margin-top:16px;">Same question as before the orientation.</div>
-        </div>
-      `,
-    },
-    // Page 9 – Self-efficacy grid (post-test)
-    {
-      id: 't2p9',
-      html: `
-        <h2 style="margin-bottom: 8px;">Skill Confidence — Updated</h2>
-        <p style="color:var(--text-sec); font-size:14px; margin-bottom:24px;">
-          Same questions as before the orientation. Rate how confident you feel in each skill now, after the program.
-        </p>
-        <div class="q-block">
-          <div class="q-label" style="margin-bottom:16px;">How confident are you in your ability to do each of the following?</div>
-          ${renderSelfEfficacyGrid('t2-se', a)}
-          <div class="q-note" style="margin-top:16px;">Same scale as before the orientation — try to reflect your current ability honestly.</div>
         </div>
       `,
     },
@@ -1694,13 +1745,19 @@ function shuffleArray(arr) {
   return a;
 }
 
-// Motivation scale — randomised selectable text cards
-// prefix: 't1-motiv' or 't2-motiv'; answers: the touchpoint answers object
-function renderMotivationScale(prefix, answers) {
+// Motivation scale — selectable text cards
+// prefix: 't1-motiv', 't2-motiv-now', 't2-motiv-then'; answers: touchpoint answers object
+// doShuffle: if true (T1), randomise once and persist order; if false (T2), always show in canonical order
+function renderMotivationScale(prefix, answers, doShuffle = true) {
   const orderKey = `${prefix}-order`;
-  // Generate shuffle order once and persist in state so back-nav is stable
-  if (!answers[orderKey]) {
-    answers[orderKey] = shuffleArray([0, 1, 2, 3, 4, 5]);
+  if (doShuffle) {
+    // Generate shuffle order once and persist so back-nav is stable
+    if (!answers[orderKey]) {
+      answers[orderKey] = shuffleArray([0, 1, 2, 3, 4, 5]);
+    }
+  } else {
+    // Static canonical order — always 0→5
+    answers[orderKey] = [0, 1, 2, 3, 4, 5];
   }
   const order   = answers[orderKey];
   const selVal  = answers[`${prefix}-val`];
