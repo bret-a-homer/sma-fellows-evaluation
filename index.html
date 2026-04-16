@@ -293,6 +293,8 @@
     .commit-bar-wrap { display:flex; align-items:center; gap:12px; margin-bottom:10px; }
     .commit-bar-label { font-size:12px; color:var(--text); width:130px; flex-shrink:0; line-height:1.3; }
     .commit-bar-sub { font-size:10px; color:var(--text-sec); font-weight:400; }
+    .commit-narrative { font-size:13px; color:var(--text-sec); line-height:1.65; margin:16px 0 0; padding:12px 14px; background:var(--surface2); border-left:2px solid var(--accent); border-radius:0 var(--radius) var(--radius) 0; }
+    .commit-narrative em { color:var(--text); font-style:italic; }
     .commit-deltas { display:flex; flex-wrap:wrap; gap:12px; margin-top:16px; border-top:1px solid var(--border); padding-top:14px; }
     .commit-delta-item { display:flex; align-items:center; gap:8px; }
     .commit-delta-val { font-size:16px; font-weight:700; min-width:40px; }
@@ -1994,6 +1996,31 @@ function renderTicks(n) {
   return html;
 }
 
+function commitmentLabel(score) {
+  if (score < 2)   return 'minimal — exploring out of curiosity or circumstance';
+  if (score < 3)   return 'a faint interest — not yet a real priority';
+  if (score < 4)   return 'open but uncommitted — interested with no concrete steps';
+  if (score < 5)   return 'moderately committed — thinking seriously with some early steps';
+  if (score < 6)   return 'fairly committed — a meaningful priority with active effort underway';
+  if (score < 6.5) return 'strongly committed — real choices already made in this direction';
+  return           'fully committed — high-impact work central to career planning';
+}
+
+function commitmentNarrative(t2then, t2now) {
+  const corrGain = t2now - t2then;
+  const sign = corrGain >= 0 ? '+' : '';
+  const thenLabel = commitmentLabel(t2then);
+  const nowLabel  = commitmentLabel(t2now);
+  let magnitude;
+  if (corrGain >= 1.5)
+    magnitude = 'This is a substantial shift, offering meaningful evidence that the orientation moved fellows beyond where pre-existing motivation alone would have taken them.';
+  else if (corrGain >= 0.7)
+    magnitude = 'This represents a real but modest shift — consistent with some orientation effect alongside meaningful pre-existing commitment.';
+  else
+    magnitude = 'This small corrected gain makes it difficult to attribute much additional commitment to the orientation itself; the cohort appears to have entered relatively committed already.';
+  return `Fellows' corrected baseline reflects <em>${thenLabel}</em> at orientation start (T2-Then: ${t2then.toFixed(1)}/7). By the close of orientation they reported <em>${nowLabel}</em> (T2-Now: ${t2now.toFixed(1)}/7) — a corrected gain of ${sign}${corrGain.toFixed(1)} points after accounting for how their interpretation of the scale may have shifted. ${magnitude}`;
+}
+
 function renderDashSnapshot(s) {
   const snap = s.snapshot;
   const recAvg = snap.recMean.toFixed(1);
@@ -2086,6 +2113,7 @@ function renderDashCommitment(s) {
       ${bar(t1now,  '#5a5a5a', 'T1 — Now', 'Naïve pre-orientation score')}
       ${bar(t2then, '#8a7a6a', 'T2 — Then', 'Retrospective pre-orientation (corrected baseline)')}
       ${bar(t2now,  'var(--accent)', 'T2 — Now', 'Post-orientation score')}
+      <p class="commit-narrative">${commitmentNarrative(t2then, t2now)}</p>
       <div class="commit-deltas">
         <div class="commit-delta-item">
           <span class="commit-delta-val ${parseFloat(naiveDelta)>=0?'pos':'neg'}">${parseFloat(naiveDelta)>=0?'+':''}${naiveDelta}</span>
@@ -2151,41 +2179,76 @@ function renderDashMotivation(s) {
 
 function renderDashCareerValues(s) {
   const { names, t1, t2, t4 } = s.careerValues;
-  // Show only Altruism (0) and Prestige (1)
-  const showIndices = [0, 1];
-  // Convert avg rank (1=best, 6=worst) to priority score (higher = more valued)
-  const toPct = (rank) => Math.round(((7 - rank) / 5) * 100);
-  const rows = showIndices.map(i => {
-    const name = names[i];
-    return `
-      <div class="cv-value-block">
-        <div class="cv-row-label">${name}</div>
-        <div class="dash-bars">
-          <div class="dash-bar-group">
-            <div class="dash-bar-label">T1</div>
-            <div class="dash-bar-track"><div class="dash-bar-fill" style="width:${toPct(t1[i])}%; background:#5a5a5a;"></div>${renderTicks(6)}</div>
-            <div class="dash-bar-val" style="font-size:11px;">Rank ${t1[i].toFixed(1)}</div>
-          </div>
-          <div class="dash-bar-group">
-            <div class="dash-bar-label">T2</div>
-            <div class="dash-bar-track"><div class="dash-bar-fill" style="width:${toPct(t2[i])}%; background:#8a6a4a;"></div>${renderTicks(6)}</div>
-            <div class="dash-bar-val" style="font-size:11px;">Rank ${t2[i].toFixed(1)}</div>
-          </div>
-          <div class="dash-bar-group">
-            <div class="dash-bar-label">T4</div>
-            <div class="dash-bar-track"><div class="dash-bar-fill" style="width:${toPct(t4[i])}%; background:var(--accent);"></div>${renderTicks(6)}</div>
-            <div class="dash-bar-val" style="font-size:11px;">Rank ${t4[i].toFixed(1)}</div>
-          </div>
-        </div>
-      </div>
-    `;
-  }).join('');
+  // priority = 7 - avg_rank  →  rank 1 (most valued) = 6, rank 6 (least) = 1
+  const toPri = r => 7 - r;
+
+  const W = 540, H = 230;
+  const ML = 36, MR = 12, MT = 16, MB = 72;
+  const cW = W - ML - MR;
+  const cH = H - MT - MB;
+  const maxY = 6;
+  const barColors = ['#5a5a5a', '#8a6a4a', '#c9622f'];
+  const barW = 11, barGap = 2;
+  const groupW = cW / names.length;
+
+  // Y gridlines + axis labels
+  let grid = '';
+  for (let v = 0; v <= maxY; v++) {
+    const y = (MT + cH - (v / maxY) * cH).toFixed(1);
+    grid += `<line x1="${ML}" y1="${y}" x2="${ML + cW}" y2="${y}" stroke="#2a2a2a" stroke-width="${v === 0 ? 1 : 0.5}"/>`;
+    if (v > 0) grid += `<text x="${ML - 6}" y="${y}" text-anchor="end" dominant-baseline="middle" font-size="9" fill="#6e6a61">${v}</text>`;
+  }
+
+  // Bars
+  let bars = '';
+  names.forEach((name, i) => {
+    const cx = ML + i * groupW + groupW / 2;
+    const blockW = 3 * barW + 2 * barGap;
+    const bx0 = cx - blockW / 2;
+    [t1[i], t2[i], t4[i]].forEach((rank, j) => {
+      const pri = toPri(rank);
+      const bh = ((pri / maxY) * cH).toFixed(1);
+      const bx = (bx0 + j * (barW + barGap)).toFixed(1);
+      const by = (MT + cH - parseFloat(bh)).toFixed(1);
+      bars += `<rect x="${bx}" y="${by}" width="${barW}" height="${bh}" fill="${barColors[j]}" rx="1"/>`;
+    });
+  });
+
+  // X-axis labels (two-line for longer names)
+  const shortNames = [
+    ['Altruism'], ['Prestige'], ['Economic','Return'],
+    ['Intellectual','Stim.'], ['Independence'], ['Achievement']
+  ];
+  let xLabels = '';
+  names.forEach((_, i) => {
+    const cx = (ML + i * groupW + groupW / 2).toFixed(1);
+    const baseY = MT + cH + 12;
+    const lines = shortNames[i];
+    lines.forEach((line, li) => {
+      xLabels += `<text x="${cx}" y="${baseY + li * 12}" text-anchor="middle" font-size="10" fill="#9e9a91">${line}</text>`;
+    });
+  });
+
+  // Legend
+  const legendLabels = ['Pre-orientation (T1)', 'Post-orientation (T2)', 'Six-month follow-up (T4)'];
+  let legend = '';
+  let lx = ML;
+  barColors.forEach((c, j) => {
+    legend += `<rect x="${lx}" y="${H - 14}" width="10" height="10" fill="${c}" rx="1"/>`;
+    legend += `<text x="${lx + 14}" y="${H - 6}" font-size="10" fill="#9e9a91">${legendLabels[j]}</text>`;
+    lx += j === 0 ? 148 : 170;
+  });
+
+  // Y-axis spine
+  const spine = `<line x1="${ML}" y1="${MT}" x2="${ML}" y2="${MT + cH}" stroke="#3a3a3a" stroke-width="1"/>`;
+
   return `
     <div class="dash-section">
       <h3 class="dash-section-title">Career Values Ranking — T1 · T2 · T4</h3>
-      <p class="dash-section-desc">Cohort average rank for each value (1 = highest priority, 6 = lowest). Bar length reflects relative priority — longer bars mean higher importance. Tracks whether orientation and internship shift what fellows say they care about.</p>
-      <div class="dash-se-legend"><span class="legend-dot" style="background:#5a5a5a"></span>Pre-orientation (T1) &nbsp;&nbsp; <span class="legend-dot" style="background:#8a6a4a"></span>Post-orientation (T2) &nbsp;&nbsp; <span class="legend-dot" style="background:var(--accent)"></span>Six-month follow-up (T4)</div>
-      <div>${rows}</div>
+      <p class="dash-section-desc">Priority score = 6 − avg. rank + 1, so the most-valued values (rank 1) have the tallest bars. Tracks whether orientation and internship shift what fellows say they care about in a career.</p>
+      <svg viewBox="0 0 ${W} ${H}" width="100%" style="display:block; overflow:visible; font-family:Inter,sans-serif;">
+        ${grid}${spine}${bars}${xLabels}${legend}
+      </svg>
     </div>
   `;
 }
