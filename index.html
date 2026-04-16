@@ -286,7 +286,7 @@
     .dash-delta.pos { color: var(--success); }
     .dash-delta.neg { color: #c07050; }
     .commit-bar-wrap { display:flex; align-items:center; gap:12px; margin-bottom:10px; }
-    .commit-bar-label { font-size:12px; color:var(--text); min-width:90px; line-height:1.3; }
+    .commit-bar-label { font-size:12px; color:var(--text); width:130px; flex-shrink:0; line-height:1.3; }
     .commit-bar-sub { font-size:10px; color:var(--text-sec); font-weight:400; }
     .commit-deltas { display:flex; flex-wrap:wrap; gap:12px; margin-top:16px; border-top:1px solid var(--border); padding-top:14px; }
     .commit-delta-item { display:flex; align-items:center; gap:8px; }
@@ -2003,7 +2003,7 @@ function renderDashSnapshot(s) {
         <div class="snap-sub">How likely to recommend SMA to a peer</div>
       </div>
       <div class="snap-card">
-        <div class="snap-num">${dirSign}${dirChange}pp</div>
+        <div class="snap-num">${dirSign}${dirChange}%</div>
         <div class="snap-label">High-Impact Career Direction</div>
         <div class="snap-sub">Change in % "Yes" from T1 to T4</div>
       </div>
@@ -2134,10 +2134,12 @@ function renderDashMotivation(s) {
 
 function renderDashCareerValues(s) {
   const { names, t1, t2, t4 } = s.careerValues;
+  // Show only Altruism (0) and Prestige (1)
+  const showIndices = [0, 1];
   // Convert avg rank (1=best, 6=worst) to priority score (higher = more valued)
-  // priority = 7 - avgRank, scaled 0–100 where 6 = 100% and 1 = ~17%
   const toPct = (rank) => Math.round(((7 - rank) / 5) * 100);
-  const rows = names.map((name, i) => {
+  const rows = showIndices.map(i => {
+    const name = names[i];
     return `
       <div class="cv-row-label">${name}</div>
       <div class="dash-bars">
@@ -2190,7 +2192,7 @@ function renderDashBarriers(s) {
             <div class="barrier-pct">${exp}%</div>
           </div>
         </div>
-        <div class="barrier-diff" style="color:${diffColor};">${sign}${diff}pp</div>
+        <div class="barrier-diff" style="color:${diffColor};">${sign}${diff}%</div>
       </div>
     `;
   }).join('');
@@ -2207,7 +2209,7 @@ function renderDashBarriers(s) {
 function renderDashPlacement(s) {
   const { dims, dist } = s.placement;
   const total = dist[0].reduce((a, b) => a + b, 0);
-  const starLabels = ['1 ★','2 ★','3 ★','4 ★','5 ★'];
+  const starLabels = ['1','2','3','4','5'];
   const starColors = ['#6b3030','#7a5030','#7a7030','#4a6a50','#3a6a4a'];
   const rows = dims.map((dim, i) => {
     const bars = dist[i].map((count, j) => {
@@ -2268,7 +2270,7 @@ function renderResults() {
     <button class="scenario-tab ${dashScenario === key ? 'active' : ''}" data-scenario="${key}">${sc.label.split(' — ')[0]}</button>
   `).join('');
   return `
-    <button class="back-link" id="back-home-results">← Home</button>
+    <button class="back-link" id="back-home-results">Home</button>
     <h2 style="margin: 24px 0 8px;">Program Evaluation Dashboard</h2>
     <p style="color:var(--text-sec); font-size:14px; margin-bottom:28px; line-height:1.6;">Simulated cohort data illustrating how the evaluation instrument answers questions about program effectiveness. Toggle between three scenarios to see how different outcome patterns read.</p>
 
