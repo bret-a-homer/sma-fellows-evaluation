@@ -188,6 +188,21 @@
       color: var(--text-sec);
       margin-top: 6px;
     }
+    .likert-point-labels {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      margin-top: 18px;
+      padding: 14px 16px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+    }
+    .likert-point-labels span {
+      font-size: 12px;
+      color: var(--text-sec);
+      line-height: 1.5;
+    }
 
     /* ── Three-option horizontal radio (Yes/Somewhat/No) ── */
     .tri-wrap {
@@ -362,6 +377,102 @@
       border-radius: 50%;
     }
     .cause-radio-cell label:hover { border-color: var(--accent); }
+
+    /* ── BARS (Behaviorally Anchored Rating Scale) ── */
+    .bars-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .bars-option {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      padding: 14px 16px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      cursor: pointer;
+      transition: border-color .15s, background .15s;
+      user-select: none;
+    }
+    .bars-option:hover { border-color: #444; }
+    .bars-option.selected,
+    .bars-option:has(input:checked) {
+      border-color: var(--accent);
+      background: rgba(201, 98, 47, .09);
+    }
+    .bars-option input[type="radio"] {
+      position: absolute;
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    .bars-num {
+      flex-shrink: 0;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text-sec);
+      margin-top: 1px;
+      transition: background .15s, color .15s;
+    }
+    .bars-option.selected .bars-num,
+    .bars-option:has(input:checked) .bars-num {
+      background: var(--accent);
+      color: #fff;
+    }
+    .bars-text {
+      font-size: 13px;
+      color: var(--text-sec);
+      line-height: 1.55;
+      flex: 1;
+    }
+    .bars-option.selected .bars-text,
+    .bars-option:has(input:checked) .bars-text { color: var(--text); }
+
+    /* ── Placement identity inputs ── */
+    .placement-inputs {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 28px;
+      padding: 18px 20px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+    }
+    .placement-inputs label {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: .07em;
+      text-transform: uppercase;
+      color: var(--text-sec);
+      margin-bottom: 4px;
+      display: block;
+    }
+    .placement-inputs input[type="text"] {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      font-family: var(--font-body);
+      font-size: 14px;
+      padding: 10px 12px;
+      box-sizing: border-box;
+      transition: border-color .15s;
+    }
+    .placement-inputs input[type="text"]:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
 
     /* ── Motivation scale (selectable text cards) ── */
     .motiv-options {
@@ -941,9 +1052,23 @@ function renderAssessment() {
 function getT1Pages() {
   const a = state.answers.t1;
   return [
-    // Page 1 – Drag-drop ranking
+    // Page 1 – Career Vision (open-ended, moved to first)
     {
       id: 't1p1',
+      html: `
+        <h2 style="margin-bottom: 8px;">Your Vision of Success</h2>
+        <p style="color:var(--text-sec); font-size:14px; margin-bottom:24px; line-height:1.6;">
+          There are no right or wrong answers here — we're interested in where you are right now.
+        </p>
+        <div class="q-block">
+          <div class="q-label" style="margin-bottom:16px;"><em>In 2–3 sentences, describe what a successful career looks like to you right now.</em></div>
+          <textarea id="t1-q2" placeholder="Describe your vision of a successful career...">${a['t1-q2'] || ''}</textarea>
+        </div>
+      `,
+    },
+    // Page 2 – Drag-drop ranking
+    {
+      id: 't1p2',
       html: `
         <h2 style="margin-bottom: 8px;">Career Values</h2>
         <p style="color:var(--text-sec); font-size:14px; margin-bottom:24px;">Drag to rank the following in order of importance to you in a career. Place what matters most at the top.</p>
@@ -953,9 +1078,9 @@ function getT1Pages() {
         </div>
       `,
     },
-    // Page 2 – Motivation regulation scale (randomised order)
+    // Page 3 – Motivation regulation scale (randomised order)
     {
-      id: 't1p2',
+      id: 't1p3',
       html: `
         <h2 style="margin-bottom: 8px;">Your Motivation</h2>
         <p style="color:var(--text-sec); font-size:14px; margin-bottom:24px; line-height:1.6;">
@@ -967,24 +1092,13 @@ function getT1Pages() {
         </div>
       `,
     },
-    // Page 3 – Textarea
-    {
-      id: 't1p3',
-      html: `
-        <h2 style="margin-bottom: 24px;">Career Vision</h2>
-        <div class="q-block">
-          <div class="q-label">Q2. In 2–3 sentences, describe what a successful career looks like to you right now.</div>
-          <textarea id="t1-q2" placeholder="Describe your vision of a successful career...">${a['t1-q2'] || ''}</textarea>
-        </div>
-      `,
-    },
     // Page 3 – Textarea with note
     {
       id: 't1p3',
       html: `
         <h2 style="margin-bottom: 24px;">Organizations & Roles</h2>
         <div class="q-block">
-          <div class="q-label">Q3. Name the organizations or roles you are most actively considering at this moment.</div>
+          <div class="q-label">Name the organizations or roles you are most actively considering at this moment.</div>
           <textarea id="t1-q3" placeholder="List specific organizations, roles, or types of work you're considering...">${a['t1-q3'] || ''}</textarea>
           <div class="q-note">Be as specific as possible — name actual organizations or roles if you can.</div>
         </div>
@@ -996,7 +1110,7 @@ function getT1Pages() {
       html: `
         <h2 style="margin-bottom: 24px;">Recent Behaviors</h2>
         <div class="q-block">
-          <div class="q-label">Q4. Which of the following have you done in the past 12 months? Select all that apply.</div>
+          <div class="q-label">Which of the following have you done in the past 12 months? Select all that apply.</div>
           ${renderChecklist('t1-q4', T1_BEHAVIORAL, a['t1-q4'] || [], false)}
         </div>
       `,
@@ -1007,7 +1121,7 @@ function getT1Pages() {
       html: `
         <h2 style="margin-bottom: 24px;">Anticipated Barriers</h2>
         <div class="q-block">
-          <div class="q-label">Q5. What are the one or two biggest barriers you anticipate in pursuing a high-impact career? Select up to 2.</div>
+          <div class="q-label">What are the one or two biggest barriers you anticipate in pursuing a high-impact career? Select up to 2.</div>
           ${renderChecklist('t1-q5', T1_BARRIERS, a['t1-q5'] || [], 2, a['t1-q5-other'] || '')}
           <div class="constrain-note" id="constrain-note-t1-q5">Select up to 2 concerns.</div>
         </div>
@@ -1019,19 +1133,31 @@ function getT1Pages() {
       html: `
         <h2 style="margin-bottom: 24px;">Cause Area Familiarity</h2>
         <div class="q-block">
-          <div class="q-label">Q6. For each cause area below, indicate your current level of familiarity or engagement.</div>
+          <div class="q-label">For each cause area below, indicate your current level of familiarity or engagement.</div>
           ${renderCauseGrid('t1-q6', a['t1-q6'] || {})}
         </div>
       `,
     },
-    // Page 7 – Three-option radio
+    // Page 7 – Peer influence (7-pt Likert)
     {
       id: 't1p7',
       html: `
-        <h2 style="margin-bottom: 24px;">Peer Influence</h2>
+        <h2 style="margin-bottom: 8px;">Peer Influence</h2>
+        <p style="color:var(--text-sec); font-size:14px; margin-bottom:24px; line-height:1.6;">
+          Think about the peers you spend the most time with — in classes, social settings, or professional networks.
+        </p>
         <div class="q-block">
-          <div class="q-label">Q7. Do you believe your career thinking is significantly shaped by the peers you are most in contact with?</div>
-          ${renderTriRadio('t1-q7', a['t1-q7'] || '')}
+          <div class="q-label" style="margin-bottom: 20px;"><em>To what extent do you actively shape how your peers think about their careers and the impact they want to have?</em></div>
+          ${renderLikert('t1-q7', a['t1-q7'] || '', 'I never do this', 'I do this constantly and deliberately')}
+          <div class="likert-point-labels">
+            <span>1 — I never think about influencing others' career thinking</span>
+            <span>2 — I rarely do this, and only incidentally</span>
+            <span>3 — I occasionally share my views but don't seek to influence</span>
+            <span>4 — I sometimes intentionally share perspectives on careers and impact</span>
+            <span>5 — I regularly and intentionally raise these topics with peers</span>
+            <span>6 — I actively and frequently try to shift how peers think about their careers</span>
+            <span>7 — I constantly and deliberately work to shape peers' thinking on careers and impact</span>
+          </div>
         </div>
       `,
     },
@@ -1041,7 +1167,7 @@ function getT1Pages() {
       html: `
         <h2 style="margin-bottom: 24px;">Peer Conversations</h2>
         <div class="q-block">
-          <div class="q-label">Q8. In the past month, have you had any substantive conversations with peers about career direction or impact?</div>
+          <div class="q-label">In the past month, have you had any substantive conversations with peers about career direction or impact?</div>
           ${renderConditionalNumeric('t1-q8', a['t1-q8-yn'] || '', a['t1-q8-num'] || '', 'How many such conversations did you have?', 'Number of conversations')}
         </div>
       `,
@@ -1069,14 +1195,22 @@ function getT1Pages() {
 function getT2Pages() {
   const a = state.answers.t2;
   return [
-    // Page 1 – 7-pt Likert
+    // Page 1 – Commitment Now + Then (merged)
     {
       id: 't2p1',
       html: `
-        <h2 style="margin-bottom: 24px;">Commitment to Impact</h2>
-        <div class="q-block">
-          <div class="q-label">Q1. How committed are you right now to pursuing a high-impact career?</div>
+        <h2 style="margin-bottom: 8px;">Commitment to High-Impact Work</h2>
+        <p style="color:var(--text-sec); font-size:14px; margin-bottom:28px; line-height:1.6;">Answer both questions using the same scale.</p>
+        <div class="q-block" style="margin-bottom:32px;">
+          <div class="q-label" style="margin-bottom:6px;">Commitment — Now</div>
+          <p style="font-style:italic; color:var(--text-sec); font-size:14px; margin-bottom:16px;">How committed are you right now to pursuing a high-impact career?</p>
           ${renderLikert('t2-q1', a['t2-q1'] || '', 'Not at all committed', 'Fully committed')}
+        </div>
+        <div class="q-block">
+          <div class="q-label" style="margin-bottom:6px;">Commitment — Then</div>
+          <p style="font-style:italic; color:var(--text-sec); font-size:14px; margin-bottom:16px;">Thinking back to before the orientation began, how committed were you then to pursuing a high-impact career?</p>
+          ${renderLikert('t2-q2', a['t2-q2'] || '', 'Not at all committed', 'Fully committed')}
+          <div class="q-note" style="margin-top:10px;">Try to recall how you actually felt at the time — not how you think you should have felt.</div>
         </div>
       `,
     },
@@ -1090,30 +1224,33 @@ function getT2Pages() {
         </p>
         <div class="q-block">
           <div class="q-label" style="margin-bottom:16px;"><em>Which best describes your pursuit of a high-impact altruistic career?</em></div>
-          ${renderMotivationScale('t2-motiv', a)}
+          ${renderMotivationScale('t2-motiv-now', a)}
           <div class="q-note" style="margin-top:16px;">Same question as before the orientation — answer based on how you feel now.</div>
         </div>
       `,
     },
-    // Page 3 – Retrospective Likert
+    // Page 3 – Motivation — Then (retrospective)
     {
       id: 't2p3',
       html: `
-        <h2 style="margin-bottom: 24px;">Retrospective Commitment</h2>
+        <h2 style="margin-bottom: 8px;">Your Motivation — Then</h2>
+        <p style="color:var(--text-sec); font-size:14px; margin-bottom:24px; line-height:1.6;">
+          Now think back to <em>before</em> the orientation began. Read each description and select the one that most honestly reflects where you were then.
+        </p>
         <div class="q-block">
-          <div class="q-label">Q2. Thinking back to before the orientation began, how committed were you then to pursuing a high-impact career?</div>
-          ${renderLikert('t2-q2', a['t2-q2'] || '', 'Not at all committed', 'Fully committed')}
-          <div class="q-note">Recall your mindset from before the orientation started, not how you feel now.</div>
+          <div class="q-label" style="margin-bottom:16px;"><em>Which best described your pursuit of a high-impact altruistic career before the orientation?</em></div>
+          ${renderMotivationScale('t2-motiv-then', a)}
+          <div class="q-note" style="margin-top:16px;">Try to recall how you actually felt at the time — not how you think you should have felt, or how you feel now.</div>
         </div>
       `,
     },
-    // Page 3 – Textarea
+    // Page 5 – Textarea
     {
       id: 't2p3',
       html: `
         <h2 style="margin-bottom: 24px;">Shifted Perspective</h2>
         <div class="q-block">
-          <div class="q-label">Q3. Has your answer to "what does a successful career look like to you" changed since before the orientation? If so, how?</div>
+          <div class="q-label">Has your answer to "what does a successful career look like to you" changed since before the orientation? If so, how?</div>
           <textarea id="t2-q3" placeholder="Describe any shifts in your thinking about what a successful career means to you...">${a['t2-q3'] || ''}</textarea>
         </div>
       `,
@@ -1124,7 +1261,7 @@ function getT2Pages() {
       html: `
         <h2 style="margin-bottom: 24px;">Most Impactful Sessions</h2>
         <div class="q-block">
-          <div class="q-label">Q4. Which one or two sessions most shifted how you think about your career, and why?</div>
+          <div class="q-label">Which one or two sessions most shifted how you think about your career, and why?</div>
           <textarea id="t2-q4" placeholder="Name the sessions and describe what shifted for you...">${a['t2-q4'] || ''}</textarea>
         </div>
       `,
@@ -1135,7 +1272,7 @@ function getT2Pages() {
       html: `
         <h2 style="margin-bottom: 24px;">Cause Area Familiarity</h2>
         <div class="q-block">
-          <div class="q-label">Q5. For each cause area, indicate your current level of familiarity or engagement. (Same question as T1 — we're tracking change.)</div>
+          <div class="q-label">For each cause area, indicate your current level of familiarity or engagement. (Same question as T1 — we're tracking change.)</div>
           ${renderCauseGrid('t2-q5', a['t2-q5'] || {})}
         </div>
       `,
@@ -1146,7 +1283,7 @@ function getT2Pages() {
       html: `
         <h2 style="margin-bottom: 24px;">Placement Readiness</h2>
         <div class="q-block">
-          <div class="q-label">Q6. How prepared do you feel to add genuine value in your fellowship placement?</div>
+          <div class="q-label">How prepared do you feel to add genuine value in your fellowship placement?</div>
           ${renderLikert('t2-q6', a['t2-q6'] || '', 'Not at all prepared', 'Fully prepared')}
         </div>
       `,
@@ -1157,7 +1294,7 @@ function getT2Pages() {
       html: `
         <h2 style="margin-bottom: 24px;">Career Capital Goals</h2>
         <div class="q-block">
-          <div class="q-label">Q7. What do you most hope to gain from your placement in terms of career capital?</div>
+          <div class="q-label">What do you most hope to gain from your placement in terms of career capital?</div>
           <textarea id="t2-q7" placeholder="Describe the skills, networks, credentials, or experiences you hope to build...">${a['t2-q7'] || ''}</textarea>
         </div>
       `,
@@ -1166,11 +1303,23 @@ function getT2Pages() {
     {
       id: 't2p8',
       html: `
-        <h2 style="margin-bottom: 24px;">Peer Influence</h2>
+        <h2 style="margin-bottom: 8px;">Peer Influence</h2>
+        <p style="color:var(--text-sec); font-size:14px; margin-bottom:24px; line-height:1.6;">
+          Think about the peers you spend the most time with — in classes, social settings, or professional networks.
+        </p>
         <div class="q-block">
-          <div class="q-label">Q8. Do you believe your career thinking is significantly shaped by the peers you are most in contact with?</div>
-          ${renderTriRadio('t2-q8', a['t2-q8'] || '')}
-          <div class="q-note">Same question as before the orientation.</div>
+          <div class="q-label" style="margin-bottom: 20px;"><em>To what extent do you actively shape how your peers think about their careers and the impact they want to have?</em></div>
+          ${renderLikert('t2-q8', a['t2-q8'] || '', 'I never do this', 'I do this constantly and deliberately')}
+          <div class="likert-point-labels">
+            <span>1 — I never think about influencing others' career thinking</span>
+            <span>2 — I rarely do this, and only incidentally</span>
+            <span>3 — I occasionally share my views but don't seek to influence</span>
+            <span>4 — I sometimes intentionally share perspectives on careers and impact</span>
+            <span>5 — I regularly and intentionally raise these topics with peers</span>
+            <span>6 — I actively and frequently try to shift how peers think about their careers</span>
+            <span>7 — I constantly and deliberately work to shape peers' thinking on careers and impact</span>
+          </div>
+          <div class="q-note" style="margin-top:16px;">Same question as before the orientation.</div>
         </div>
       `,
     },
@@ -1200,25 +1349,69 @@ function getT3Pages() {
   const branch = state.branchChoice;
 
   const standardPages = [
-    // Page 1 – Three stacked Likerts
+    // Page 1 – Internship placement identity
     {
       id: 't3p1',
       html: `
-        <h2 style="margin-bottom: 24px;">Program Quality</h2>
-        <div class="q-block">
-          <div class="q-label" style="margin-bottom: 20px;">Q1. Rate the program on each dimension.</div>
-          <div style="margin-bottom: 24px;">
-            <div class="q-label" style="font-size:13px; color: var(--text-sec); margin-bottom:10px;">Intellectual rigor</div>
-            ${renderLikert('t3-q1a', a['t3-q1a'] || '', 'Not at all rigorous', 'Extremely rigorous')}
-          </div>
-          <div style="margin-bottom: 24px;">
-            <div class="q-label" style="font-size:13px; color: var(--text-sec); margin-bottom:10px;">Professional development value</div>
-            ${renderLikert('t3-q1b', a['t3-q1b'] || '', 'No value', 'Exceptional value')}
+        <h2 style="margin-bottom: 8px;">Your Internship Placement</h2>
+        <p style="color:var(--text-sec); font-size:14px; margin-bottom:24px; line-height:1.6;">
+          Tell us about the placement you completed as part of the fellowship.
+        </p>
+        <div class="placement-inputs">
+          <div>
+            <label for="t3-org">Organization name</label>
+            <input type="text" id="t3-org" placeholder="e.g. GiveWell, Open Philanthropy, CSET…" value="${a['t3-org'] || ''}" />
           </div>
           <div>
-            <div class="q-label" style="font-size:13px; color: var(--text-sec); margin-bottom:10px;">Meaningfulness of impact</div>
-            ${renderLikert('t3-q1c', a['t3-q1c'] || '', 'Not at all meaningful', 'Extremely meaningful')}
+            <label for="t3-role">Your role or title</label>
+            <input type="text" id="t3-role" placeholder="e.g. Research Analyst Intern, Policy Fellow…" value="${a['t3-role'] || ''}" />
           </div>
+        </div>
+      `,
+    },
+    // Page 1b – Internship BARS ratings (three dimensions)
+    {
+      id: 't3p1b',
+      html: `
+        <h2 style="margin-bottom: 8px;">Placement Quality</h2>
+        <p style="color:var(--text-sec); font-size:14px; margin-bottom:28px; line-height:1.6;">
+          For each dimension, select the description that best matches your experience of the internship.
+        </p>
+        <div class="q-block" style="margin-bottom:32px;">
+          <div class="q-label" style="margin-bottom:14px;">Intellectual rigor</div>
+          ${renderBARS('t3-q1a', a['t3-q1a'] || '', [
+            'The work required no real thinking — tasks were entirely routine and required no judgment.',
+            'Occasionally I had to think carefully, but most tasks were straightforward and low-complexity.',
+            'Some tasks were intellectually engaging, but the placement was inconsistent in what it demanded of me.',
+            'The work was moderately rigorous — I was challenged fairly regularly and needed to apply what I know.',
+            'The work was consistently demanding. I had to think hard, synthesize information, and exercise judgment.',
+            'The work was highly rigorous. I was routinely pushed to my intellectual limits and produced substantive outputs.',
+            'The internship was among the most intellectually demanding experiences I\'ve had. I was stretched constantly and produced work I\'m genuinely proud of.',
+          ])}
+        </div>
+        <div class="q-block" style="margin-bottom:32px;">
+          <div class="q-label" style="margin-bottom:14px;">Professional development value</div>
+          ${renderBARS('t3-q1b', a['t3-q1b'] || '', [
+            'I gained no meaningful skills, networks, or credentials I didn\'t already have.',
+            'I gained very little — perhaps minor exposure to a new context, but nothing I\'d point to as career capital.',
+            'I gained some useful exposure, but the development value was limited and I could have gotten it elsewhere easily.',
+            'I built some real skills or made some useful connections that I expect to be relevant to my career.',
+            'I gained substantial career capital — skills, networks, or credentials I genuinely wouldn\'t have gotten another way.',
+            'The placement significantly advanced my professional development in ways I expect to matter for years.',
+            'The placement was transformative for my career trajectory — I came out with skills, relationships, and credibility I couldn\'t have built any other way.',
+          ])}
+        </div>
+        <div class="q-block">
+          <div class="q-label" style="margin-bottom:14px;">Impact meaningfulness</div>
+          ${renderBARS('t3-q1c', a['t3-q1c'] || '', [
+            'The work had no meaningful impact — it felt like busywork with no connection to any important outcome.',
+            'I struggled to see how my work connected to anything that mattered. The link to impact felt very thin.',
+            'There was some connection to impactful work, but my individual contribution felt marginal or unclear.',
+            'My work felt moderately meaningful — I could see a plausible connection to outcomes that matter.',
+            'My work had clear impact relevance. I could see how what I did connected to important real-world outcomes.',
+            'My work contributed meaningfully and directly to outcomes I care about. The impact felt genuine and significant.',
+            'The work I did was among the most meaningful I\'ve contributed to. I feel confident it will have lasting positive impact.',
+          ])}
         </div>
       `,
     },
@@ -1228,7 +1421,7 @@ function getT3Pages() {
       html: `
         <h2 style="margin-bottom: 24px;">Career Capital Delivery</h2>
         <div class="q-block">
-          <div class="q-label">Q2. Did your placement deliver on what you hoped for in terms of career capital? Explain.</div>
+          <div class="q-label">Did your placement deliver on what you hoped for in terms of career capital? Explain.</div>
           <textarea id="t3-q2" placeholder="Reflect honestly — what was delivered, what fell short, and why...">${a['t3-q2'] || ''}</textarea>
         </div>
       `,
@@ -1239,7 +1432,7 @@ function getT3Pages() {
       html: `
         <h2 style="margin-bottom: 24px;">Program Recommendation</h2>
         <div class="q-block">
-          <div class="q-label">Q3. How likely are you to recommend SMA to a peer?</div>
+          <div class="q-label">How likely are you to recommend SMA to a peer?</div>
           ${renderNPS('t3-q3', a['t3-q3'] || '')}
         </div>
       `,
@@ -1250,7 +1443,7 @@ function getT3Pages() {
       html: `
         <h2 style="margin-bottom: 24px;">Most Valuable Aspect</h2>
         <div class="q-block">
-          <div class="q-label">Q4. What was the single most valuable thing about the SMA program for you?</div>
+          <div class="q-label">What was the single most valuable thing about the SMA program for you?</div>
           <textarea id="t3-q4" placeholder="Describe the one thing you valued most...">${a['t3-q4'] || ''}</textarea>
         </div>
       `,
@@ -1261,7 +1454,7 @@ function getT3Pages() {
       html: `
         <h2 style="margin-bottom: 24px;">Suggested Improvement</h2>
         <div class="q-block">
-          <div class="q-label">Q5. What is the one thing you would change about the program?</div>
+          <div class="q-label">What is the one thing you would change about the program?</div>
           <textarea id="t3-q5" placeholder="Be specific — what would make the program meaningfully better?">${a['t3-q5'] || ''}</textarea>
         </div>
       `,
@@ -1284,7 +1477,7 @@ function getT3Pages() {
       html: `
         <h2 style="margin-bottom: 24px;">Career Vision — Revisited</h2>
         <div class="q-block">
-          <div class="q-label">Q7. In 2–3 sentences, describe what a successful career looks like to you right now.</div>
+          <div class="q-label">In 2–3 sentences, describe what a successful career looks like to you right now.</div>
           <textarea id="t3-q7" placeholder="Describe your current vision of a successful career...">${a['t3-q7'] || ''}</textarea>
           <div class="q-note">Same question as before the program.</div>
         </div>
@@ -1296,7 +1489,7 @@ function getT3Pages() {
       html: `
         <h2 style="margin-bottom: 24px;">Peer Conversations</h2>
         <div class="q-block">
-          <div class="q-label">Q8. Since the program ended, how many substantive conversations have you had with peers about career direction or impact?</div>
+          <div class="q-label">Since the program ended, how many substantive conversations have you had with peers about career direction or impact?</div>
           <input type="number" class="number-input" id="t3-q8" min="0" value="${a['t3-q8'] || ''}" placeholder="0" />
         </div>
       `,
@@ -1307,7 +1500,7 @@ function getT3Pages() {
       html: `
         <h2 style="margin-bottom: 24px;">Most Significant Conversation</h2>
         <div class="q-block">
-          <div class="q-label">Q9. Describe the most significant career conversation you have had with a peer since the program ended. What was discussed and what came of it?</div>
+          <div class="q-label">Describe the most significant career conversation you have had with a peer since the program ended. What was discussed and what came of it?</div>
           <textarea id="t3-q9" placeholder="Who did you talk with (no names needed), what was the substance, and what impact did it have on you or them?">${a['t3-q9'] || ''}</textarea>
         </div>
       `,
@@ -1318,7 +1511,7 @@ function getT3Pages() {
       html: `
         <h2 style="margin-bottom: 24px;">Roles & Applications</h2>
         <div class="q-block">
-          <div class="q-label">Q10. List the roles or positions you have applied to, received offers for, or accepted since the program began.</div>
+          <div class="q-label">List the roles or positions you have applied to, received offers for, or accepted since the program began.</div>
           <div id="dyn-list-container">
             ${renderDynRows(a['t3-q10'] || [{ role: '', status: '', sector: '' }])}
           </div>
@@ -1332,7 +1525,7 @@ function getT3Pages() {
       html: `
         <h2 style="margin-bottom: 24px;">Career Direction</h2>
         <div class="q-block">
-          <div class="q-label">Q11. Are you currently pursuing a high-impact career as your primary path?</div>
+          <div class="q-label">Are you currently pursuing a high-impact career as your primary path?</div>
           <div class="check-list" style="gap: 8px;">
             ${['Yes', 'No', 'Still deciding'].map(opt => `
               <label class="${(a['t3-q11'] || '') === opt ? 'checked' : ''}" data-group="t3-q11" data-val="${opt}">
@@ -1354,7 +1547,7 @@ function getT3Pages() {
       html: `
         <h2 style="margin-bottom: 24px;">Career Direction Factors</h2>
         <div class="q-block">
-          <div class="q-label">Q12. What factors most influenced your career direction this year?</div>
+          <div class="q-label">What factors most influenced your career direction this year?</div>
           <textarea id="t3-q12a" placeholder="Describe the key factors — personal, professional, financial, or otherwise — that shaped where you are heading...">${a['t3-q12a'] || ''}</textarea>
         </div>
       `,
@@ -1365,7 +1558,7 @@ function getT3Pages() {
       html: `
         <h2 style="margin-bottom: 24px;">Influences on Your Path</h2>
         <div class="q-block">
-          <div class="q-label">Q12. What most influenced your decision to pursue this path? What role, if any, did SMA play?</div>
+          <div class="q-label">What most influenced your decision to pursue this path? What role, if any, did SMA play?</div>
           <textarea id="t3-q12b" placeholder="Describe what shaped your decision, and be candid about SMA's role — whether central, minor, or indirect...">${a['t3-q12b'] || ''}</textarea>
         </div>
       `,
@@ -1465,6 +1658,26 @@ function renderChecklist(name, items, selected, max, otherVal) {
             ${item}
           </label>
           ${isOther ? `<input type="text" class="other-input" id="${name}-other" placeholder="Please specify..." value="${otherVal || ''}" style="display:${isChecked ? 'block' : 'none'}" />` : ''}
+        `;
+      }).join('')}
+    </div>
+  `;
+}
+
+// BARS (Behaviorally Anchored Rating Scale) — renders a 7-pt scale with
+// a visible anchor description for every point. anchors = array of 7 strings [1..7].
+function renderBARS(name, selected, anchors) {
+  return `
+    <div class="bars-wrap">
+      ${anchors.map((anchor, i) => {
+        const val = i + 1;
+        const isChecked = selected == val;
+        return `
+          <label class="bars-option${isChecked ? ' selected' : ''}">
+            <input type="radio" name="${name}" value="${val}" ${isChecked ? 'checked' : ''} />
+            <span class="bars-num">${val}</span>
+            <span class="bars-text">${anchor}</span>
+          </label>
         `;
       }).join('')}
     </div>
@@ -1636,13 +1849,21 @@ function renderDynRows(rows) {
 // EVENT HANDLERS
 // ─────────────────────────────────────────────
 function attachHandlers() {
-  // Motivation cards — keep .selected class in sync (fallback for browsers
-  // that don't support :has(), and to ensure collectPageAnswers sees the value)
+  // Motivation cards — keep .selected class in sync
   document.querySelectorAll('.motiv-options').forEach(group => {
     group.addEventListener('change', e => {
       if (e.target.type !== 'radio') return;
       group.querySelectorAll('.motiv-card').forEach(card => card.classList.remove('selected'));
       e.target.closest('.motiv-card').classList.add('selected');
+    });
+  });
+
+  // BARS options — keep .selected class in sync
+  document.querySelectorAll('.bars-wrap').forEach(wrap => {
+    wrap.addEventListener('change', e => {
+      if (e.target.type !== 'radio') return;
+      wrap.querySelectorAll('.bars-option').forEach(opt => opt.classList.remove('selected'));
+      e.target.closest('.bars-option').classList.add('selected');
     });
   });
 
@@ -1957,6 +2178,11 @@ function collectPageAnswers() {
 
   // Collect "other" text inputs
   document.querySelectorAll('input.other-input').forEach(inp => {
+    if (inp.id) a[inp.id] = inp.value;
+  });
+
+  // Collect placement identity text inputs (and any other named text inputs)
+  document.querySelectorAll('.placement-inputs input[type="text"]').forEach(inp => {
     if (inp.id) a[inp.id] = inp.value;
   });
 
