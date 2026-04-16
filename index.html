@@ -367,7 +367,7 @@
     .rank-list { display: flex; flex-direction: column; gap: 6px; }
     .rank-item {
       display: flex;
-      align-items: center;
+      align-items: flex-start;
       gap: 14px;
       padding: 14px 16px;
       background: var(--surface);
@@ -400,10 +400,21 @@
       flex-shrink: 0;
       letter-spacing: .05em;
     }
+    .rank-content {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      flex: 1;
+    }
     .rank-label {
       font-size: 14px;
+      font-weight: 600;
       color: var(--text);
-      flex: 1;
+    }
+    .rank-desc {
+      font-size: 12px;
+      color: var(--text-sec);
+      line-height: 1.5;
     }
 
     /* ── Numeric input ── */
@@ -673,12 +684,12 @@ const CAUSE_AREAS = [
 ];
 
 const CAREER_VALUES = [
-  'Impact on the world',
-  'Income',
-  'Prestige and status',
-  'Intellectual challenge',
-  'Work-life balance',
-  'Social belonging',
+  { name: 'Altruism',                desc: 'Work that lets you make a direct difference in other people\'s lives and contribute to the well-being of others' },
+  { name: 'Prestige',                desc: 'Work that earns you recognition and respect — where others see your career as impressive and important' },
+  { name: 'Economic Return',         desc: 'Work that pays well and gives you the financial security to live the way you want' },
+  { name: 'Intellectual Stimulation',desc: 'Work that challenges you mentally — where you\'re constantly solving hard problems and learning how things work' },
+  { name: 'Independence',            desc: 'Work that lets you operate on your own terms — making your own decisions about how and when things get done' },
+  { name: 'Achievement',             desc: 'Work where you can clearly see the results of your efforts and feel the satisfaction of doing something well' },
 ];
 
 const T1_BEHAVIORAL = [
@@ -815,10 +826,11 @@ function getT1Pages() {
     {
       id: 't1p1',
       html: `
-        <h2 style="margin-bottom: 24px;">Career Values</h2>
+        <h2 style="margin-bottom: 8px;">Career Values</h2>
+        <p style="color:var(--text-sec); font-size:14px; margin-bottom:24px;">Drag to rank the following in order of importance to you in a career. Place what matters most at the top.</p>
         <div class="q-block">
-          <div class="q-label">Q1. Rank the following career values from most to least important to you right now. Drag to reorder.</div>
-          ${renderRankList('t1-rank', a['t1-rank'] || CAREER_VALUES.slice())}
+          <div class="q-label">Career values ranking</div>
+          ${renderRankList('t1-rank', a['t1-rank'] || CAREER_VALUES)}
         </div>
       `,
     },
@@ -1081,10 +1093,11 @@ function getT3Pages() {
     {
       id: 't3p6',
       html: `
-        <h2 style="margin-bottom: 24px;">Career Values — Revisited</h2>
+        <h2 style="margin-bottom: 8px;">Career Values — Updated</h2>
+        <p style="color:var(--text-sec); font-size:14px; margin-bottom:24px;">Same as before the program — drag to rank the following in order of importance to you in a career.</p>
         <div class="q-block">
-          <div class="q-label">Q6. Rank the following career values from most to least important to you right now. Drag to reorder.</div>
-          ${renderRankList('t3-rank', a['t3-rank'] || CAREER_VALUES.slice())}
+          <div class="q-label">Career values ranking — updated</div>
+          ${renderRankList('t3-rank', a['t3-rank'] || CAREER_VALUES)}
         </div>
       `,
     },
@@ -1331,13 +1344,23 @@ function renderConditionalNumeric(name, yn, num, label, placeholder) {
 
 // Drag-drop ranking list
 function renderRankList(name, items) {
+  // items may be {name,desc} objects (default) or plain name strings (restored from state)
+  const resolved = items.map(item => {
+    if (typeof item === 'string') {
+      return CAREER_VALUES.find(v => v.name === item) || { name: item, desc: '' };
+    }
+    return item;
+  });
   return `
     <div class="rank-list" id="rl-${name}" data-name="${name}">
-      ${items.map((item, i) => `
-        <div class="rank-item" draggable="true" data-index="${i}" data-label="${item}">
+      ${resolved.map((item, i) => `
+        <div class="rank-item" draggable="true" data-index="${i}" data-label="${item.name}">
           <span class="rank-handle">⠿</span>
           <span class="rank-num">#${i+1}</span>
-          <span class="rank-label">${item}</span>
+          <div class="rank-content">
+            <span class="rank-label">${item.name}</span>
+            ${item.desc ? `<span class="rank-desc">${item.desc}</span>` : ''}
+          </div>
         </div>
       `).join('')}
     </div>
