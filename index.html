@@ -363,6 +363,42 @@
     }
     .cause-radio-cell label:hover { border-color: var(--accent); }
 
+    /* ── Motivation scale (selectable text cards) ── */
+    .motiv-options {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .motiv-card {
+      display: block;
+      padding: 18px 20px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      cursor: pointer;
+      transition: border-color .15s, background .15s;
+      font-size: 14px;
+      line-height: 1.65;
+      color: var(--text-sec);
+      user-select: none;
+    }
+    .motiv-card:hover {
+      border-color: #444;
+      color: var(--text);
+    }
+    .motiv-card:has(input:checked),
+    .motiv-card.selected {
+      border-color: var(--accent);
+      background: rgba(201, 98, 47, .09);
+      color: var(--text);
+    }
+    .motiv-card input[type="radio"] {
+      position: absolute;
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
     /* ── Self-efficacy table ── */
     .se-table {
       width: 100%;
@@ -737,6 +773,17 @@ const CAUSE_AREAS = [
   'Climate change and energy transition',
 ];
 
+// Motivational regulation options — stored in original index order (0–5).
+// Display order is randomised per-respondent; index is what gets saved.
+const MOTIVATION_OPTIONS = [
+  "I'm pursuing this kind of work primarily because of external pressures or expectations — whether from family, peers, or the communities I'm part of. If those expectations weren't there, I'm not sure I'd be drawn to it.",
+  "I feel some personal pull toward this work, but I'm also aware that a lot of my motivation comes from wanting to be seen a certain way — by others or by myself. I'd feel guilty or embarrassed stepping away from it.",
+  "My reasons for doing this work are a mix of external and internal. I believe it matters, but I haven't fully worked out why it matters to me personally. It doesn't yet feel like a natural expression of who I am.",
+  "I genuinely believe this work is important and worth doing. It aligns with values I've chosen for myself, even if it sometimes feels more like an obligation than something I'm energized by day-to-day.",
+  "This work feels like a meaningful expression of my values. I'm motivated by a real sense of purpose — not guilt or obligation — and I'd pursue it even without external recognition or pressure.",
+  "This work is central to who I am. My commitment to making a positive difference isn't something I do — it's part of how I understand myself. It feels fully coherent with the rest of my life and identity.",
+];
+
 const SELF_EFFICACY_ITEMS = [
   'Developing a theory of change',
   'Evaluating a theory of change',
@@ -906,9 +953,23 @@ function getT1Pages() {
         </div>
       `,
     },
-    // Page 2 – Textarea
+    // Page 2 – Motivation regulation scale (randomised order)
     {
       id: 't1p2',
+      html: `
+        <h2 style="margin-bottom: 8px;">Your Motivation</h2>
+        <p style="color:var(--text-sec); font-size:14px; margin-bottom:24px; line-height:1.6;">
+          Read each description carefully. Select the one that most honestly reflects where you are right now — not where you'd like to be.
+        </p>
+        <div class="q-block">
+          <div class="q-label" style="margin-bottom:16px;"><em>Which best describes your pursuit of a high-impact altruistic career?</em></div>
+          ${renderMotivationScale('t1-motiv', a)}
+        </div>
+      `,
+    },
+    // Page 3 – Textarea
+    {
+      id: 't1p3',
       html: `
         <h2 style="margin-bottom: 24px;">Career Vision</h2>
         <div class="q-block">
@@ -1019,9 +1080,24 @@ function getT2Pages() {
         </div>
       `,
     },
-    // Page 2 – Retrospective Likert
+    // Page 2 – Motivation regulation scale (randomised order, post-test)
     {
       id: 't2p2',
+      html: `
+        <h2 style="margin-bottom: 8px;">Your Motivation — Now</h2>
+        <p style="color:var(--text-sec); font-size:14px; margin-bottom:24px; line-height:1.6;">
+          Read each description carefully. Select the one that most honestly reflects where you are right now — after the orientation.
+        </p>
+        <div class="q-block">
+          <div class="q-label" style="margin-bottom:16px;"><em>Which best describes your pursuit of a high-impact altruistic career?</em></div>
+          ${renderMotivationScale('t2-motiv', a)}
+          <div class="q-note" style="margin-top:16px;">Same question as before the orientation — answer based on how you feel now.</div>
+        </div>
+      `,
+    },
+    // Page 3 – Retrospective Likert
+    {
+      id: 't2p3',
       html: `
         <h2 style="margin-bottom: 24px;">Retrospective Commitment</h2>
         <div class="q-block">
@@ -1395,6 +1471,40 @@ function renderChecklist(name, items, selected, max, otherVal) {
   `;
 }
 
+// Fisher-Yates shuffle (returns new array)
+function shuffleArray(arr) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+// Motivation scale — randomised selectable text cards
+// prefix: 't1-motiv' or 't2-motiv'; answers: the touchpoint answers object
+function renderMotivationScale(prefix, answers) {
+  const orderKey = `${prefix}-order`;
+  // Generate shuffle order once and persist in state so back-nav is stable
+  if (!answers[orderKey]) {
+    answers[orderKey] = shuffleArray([0, 1, 2, 3, 4, 5]);
+  }
+  const order   = answers[orderKey];
+  const selVal  = answers[`${prefix}-val`];
+
+  return `
+    <div class="motiv-options">
+      ${order.map(origIdx => `
+        <label class="motiv-card${selVal == origIdx ? ' selected' : ''}">
+          <input type="radio" name="${prefix}-val" value="${origIdx}"
+            ${selVal == origIdx ? 'checked' : ''} />
+          ${MOTIVATION_OPTIONS[origIdx]}
+        </label>
+      `).join('')}
+    </div>
+  `;
+}
+
 // Self-efficacy grid
 function renderSelfEfficacyGrid(prefix, answers) {
   return `
@@ -1526,6 +1636,16 @@ function renderDynRows(rows) {
 // EVENT HANDLERS
 // ─────────────────────────────────────────────
 function attachHandlers() {
+  // Motivation cards — keep .selected class in sync (fallback for browsers
+  // that don't support :has(), and to ensure collectPageAnswers sees the value)
+  document.querySelectorAll('.motiv-options').forEach(group => {
+    group.addEventListener('change', e => {
+      if (e.target.type !== 'radio') return;
+      group.querySelectorAll('.motiv-card').forEach(card => card.classList.remove('selected'));
+      e.target.closest('.motiv-card').classList.add('selected');
+    });
+  });
+
   // Home
   const btnBegin = document.getElementById('btn-begin');
   if (btnBegin) btnBegin.addEventListener('click', () => { state.screen = 'touchpoint'; render(); });
