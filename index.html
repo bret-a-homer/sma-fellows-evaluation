@@ -868,8 +868,8 @@ const state = {
   screen: 'home',        // home | touchpoint | assessment | complete | results
   touchpoint: null,      // 't1' | 't2' | 't3'
   page: 0,
-  answers: { t1: {}, t2: {}, t3: {} },
-  branchChoice: null,    // for T3 Q11
+  answers: { t1: {}, t2: {}, t3: {}, t4: {} },
+  branchChoice: null,    // for T3/T4 Q11
 };
 
 // ─────────────────────────────────────────────
@@ -942,7 +942,7 @@ const TOUCHPOINTS = [
   {
     id: 't1',
     tag: 'T1',
-    name: 'Pre-program',
+    name: 'Pre-orientation',
     time: '~12–15 min',
     desc: 'Establish your baseline career values and intentions before the program begins.',
   },
@@ -956,9 +956,16 @@ const TOUCHPOINTS = [
   {
     id: 't3',
     tag: 'T3',
+    name: 'Post-Internship Check-in',
+    time: '~15–20 min',
+    desc: 'Reflect on your internship placement, career direction, and program impact.',
+  },
+  {
+    id: 't4',
+    tag: 'T4',
     name: 'Six-month follow-up',
     time: '~15–20 min',
-    desc: 'Reflect on outcomes, career direction, and program impact.',
+    desc: 'Six months on — reflect on career outcomes, peer influence, and lasting impact of the program.',
   },
 ];
 
@@ -985,7 +992,7 @@ function renderHome() {
     <h1>School for Moral Ambition</h1>
     <div class="home-subtitle">Harvard Fellows Program — Evaluation Tool</div>
     <hr class="divider" />
-    <p>This tool collects structured assessments from fellows at three points throughout the program. Please complete each touchpoint honestly — your responses inform how we improve the program over time.</p>
+    <p>This tool collects structured assessments from fellows at four points throughout the program. Please complete each touchpoint honestly — your responses inform how we improve the program over time.</p>
     <div class="home-actions">
       <button class="btn btn-primary" id="btn-begin">Begin Assessment</button>
       <button class="btn btn-ghost" id="btn-results">View Simulated Results</button>
@@ -1024,6 +1031,7 @@ function getPages() {
   if (state.touchpoint === 't1') return getT1Pages();
   if (state.touchpoint === 't2') return getT2Pages();
   if (state.touchpoint === 't3') return getT3Pages();
+  if (state.touchpoint === 't4') return getT4Pages();
   return [];
 }
 
@@ -1033,7 +1041,8 @@ function renderAssessment() {
   const current = state.page;
   const page = pages[current];
   const pct = ((current + 1) / (total + 1)) * 100;
-  const tpLabel = state.touchpoint === 't1' ? 'T1 — Pre-program' : state.touchpoint === 't2' ? 'T2 — Post-orientation' : 'T3 — Six-month follow-up';
+  const tpLabels = { t1: 'T1 — Pre-orientation', t2: 'T2 — Post-orientation', t3: 'T3 — Post-Internship Check-in', t4: 'T4 — Six-month follow-up' };
+  const tpLabel = tpLabels[state.touchpoint] || '';
 
   return `
     <div class="progress-wrap"><div class="progress-fill" style="width:${pct}%"></div></div>
@@ -1395,14 +1404,16 @@ function getT2Pages() {
 // ─────────────────────────────────────────────
 // T3 PAGES
 // ─────────────────────────────────────────────
-function getT3Pages() {
-  const a = state.answers.t3;
+// Shared page builder for T3 (Post-Internship) and T4 (Six-month follow-up).
+// tp = 't3' | 't4'
+function getFollowUpPages(tp) {
+  const a = state.answers[tp];
   const branch = state.branchChoice;
 
   const standardPages = [
     // Page 1 – Internship placement identity
     {
-      id: 't3p1',
+      id: tp + 'p1',
       html: `
         <h2 style="margin-bottom: 8px;">Your Internship Placement</h2>
         <p style="color:var(--text-sec); font-size:14px; margin-bottom:24px; line-height:1.6;">
@@ -1410,19 +1421,19 @@ function getT3Pages() {
         </p>
         <div class="placement-inputs">
           <div>
-            <label for="t3-org">Organization name</label>
-            <input type="text" id="t3-org" placeholder="e.g. GiveWell, Open Philanthropy, CSET…" value="${a['t3-org'] || ''}" />
+            <label for="${tp}-org">Organization name</label>
+            <input type="text" id="${tp}-org" placeholder="e.g. GiveWell, Open Philanthropy, CSET…" value="${a[tp + '-org'] || ''}" />
           </div>
           <div>
-            <label for="t3-role">Your role or title</label>
-            <input type="text" id="t3-role" placeholder="e.g. Research Analyst Intern, Policy Fellow…" value="${a['t3-role'] || ''}" />
+            <label for="${tp}-role">Your role or title</label>
+            <input type="text" id="${tp}-role" placeholder="e.g. Research Analyst Intern, Policy Fellow…" value="${a[tp + '-role'] || ''}" />
           </div>
         </div>
       `,
     },
     // Page 1b – Internship BARS ratings (three dimensions)
     {
-      id: 't3p1b',
+      id: tp + 'p1b',
       html: `
         <h2 style="margin-bottom: 8px;">Placement Quality</h2>
         <p style="color:var(--text-sec); font-size:14px; margin-bottom:28px; line-height:1.6;">
@@ -1430,7 +1441,7 @@ function getT3Pages() {
         </p>
         <div class="q-block" style="margin-bottom:32px;">
           <div class="q-label" style="margin-bottom:14px;">Intellectual rigor</div>
-          ${renderBARS('t3-q1a', a['t3-q1a'] || '', [
+          ${renderBARS(tp + '-q1a', a[tp + '-q1a'] || '', [
             'The work required no real thinking — tasks were entirely routine and required no judgment.',
             'Occasionally I had to think carefully, but most tasks were straightforward and low-complexity.',
             'Some tasks were intellectually engaging, but the placement was inconsistent in what it demanded of me.',
@@ -1442,7 +1453,7 @@ function getT3Pages() {
         </div>
         <div class="q-block" style="margin-bottom:32px;">
           <div class="q-label" style="margin-bottom:14px;">Professional development value</div>
-          ${renderBARS('t3-q1b', a['t3-q1b'] || '', [
+          ${renderBARS(tp + '-q1b', a[tp + '-q1b'] || '', [
             'I gained no meaningful skills, networks, or credentials I didn\'t already have.',
             'I gained very little — perhaps minor exposure to a new context, but nothing I\'d point to as career capital.',
             'I gained some useful exposure, but the development value was limited and I could have gotten it elsewhere easily.',
@@ -1454,7 +1465,7 @@ function getT3Pages() {
         </div>
         <div class="q-block">
           <div class="q-label" style="margin-bottom:14px;">Impact meaningfulness</div>
-          ${renderBARS('t3-q1c', a['t3-q1c'] || '', [
+          ${renderBARS(tp + '-q1c', a[tp + '-q1c'] || '', [
             'The work had no meaningful impact — it felt like busywork with no connection to any important outcome.',
             'I struggled to see how my work connected to anything that mattered. The link to impact felt very thin.',
             'There was some connection to impactful work, but my individual contribution felt marginal or unclear.',
@@ -1468,103 +1479,103 @@ function getT3Pages() {
     },
     // Page 2 – Textarea
     {
-      id: 't3p2',
+      id: tp + 'p2',
       html: `
         <h2 style="margin-bottom: 24px;">Career Capital Delivery</h2>
         <div class="q-block">
           <div class="q-label">Did your placement deliver on what you hoped for in terms of career capital? Explain.</div>
-          <textarea id="t3-q2" placeholder="Reflect honestly — what was delivered, what fell short, and why...">${a['t3-q2'] || ''}</textarea>
+          <textarea id="${tp}-q2" placeholder="Reflect honestly — what was delivered, what fell short, and why...">${a[tp + '-q2'] || ''}</textarea>
         </div>
       `,
     },
     // Page 3 – NPS
     {
-      id: 't3p3',
+      id: tp + 'p3',
       html: `
         <h2 style="margin-bottom: 24px;">Program Recommendation</h2>
         <div class="q-block">
           <div class="q-label">How likely are you to recommend SMA to a peer?</div>
-          ${renderNPS('t3-q3', a['t3-q3'] || '')}
+          ${renderNPS(tp + '-q3', a[tp + '-q3'] || '')}
         </div>
       `,
     },
     // Page 4 – Textarea
     {
-      id: 't3p4',
+      id: tp + 'p4',
       html: `
         <h2 style="margin-bottom: 24px;">Most Valuable Aspect</h2>
         <div class="q-block">
           <div class="q-label">What was the single most valuable thing about the SMA program for you?</div>
-          <textarea id="t3-q4" placeholder="Describe the one thing you valued most...">${a['t3-q4'] || ''}</textarea>
+          <textarea id="${tp}-q4" placeholder="Describe the one thing you valued most...">${a[tp + '-q4'] || ''}</textarea>
         </div>
       `,
     },
     // Page 5 – Textarea
     {
-      id: 't3p5',
+      id: tp + 'p5',
       html: `
         <h2 style="margin-bottom: 24px;">Suggested Improvement</h2>
         <div class="q-block">
           <div class="q-label">What is the one thing you would change about the program?</div>
-          <textarea id="t3-q5" placeholder="Be specific — what would make the program meaningfully better?">${a['t3-q5'] || ''}</textarea>
+          <textarea id="${tp}-q5" placeholder="Be specific — what would make the program meaningfully better?">${a[tp + '-q5'] || ''}</textarea>
         </div>
       `,
     },
     // Page 6 – Drag-drop ranking
     {
-      id: 't3p6',
+      id: tp + 'p6',
       html: `
         <h2 style="margin-bottom: 8px;">Career Values — Updated</h2>
         <p style="color:var(--text-sec); font-size:14px; margin-bottom:24px;">Same as before the program — drag to rank the following in order of importance to you in a career.</p>
         <div class="q-block">
           <div class="q-label">Career values ranking — updated</div>
-          ${renderRankList('t3-rank', a['t3-rank'] || CAREER_VALUES)}
+          ${renderRankList(tp + '-rank', a[tp + '-rank'] || CAREER_VALUES)}
         </div>
       `,
     },
     // Page 7 – Textarea with note
     {
-      id: 't3p7',
+      id: tp + 'p7',
       html: `
         <h2 style="margin-bottom: 24px;">Career Vision — Revisited</h2>
         <div class="q-block">
           <div class="q-label">In 2–3 sentences, describe what a successful career looks like to you right now.</div>
-          <textarea id="t3-q7" placeholder="Describe your current vision of a successful career...">${a['t3-q7'] || ''}</textarea>
+          <textarea id="${tp}-q7" placeholder="Describe your current vision of a successful career...">${a[tp + '-q7'] || ''}</textarea>
           <div class="q-note">Same question as before the program.</div>
         </div>
       `,
     },
     // Page 8 – Numeric input
     {
-      id: 't3p8',
+      id: tp + 'p8',
       html: `
         <h2 style="margin-bottom: 24px;">Peer Conversations</h2>
         <div class="q-block">
           <div class="q-label">Since the program ended, how many substantive conversations have you had with peers about career direction or impact?</div>
-          <input type="number" class="number-input" id="t3-q8" min="0" value="${a['t3-q8'] || ''}" placeholder="0" />
+          <input type="number" class="number-input" id="${tp}-q8" min="0" value="${a[tp + '-q8'] || ''}" placeholder="0" />
         </div>
       `,
     },
     // Page 9 – Textarea
     {
-      id: 't3p9',
+      id: tp + 'p9',
       html: `
         <h2 style="margin-bottom: 24px;">Most Significant Conversation</h2>
         <div class="q-block">
           <div class="q-label">Describe the most significant career conversation you have had with a peer since the program ended. What was discussed and what came of it?</div>
-          <textarea id="t3-q9" placeholder="Who did you talk with (no names needed), what was the substance, and what impact did it have on you or them?">${a['t3-q9'] || ''}</textarea>
+          <textarea id="${tp}-q9" placeholder="Who did you talk with (no names needed), what was the substance, and what impact did it have on you or them?">${a[tp + '-q9'] || ''}</textarea>
         </div>
       `,
     },
     // Page 10 – Dynamic list builder
     {
-      id: 't3p10',
+      id: tp + 'p10',
       html: `
         <h2 style="margin-bottom: 24px;">Roles & Applications</h2>
         <div class="q-block">
           <div class="q-label">List the roles or positions you have applied to, received offers for, or accepted since the program began.</div>
           <div id="dyn-list-container">
-            ${renderDynRows(a['t3-q10'] || [{ role: '', status: '', sector: '' }])}
+            ${renderDynRows(a[tp + '-q10'] || [{ role: '', status: '', sector: '' }])}
           </div>
           <button class="btn btn-ghost btn-sm" id="dyn-add" style="margin-top: 10px;">+ Add another role</button>
         </div>
@@ -1572,15 +1583,15 @@ function getT3Pages() {
     },
     // Page 11 – Branching question
     {
-      id: 't3p11',
+      id: tp + 'p11',
       html: `
         <h2 style="margin-bottom: 24px;">Career Direction</h2>
         <div class="q-block">
           <div class="q-label">Are you currently pursuing a high-impact career as your primary path?</div>
           <div class="check-list" style="gap: 8px;">
             ${['Yes', 'No', 'Still deciding'].map(opt => `
-              <label class="${(a['t3-q11'] || '') === opt ? 'checked' : ''}" data-group="t3-q11" data-val="${opt}">
-                <input type="radio" name="t3-q11" value="${opt}" ${(a['t3-q11'] || '') === opt ? 'checked' : ''} style="display:none" />
+              <label class="${(a[tp + '-q11'] || '') === opt ? 'checked' : ''}" data-group="${tp}-q11" data-val="${opt}">
+                <input type="radio" name="${tp}-q11" value="${opt}" ${(a[tp + '-q11'] || '') === opt ? 'checked' : ''} style="display:none" />
                 <span class="check-indicator"></span>
                 ${opt}
               </label>
@@ -1594,23 +1605,23 @@ function getT3Pages() {
   // Conditional pages
   if (branch === 'No') {
     standardPages.push({
-      id: 't3p12a',
+      id: tp + 'p12a',
       html: `
         <h2 style="margin-bottom: 24px;">Career Direction Factors</h2>
         <div class="q-block">
           <div class="q-label">What factors most influenced your career direction this year?</div>
-          <textarea id="t3-q12a" placeholder="Describe the key factors — personal, professional, financial, or otherwise — that shaped where you are heading...">${a['t3-q12a'] || ''}</textarea>
+          <textarea id="${tp}-q12a" placeholder="Describe the key factors — personal, professional, financial, or otherwise — that shaped where you are heading...">${a[tp + '-q12a'] || ''}</textarea>
         </div>
       `,
     });
   } else if (branch === 'Yes') {
     standardPages.push({
-      id: 't3p12b',
+      id: tp + 'p12b',
       html: `
         <h2 style="margin-bottom: 24px;">Influences on Your Path</h2>
         <div class="q-block">
           <div class="q-label">What most influenced your decision to pursue this path? What role, if any, did SMA play?</div>
-          <textarea id="t3-q12b" placeholder="Describe what shaped your decision, and be candid about SMA's role — whether central, minor, or indirect...">${a['t3-q12b'] || ''}</textarea>
+          <textarea id="${tp}-q12b" placeholder="Describe what shaped your decision, and be candid about SMA's role — whether central, minor, or indirect...">${a[tp + '-q12b'] || ''}</textarea>
         </div>
       `,
     });
@@ -1619,11 +1630,14 @@ function getT3Pages() {
   return standardPages;
 }
 
+function getT3Pages() { return getFollowUpPages('t3'); }
+function getT4Pages() { return getFollowUpPages('t4'); }
+
 // ─────────────────────────────────────────────
 // COMPLETE
 // ─────────────────────────────────────────────
 function renderComplete() {
-  const labels = { t1: 'T1 — Pre-program', t2: 'T2 — Post-orientation', t3: 'T3 — Six-month follow-up' };
+  const labels = { t1: 'T1 — Pre-orientation', t2: 'T2 — Post-orientation', t3: 'T3 — Post-Internship Check-in', t4: 'T4 — Six-month follow-up' };
   return `
     <div class="completion-icon">&#10003;</div>
     <h2 style="margin-bottom: 12px;">Thank you.</h2>
@@ -2016,25 +2030,28 @@ function attachHandlers() {
   // Dynamic list builder
   const dynAdd = document.getElementById('dyn-add');
   if (dynAdd) dynAdd.addEventListener('click', () => {
-    const a = state.answers.t3;
-    if (!a['t3-q10']) a['t3-q10'] = [{ role: '', status: '', sector: '' }];
+    const tp = state.touchpoint;
+    const a = state.answers[tp];
+    const key = tp + '-q10';
+    if (!a[key]) a[key] = [{ role: '', status: '', sector: '' }];
     saveDynRows();
-    a['t3-q10'].push({ role: '', status: '', sector: '' });
+    a[key].push({ role: '', status: '', sector: '' });
     const container = document.getElementById('dyn-list-container');
-    if (container) container.innerHTML = renderDynRows(a['t3-q10']);
+    if (container) container.innerHTML = renderDynRows(a[key]);
     attachDynHandlers();
   });
 
   attachDynHandlers();
   attachDragHandlers();
 
-  // T3 Q11 branching radio (uses check-list style but is radio)
-  document.querySelectorAll('input[name="t3-q11"]').forEach(radio => {
+  // T3/T4 Q11 branching radio (uses check-list style but is radio)
+  document.querySelectorAll('input[name$="-q11"]').forEach(radio => {
     radio.addEventListener('change', () => {
-      state.answers.t3['t3-q11'] = radio.value;
+      const tp = state.touchpoint;
+      state.answers[tp][tp + '-q11'] = radio.value;
       state.branchChoice = radio.value;
       // Update label styling
-      document.querySelectorAll('[data-group="t3-q11"]').forEach(lbl => {
+      document.querySelectorAll(`[data-group="${tp}-q11"]`).forEach(lbl => {
         lbl.classList.toggle('checked', lbl.dataset.val === radio.value);
       });
     });
@@ -2045,13 +2062,15 @@ function attachDynHandlers() {
   document.querySelectorAll('.dyn-remove').forEach(btn => {
     btn.addEventListener('click', () => {
       const idx = parseInt(btn.dataset.remove);
-      const a = state.answers.t3;
-      if (!a['t3-q10']) return;
+      const tp = state.touchpoint;
+      const a = state.answers[tp];
+      const key = tp + '-q10';
+      if (!a[key]) return;
       saveDynRows();
-      if (a['t3-q10'].length > 1) {
-        a['t3-q10'].splice(idx, 1);
+      if (a[key].length > 1) {
+        a[key].splice(idx, 1);
         const container = document.getElementById('dyn-list-container');
-        if (container) container.innerHTML = renderDynRows(a['t3-q10']);
+        if (container) container.innerHTML = renderDynRows(a[key]);
         attachDynHandlers();
       }
     });
@@ -2066,6 +2085,7 @@ function attachDynHandlers() {
 }
 
 function saveDynRows() {
+  const tp = state.touchpoint;
   const rows = [];
   document.querySelectorAll('.dyn-row').forEach(row => {
     const roleInp = row.querySelector('input[type="text"]');
@@ -2076,7 +2096,7 @@ function saveDynRows() {
       sector: selects[1] ? selects[1].value : '',
     });
   });
-  state.answers.t3['t3-q10'] = rows;
+  state.answers[tp][tp + '-q10'] = rows;
 }
 
 // ─────────────────────────────────────────────
@@ -2218,7 +2238,7 @@ function collectPageAnswers() {
       a[`${base}-yn`] = r.value;
     }
     // Handle branching
-    if (r.name === 't3-q11') {
+    if (r.name.endsWith('-q11')) {
       state.branchChoice = r.value;
     }
   });
@@ -2294,16 +2314,16 @@ function handleNext() {
   collectPageAnswers();
   const pages = getPages();
 
-  // Special: T3 Q11 branching
-  if (state.touchpoint === 't3' && state.page === 10) {
-    const q11 = state.answers.t3['t3-q11'];
+  // Special: T3/T4 Q11 branching (page 10 = index 10, the 11th standard page)
+  if ((state.touchpoint === 't3' || state.touchpoint === 't4') && state.page === 10) {
+    const tp = state.touchpoint;
+    const q11 = state.answers[tp][tp + '-q11'];
     if (q11 === 'Still deciding') {
       state.screen = 'complete';
       render();
       return;
     }
     state.branchChoice = q11;
-    // Pages will now include the conditional page
     state.page++;
     render();
     return;
