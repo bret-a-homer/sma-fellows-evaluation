@@ -1066,11 +1066,60 @@ function renderAssessment() {
 }
 
 // ─────────────────────────────────────────────
+// RESPONDENT ID PAGE (shared across all touchpoints)
+// ─────────────────────────────────────────────
+
+// Pull name/email from any touchpoint already completed this session
+function getRespondentDefaults() {
+  for (const tp of ['t1', 't2', 't3', 't4']) {
+    const a = state.answers[tp];
+    if (a[tp + '-respondent-name']) {
+      return {
+        name:  a[tp + '-respondent-name'],
+        email: a[tp + '-respondent-email'] || '',
+      };
+    }
+  }
+  return { name: '', email: '' };
+}
+
+function renderRespondentPage(tp, a) {
+  const defaults = getRespondentDefaults();
+  const name  = a[tp + '-respondent-name']  || defaults.name;
+  const email = a[tp + '-respondent-email'] || defaults.email;
+  return `
+    <h2 style="margin-bottom: 8px;">Before We Begin</h2>
+    <p style="color:var(--text-sec); font-size:14px; margin-bottom:28px; line-height:1.6;">
+      Your name and email are used only to link your responses across the four assessment touchpoints — they are not stored outside this session.
+    </p>
+    <div class="placement-inputs">
+      <div>
+        <label for="${tp}-respondent-name">Full name</label>
+        <input type="text" id="${tp}-respondent-name"
+          placeholder="e.g. Jordan Smith"
+          value="${name}" autocomplete="name" />
+      </div>
+      <div>
+        <label for="${tp}-respondent-email">Email address</label>
+        <input type="email" id="${tp}-respondent-email"
+          placeholder="e.g. jsmith@college.edu"
+          value="${email}" autocomplete="email" />
+      </div>
+    </div>
+    <p style="color:var(--text-sec); font-size:12px; margin-top:4px; line-height:1.5;">
+      Use the same name and email for each touchpoint so your responses can be linked in analysis.
+    </p>
+  `;
+}
+
+// ─────────────────────────────────────────────
 // T1 PAGES
 // ─────────────────────────────────────────────
 function getT1Pages() {
   const a = state.answers.t1;
   return [
+    // Page 0 – Respondent identity
+    { id: 't1p0', html: renderRespondentPage('t1', a) },
     // Page 1 – Career Vision (open-ended, moved to first)
     {
       id: 't1p1',
@@ -1225,6 +1274,8 @@ function getT1Pages() {
 function getT2Pages() {
   const a = state.answers.t2;
   return [
+    // Page 0 – Respondent identity
+    { id: 't2p0', html: renderRespondentPage('t2', a) },
     // Page 1 – Vision of Success (open-ended, mirrors T1 p1)
     {
       id: 't2p1',
@@ -1424,6 +1475,8 @@ function getFollowUpPages(tp) {
   const branch = state.branchChoice;
 
   const standardPages = [
+    // Page 0 – Respondent identity
+    { id: tp + 'p0', html: renderRespondentPage(tp, a) },
     // Page 1 – Internship placement identity
     {
       id: tp + 'p1',
@@ -2291,8 +2344,8 @@ function collectPageAnswers() {
     if (inp.id) a[inp.id] = inp.value;
   });
 
-  // Collect placement identity text inputs (and any other named text inputs)
-  document.querySelectorAll('.placement-inputs input[type="text"]').forEach(inp => {
+  // Collect placement identity and respondent text/email inputs
+  document.querySelectorAll('.placement-inputs input[type="text"], .placement-inputs input[type="email"]').forEach(inp => {
     if (inp.id) a[inp.id] = inp.value;
   });
 
