@@ -1996,6 +1996,29 @@ function renderTicks(n) {
   return html;
 }
 
+function motivationLabel(score) {
+  if (score < 1.5) return 'External — doing this for external rewards or to avoid criticism';
+  if (score < 2.5) return 'Introjected — driven by internal pressure or guilt, not genuine ownership';
+  if (score < 3.5) return 'Identified — personally valuing the goal, even if not fully internalized';
+  if (score < 4.5) return 'Integrated — the goal is fully aligned with their broader sense of self';
+  return              'Intrinsic — pursuing this because the work itself is deeply meaningful';
+}
+
+function motivationNarrative(t2then, t2now) {
+  const corrGain = t2now - t2then;
+  const sign = corrGain >= 0 ? '+' : '';
+  const thenLabel = motivationLabel(t2then);
+  const nowLabel  = motivationLabel(t2now);
+  let magnitude;
+  if (corrGain >= 1.2)
+    magnitude = 'This is a meaningful internalization shift — fellows appear to have moved from compliance-adjacent motivation toward genuine ownership of the high-impact mission, which SDT research associates with greater persistence and career follow-through.';
+  else if (corrGain >= 0.5)
+    magnitude = 'This modest shift suggests some internalization occurred during orientation, though pre-existing motivation also played a role. Fellows show early signs of owning the mission rather than simply responding to external pull.';
+  else
+    magnitude = 'The small corrected shift makes it difficult to attribute meaningful internalization to the orientation. Fellows may have already held stable motivation coming in, or the orientation did not substantially shift how they relate to the high-impact mission.';
+  return `Fellows' corrected baseline reflects <em>${thenLabel}</em> (T2-Then: ${t2then.toFixed(1)}/5). After orientation they reported <em>${nowLabel}</em> (T2-Now: ${t2now.toFixed(1)}/5) — a corrected shift of ${sign}${corrGain.toFixed(2)} ordinal points after accounting for possible scale recalibration. ${magnitude}`;
+}
+
 function commitmentLabel(score) {
   if (score < 2)   return 'minimal — exploring out of curiosity or circumstance';
   if (score < 3)   return 'a faint interest — not yet a real priority';
@@ -2113,7 +2136,6 @@ function renderDashCommitment(s) {
       ${bar(t1now,  '#5a5a5a', 'T1 — Now', 'Naïve pre-orientation score')}
       ${bar(t2then, '#8a7a6a', 'T2 — Then', 'Retrospective pre-orientation (corrected baseline)')}
       ${bar(t2now,  'var(--accent)', 'T2 — Now', 'Post-orientation score')}
-      <p class="commit-narrative">${commitmentNarrative(t2then, t2now)}</p>
       <div class="commit-deltas">
         <div class="commit-delta-item">
           <span class="commit-delta-val ${parseFloat(naiveDelta)>=0?'pos':'neg'}">${parseFloat(naiveDelta)>=0?'+':''}${naiveDelta}</span>
@@ -2163,6 +2185,7 @@ function renderDashMotivation(s) {
       ${mBar(t1now,  '#5a5a5a', 'T1 — Now', 'Naïve pre-orientation score')}
       ${mBar(t2then, '#8a7a6a', 'T2 — Then', 'Retrospective pre-orientation (corrected baseline)')}
       ${mBar(t2now,  'var(--accent)', 'T2 — Now', 'Post-orientation score')}
+      <p class="commit-narrative">${motivationNarrative(t2then, t2now)}</p>
       <div class="commit-deltas">
         <div class="commit-delta-item">
           <span class="commit-delta-val ${parseFloat(naiveDelta)>=0?'pos':'neg'}">${parseFloat(naiveDelta)>=0?'+':''}${naiveDelta}</span>
