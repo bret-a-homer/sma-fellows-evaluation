@@ -1864,6 +1864,7 @@ const DASH_SCENARIOS = {
       n: 18, t1Completion: 100, t2Completion: 94, t3Completion: 89, t4Completion: 83,
       recMean: 8.7, recDist: [0,0,0,0,1,1,2,3,5,4,2], // 0-10
       readiness: 6.1,
+      convT1: 56, convT4: 89,
       careerDirT1: { Yes: 15, No: 22, Deciding: 63 },
       careerDirT4: { Yes: 67, No: 11, Deciding: 22 },
     },
@@ -1904,6 +1905,7 @@ const DASH_SCENARIOS = {
       n: 18, t1Completion: 100, t2Completion: 94, t3Completion: 78, t4Completion: 67,
       recMean: 7.2, recDist: [0,0,1,1,2,3,3,4,3,1,0],
       readiness: 4.9,
+      convT1: 50, convT4: 72,
       careerDirT1: { Yes: 20, No: 25, Deciding: 55 },
       careerDirT4: { Yes: 50, No: 20, Deciding: 30 },
     },
@@ -1944,6 +1946,7 @@ const DASH_SCENARIOS = {
       n: 18, t1Completion: 100, t2Completion: 89, t3Completion: 61, t4Completion: 44,
       recMean: 6.1, recDist: [1,1,2,2,3,3,3,2,1,0,0],
       readiness: 4.2,
+      convT1: 47, convT4: 58,
       careerDirT1: { Yes: 25, No: 28, Deciding: 47 },
       careerDirT4: { Yes: 44, No: 28, Deciding: 28 },
     },
@@ -2049,6 +2052,8 @@ function renderDashSnapshot(s) {
   const recAvg = snap.recMean.toFixed(1);
   const dirChange = (snap.careerDirT4.Yes - snap.careerDirT1.Yes);
   const dirSign = dirChange >= 0 ? '+' : '';
+  const convChange = snap.convT4 - snap.convT1;
+  const convSign = convChange >= 0 ? '+' : '';
   return `
     <div class="dash-snapshot">
       <div class="snap-card">
@@ -2074,6 +2079,11 @@ function renderDashSnapshot(s) {
         <div class="snap-num">${snap.readiness.toFixed(1)}<span style="font-size:14px;font-weight:400;color:var(--text-sec)">/7</span></div>
         <div class="snap-label">Readiness for Placement</div>
         <div class="snap-sub">Cohort average at T2</div>
+      </div>
+      <div class="snap-card">
+        <div class="snap-num">${snap.convT4}%</div>
+        <div class="snap-label">Having Career Conversations</div>
+        <div class="snap-sub">${convSign}${convChange}% from T1 (${snap.convT1}%) · at six-month follow-up</div>
       </div>
     </div>
   `;
