@@ -1658,6 +1658,32 @@ function getFollowUpPages(tp) {
         </div>
       `,
     },
+    // Page 1c – Retrospective placement readiness
+    {
+      id: tp + 'p1c',
+      html: `
+        <h2 style="margin-bottom: 8px;">Readiness — Looking Back</h2>
+        <p style="color:var(--text-sec); font-size:14px; margin-bottom:28px; line-height:1.6;">
+          Now that you've completed the placement, reflect on how prepared you actually were going in.
+        </p>
+        <div class="q-block">
+          <div class="q-label" style="margin-bottom:16px;"><em>How would you describe your readiness for this placement?</em></div>
+          <div class="check-list" style="gap:10px;">
+            ${[
+              { val: 'Yes', desc: 'I was well-prepared — I hit the ground running and contributed effectively from early on.' },
+              { val: 'Somewhat', desc: 'I was somewhat prepared — I had gaps but managed to find my footing and contribute meaningfully.' },
+              { val: 'No', desc: 'I was underprepared — I struggled more than expected and found it difficult to contribute effectively.' },
+            ].map(opt => `
+              <label class="${(a[tp + '-ready'] || '') === opt.val ? 'checked' : ''}" data-group="${tp}-ready" data-val="${opt.val}">
+                <input type="radio" name="${tp}-ready" value="${opt.val}" ${(a[tp + '-ready'] || '') === opt.val ? 'checked' : ''} style="display:none" />
+                <span class="check-indicator"></span>
+                <span><strong>${opt.val}</strong> — ${opt.desc}</span>
+              </label>
+            `).join('')}
+          </div>
+        </div>
+      `,
+    },
     // Page 2 – Experienced Barriers
     {
       id: tp + 'p2',
@@ -1863,7 +1889,7 @@ const DASH_SCENARIOS = {
     snapshot: {
       n: 18, t1Completion: 100, t2Completion: 94, t3Completion: 89, t4Completion: 83,
       recMean: 8.7, recDist: [0,0,0,0,1,1,2,3,5,4,2], // 0-10
-      readiness: 6.1,
+      placementReady: 83,
       convT1: 56, convT4: 89,
       careerDirT1: { Yes: 15, No: 22, Deciding: 63 },
       careerDirT4: { Yes: 67, No: 11, Deciding: 22 },
@@ -1904,7 +1930,7 @@ const DASH_SCENARIOS = {
     snapshot: {
       n: 18, t1Completion: 100, t2Completion: 94, t3Completion: 78, t4Completion: 67,
       recMean: 7.2, recDist: [0,0,1,1,2,3,3,4,3,1,0],
-      readiness: 4.9,
+      placementReady: 61,
       convT1: 50, convT4: 72,
       careerDirT1: { Yes: 20, No: 25, Deciding: 55 },
       careerDirT4: { Yes: 50, No: 20, Deciding: 30 },
@@ -1945,7 +1971,7 @@ const DASH_SCENARIOS = {
     snapshot: {
       n: 18, t1Completion: 100, t2Completion: 89, t3Completion: 61, t4Completion: 44,
       recMean: 6.1, recDist: [1,1,2,2,3,3,3,2,1,0,0],
-      readiness: 4.2,
+      placementReady: 44,
       convT1: 47, convT4: 58,
       careerDirT1: { Yes: 25, No: 28, Deciding: 47 },
       careerDirT4: { Yes: 44, No: 28, Deciding: 28 },
@@ -2076,9 +2102,9 @@ function renderDashSnapshot(s) {
         <div class="snap-sub">Change in % "Yes" from T1 to T4</div>
       </div>
       <div class="snap-card">
-        <div class="snap-num">${snap.readiness.toFixed(1)}<span style="font-size:14px;font-weight:400;color:var(--text-sec)">/7</span></div>
-        <div class="snap-label">Readiness for Placement</div>
-        <div class="snap-sub">Cohort average at T2</div>
+        <div class="snap-num">${snap.placementReady}%</div>
+        <div class="snap-label">Felt Ready for Placement</div>
+        <div class="snap-sub">Reported well- or somewhat-prepared · post-internship (T3)</div>
       </div>
       <div class="snap-card">
         <div class="snap-num">${snap.convT4}%</div>
