@@ -946,14 +946,21 @@
 
 <script>
 // ─────────────────────────────────────────────
+// CONFIG  ← paste your Apps Script web app URL here after deploying
+// ─────────────────────────────────────────────
+const APPS_SCRIPT_URL = 'YOUR_APPS_SCRIPT_URL_HERE';
+
+// ─────────────────────────────────────────────
 // STATE
 // ─────────────────────────────────────────────
 const state = {
   screen: 'home',        // home | touchpoint | assessment | complete | results
-  touchpoint: null,      // 't1' | 't2' | 't3'
+  touchpoint: null,      // 't1' | 't2' | 't3' | 't4'
   page: 0,
   answers: { t1: {}, t2: {}, t3: {}, t4: {} },
   branchChoice: null,    // for T3/T4 Q11
+  submitting: false,     // true while fetch is in-flight
+  submitError: null,     // string if submission failed, null otherwise
 };
 
 // ─────────────────────────────────────────────
@@ -1171,11 +1178,16 @@ function renderRespondentPage(tp, a) {
   const defaults = getRespondentDefaults();
   const name  = a[tp + '-respondent-name']  || defaults.name;
   const email = a[tp + '-respondent-email'] || defaults.email;
+  const isReturn = tp !== 't1';
   return `
     <h2 style="margin-bottom: 8px;">Before We Begin</h2>
-    <p style="color:var(--text-sec); font-size:14px; margin-bottom:28px; line-height:1.6;">
+    <p style="color:var(--text-sec); font-size:14px; margin-bottom:${isReturn ? '16px' : '28px'}; line-height:1.6;">
       Your name and email are used only to link your responses across the four assessment touchpoints — they are not stored outside this session.
     </p>
+    ${isReturn ? `
+    <div style="padding:12px 16px; background:rgba(201,98,47,.08); border:1px solid var(--accent); border-radius:var(--radius); margin-bottom:24px; font-size:13px; color:var(--text-sec); line-height:1.55;">
+      Use the <strong style="color:var(--text)">same email address</strong> you entered at your previous touchpoint — this is how your responses are linked across the program.
+    </div>` : ''}
     <div class="placement-inputs">
       <div>
         <label for="${tp}-respondent-name">Full name</label>
@@ -1184,15 +1196,15 @@ function renderRespondentPage(tp, a) {
           value="${name}" autocomplete="name" />
       </div>
       <div>
-        <label for="${tp}-respondent-email">Email address</label>
+        <label for="${tp}-respondent-email">Email address <span style="color:var(--accent);">*</span></label>
         <input type="email" id="${tp}-respondent-email"
           placeholder="e.g. jsmith@college.edu"
           value="${email}" autocomplete="email" />
+        <p style="color:var(--text-sec); font-size:12px; margin-top:6px; line-height:1.5;">
+          Required — used to link your responses across touchpoints. Use the same address each time.
+        </p>
       </div>
     </div>
-    <p style="color:var(--text-sec); font-size:12px; margin-top:4px; line-height:1.5;">
-      Use the same name and email for each touchpoint so your responses can be linked in analysis.
-    </p>
   `;
 }
 
@@ -1861,9 +1873,35 @@ function getT3Pages() { return getFollowUpPages('t3'); }
 function getT4Pages() { return getFollowUpPages('t4'); }
 
 // ─────────────────────────────────────────────
-// COMPLETE
+// COMPLETE  (handles loading / success / error)
 // ─────────────────────────────────────────────
 function renderComplete() {
+  // ── Submitting ──────────────────────────────
+  if (state.submitting) {
+    return `
+      <div style="text-align:center; padding:64px 0;">
+        <div style="width:36px;height:36px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 20px;"></div>
+        <p style="font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--text-sec);">Saving your responses…</p>
+      </div>
+      <style>@keyframes spin{to{transform:rotate(360deg)}}</style>
+    `;
+  }
+
+  // ── Error ───────────────────────────────────
+  if (state.submitError) {
+    return `
+      <div style="width:56px;height:56px;border-radius:50%;background:rgba(192,112,80,.12);border:1px solid #c07050;display:flex;align-items:center;justify-content:center;font-size:24px;margin-bottom:24px;">✕</div>
+      <h2 style="margin-bottom:12px;">Something went wrong</h2>
+      <p>Your responses could not be saved. Please try again — if the problem persists, contact the SMA research team.</p>
+      <p style="margin-top:10px;font-size:12px;color:var(--text-sec);word-break:break-word;">${state.submitError}</p>
+      <div style="margin-top:36px;display:flex;gap:12px;flex-wrap:wrap;">
+        <button class="btn btn-primary" id="btn-retry">Try Again</button>
+        <button class="btn btn-ghost" id="btn-home-complete">Return to Home</button>
+      </div>
+    `;
+  }
+
+  // ── Success ─────────────────────────────────
   const labels = { t1: 'T1 — Pre-orientation', t2: 'T2 — Post-orientation', t3: 'T3 — Post-Internship Check-in', t4: 'T4 — Six-month follow-up' };
   return `
     <div class="completion-icon">&#10003;</div>
@@ -2735,9 +2773,13 @@ function attachHandlers() {
     });
   });
 
-  // Complete back
+  // Complete — back to home
   const btnHomeC = document.getElementById('btn-home-complete');
   if (btnHomeC) btnHomeC.addEventListener('click', () => { state.screen = 'home'; render(); });
+
+  // Complete — retry after error
+  const btnRetry = document.getElementById('btn-retry');
+  if (btnRetry) btnRetry.addEventListener('click', () => submitToSheet());
 
   // Assessment navigation
   const btnNext = document.getElementById('btn-next');
@@ -3086,13 +3128,22 @@ function handleNext() {
   collectPageAnswers();
   const pages = getPages();
 
-  // Special: T3/T4 Q11 branching (page 10 = index 10, the 11th standard page)
+  // ── Email validation on the respondent page (always page 0) ───────────────
+  if (state.page === 0) {
+    const tp    = state.touchpoint;
+    const email = state.answers[tp][tp + '-respondent-email'] || '';
+    if (!isValidEmail(email)) {
+      showEmailError();
+      return;
+    }
+  }
+
+  // ── T3/T4 Q11 branching ───────────────────────────────────────────────────
   if ((state.touchpoint === 't3' || state.touchpoint === 't4') && state.page === 10) {
-    const tp = state.touchpoint;
+    const tp  = state.touchpoint;
     const q11 = state.answers[tp][tp + '-q11'];
     if (q11 === 'Still deciding') {
-      state.screen = 'complete';
-      render();
+      submitToSheet();
       return;
     }
     state.branchChoice = q11;
@@ -3101,9 +3152,9 @@ function handleNext() {
     return;
   }
 
+  // ── Last page → submit ────────────────────────────────────────────────────
   if (state.page >= pages.length - 1) {
-    state.screen = 'complete';
-    render();
+    submitToSheet();
   } else {
     state.page++;
     render();
@@ -3116,6 +3167,77 @@ function handleBack() {
     render();
   } else {
     state.page--;
+    render();
+  }
+}
+
+// ─────────────────────────────────────────────
+// EMAIL VALIDATION
+// ─────────────────────────────────────────────
+function isValidEmail(email) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email).trim());
+}
+
+function showEmailError() {
+  const inp = document.querySelector('input[type="email"]');
+  if (!inp) return;
+  inp.style.borderColor = '#c07050';
+  inp.focus();
+  if (!document.getElementById('email-error')) {
+    const err = document.createElement('p');
+    err.id = 'email-error';
+    err.style.cssText = 'color:#c07050;font-size:12px;margin-top:6px;line-height:1.5;';
+    err.textContent = 'Please enter a valid email address — this is how your responses are linked across touchpoints.';
+    inp.insertAdjacentElement('afterend', err);
+  }
+  inp.addEventListener('input', () => {
+    inp.style.borderColor = '';
+    const e = document.getElementById('email-error');
+    if (e) e.remove();
+  }, { once: true });
+}
+
+// ─────────────────────────────────────────────
+// SUBMISSION
+// ─────────────────────────────────────────────
+async function submitToSheet() {
+  const tp = state.touchpoint;
+  const a  = state.answers[tp];
+
+  const email = (a[tp + '-respondent-email'] || '').trim().toLowerCase();
+  const name  = (a[tp + '-respondent-name']  || '').trim();
+
+  const payload = {
+    touchpoint: tp,
+    email,
+    name,
+    data: a,
+  };
+
+  state.submitting  = true;
+  state.submitError = null;
+  state.screen      = 'complete';
+  render();
+
+  try {
+    const res  = await fetch(APPS_SCRIPT_URL, {
+      method:  'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body:    JSON.stringify(payload),
+    });
+    const json = await res.json();
+
+    if (json.success) {
+      state.submitting = false;
+      render();
+    } else {
+      state.submitting  = false;
+      state.submitError = json.error || 'The server returned an error. Please try again.';
+      render();
+    }
+  } catch (err) {
+    state.submitting  = false;
+    state.submitError = 'Could not reach the server (' + err.message + '). Check your connection and try again.';
     render();
   }
 }
