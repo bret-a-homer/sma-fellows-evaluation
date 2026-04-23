@@ -515,6 +515,17 @@ function computeDashboardData(cohortFilter) {
     return [1,2,3,4,5].map(function(v){return t3r.filter(function(r){return Number(r[ci(col)])===v;}).length;});
   });
 
+  // Motivation distributions
+  var motT1dist=[0,0,0,0,0], motT2thenDist=[0,0,0,0,0], motT2nowDist=[0,0,0,0,0];
+  rows.forEach(function(r){
+    var v=num(r,'T1_Motivation_Index');
+    if(v!==null){var idx=Math.min(Math.max(Math.round(v)-1,0),4); motT1dist[idx]++;}
+  });
+  t2r.forEach(function(r){
+    var v=num(r,'T2_Motivation_Then_Index'); if(v!==null){var idx=Math.min(Math.max(Math.round(v)-1,0),4); motT2thenDist[idx]++;}
+    var w=num(r,'T2_Motivation_Now_Index');  if(w!==null){var idx=Math.min(Math.max(Math.round(w)-1,0),4); motT2nowDist[idx]++;}
+  });
+
   return {
     n: n, cohorts: allCohorts,
     snapshot: {
@@ -536,6 +547,7 @@ function computeDashboardData(cohortFilter) {
       t1now:  avg(rows.map(function(r){return num(r,'T1_Motivation_Index');})),
       t2then: avg(t2r.map(function(r){return num(r,'T2_Motivation_Then_Index');})),
       t2now:  avg(t2r.map(function(r){return num(r,'T2_Motivation_Now_Index');})),
+      t1dist: motT1dist, t2thenDist: motT2thenDist, t2nowDist: motT2nowDist,
       labels: ['External','Introjected','Identified','Integrated','Intrinsic']
     },
     careerValues: { names: CAREER_VALUES.map(function(v){return v.name;}), t1:cvT1, t2:cvT2, t4:cvT4 },
