@@ -3220,24 +3220,20 @@ async function submitToSheet() {
   render();
 
   try {
-    const res  = await fetch(APPS_SCRIPT_URL, {
-      method:  'POST',
-      headers: { 'Content-Type': 'text/plain' },
-      body:    JSON.stringify(payload),
+    // mode: 'no-cors' works around a Google Apps Script redirect that breaks
+    // CORS response reading. The payload is delivered successfully — we just
+    // can't read the confirmation back. The sheet is the source of truth.
+    await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      mode:   'no-cors',
+      body:   JSON.stringify(payload),
     });
-    const json = await res.json();
-
-    if (json.success) {
-      state.submitting = false;
-      render();
-    } else {
-      state.submitting  = false;
-      state.submitError = json.error || 'The server returned an error. Please try again.';
-      render();
-    }
+    state.submitting = false;
+    render();
   } catch (err) {
+    // Only fires on genuine network failure (offline, DNS error, etc.)
     state.submitting  = false;
-    state.submitError = 'Could not reach the server (' + err.message + '). Check your connection and try again.';
+    state.submitError = 'Could not reach the server (' + err.message + '). Check your internet connection and try again.';
     render();
   }
 }
