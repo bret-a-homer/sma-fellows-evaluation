@@ -407,9 +407,139 @@ function doPost(e) {
   }
 }
 
-// Health-check endpoint — returns {status:'ok'} for manual verification
+// Dashboard — served at the web app URL (no parameters = all cohorts)
 function doGet(e) {
-  return jsonResponse({ status: 'ok', timestamp: new Date().toISOString() });
+  var cohort = (e && e.parameter && e.parameter.cohort) ? e.parameter.cohort : 'all';
+  var data   = computeDashboardData(cohort);
+  if (!data || data.n === 0) {
+    return HtmlService.createHtmlOutput(
+      '<p style="font-family:sans-serif;padding:40px;color:#666">' +
+      'No data found. Run <strong>setup()</strong> then <strong>generateSampleData()</strong> in the Apps Script editor.</p>'
+    );
+  }
+  var tmpl = HtmlService.createTemplateFromFile('dashboard');
+  tmpl.dataJson     = JSON.stringify(data);
+  tmpl.cohortsList  = JSON.stringify(data.cohorts);
+  tmpl.selected     = cohort;
+  return tmpl.evaluate()
+    .setTitle('SMA Fellows Evaluation — Dashboard')
+    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+}
+
+function computeDashboardData(cohortFilter) {
+  var ss    = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName(SHEET_NAME);
+  if (!sheet || sheet.getLastRow() <= 1) return null;
+
+  var raw  = sheet.getDataRange().getValues();
+  var hdr  = raw[0];
+  var rows = raw.slice(1);
+  function ci(name) { return hdr.indexOf(name); }
+
+  rows = rows.filter(function(r) { return String(r[ci('Email')] || '').trim(); });
+
+  var allCohorts = [];
+  rows.forEach(function(r) {
+    var c = String(r[ci('Cohort')] || '').trim() || 'Unknown';
+    if (allCohorts.indexOf(c) < 0) allCohorts.push(c);
+  });
+  allCohorts.sort();
+
+  if (cohortFilter && cohortFilter !== 'all') {
+    rows = rows.filter(function(r) {
+      return String(r[ci('Cohort')] || '').trim() === cohortFilter;
+    });
+  }
+
+  var n = rows.length;
+  if (!n) return { n: 0, cohorts: allCohorts };
+
+  function num(r, name) {
+    var v = r[ci(name)];
+    return (v !== '' && v !== null && v !== undefined) ? Number(v) : null;
+  }
+  function avg(vals) {
+    var v = vals.filter(function(x) { return x !== null && !isNaN(x); });
+    return v.length ? v.reduce(function(a,b){return a+b;},0)/v.length : 0;
+  }
+
+  var t2r = rows.filter(function(r){ return r[ci('T2_Submitted')]; });
+  var t3r = rows.filter(function(r){ return r[ci('T3_Submitted')]; });
+  var t4r = rows.filter(function(r){ return r[ci('T4_Submitted')]; });
+
+  // Snapshot
+  var npsVals = [];
+  rows.forEach(function(r){
+    var v = num(r,'T4_NPS') !== null ? num(r,'T4_NPS') : num(r,'T3_NPS');
+    if (v !== null) npsVals.push(v);
+  });
+
+  function dirPcts(subset, col) {
+    var valid = subset.filter(function(r){ return r[ci(col)]; });
+    if (!valid.length) return {Yes:0,Deciding:0,No:0};
+    var tot = valid.length;
+    return {
+      Yes:      Math.round(100*valid.filter(function(r){return r[ci(col)]==='Yes';}).length/tot),
+      Deciding: Math.round(100*valid.filter(function(r){return r[ci(col)]==='Still deciding';}).length/tot),
+      No:       Math.round(100*valid.filter(function(r){return r[ci(col)]==='No';}).length/tot)
+    };
+  }
+
+  var rdy = t3r.filter(function(r){return num(r,'T3_Readiness_Retrospective')!==null;});
+  var t1cv = rows.filter(function(r){return r[ci('T1_Peer_Conv_YN')];});
+  var t4cv = t4r.filter(function(r){return num(r,'T4_Peer_Conv_Count')!==null;});
+
+  // SE
+  var seT1 = SE_ITEMS.map(function(s){return avg(rows.map(function(r){return num(r,'T1_SE_'+s.key);}));});
+  var seT2 = SE_ITEMS.map(function(s){return avg(t2r.map(function(r){return num(r,'T2_SE_'+s.key);}));});
+
+  // Career values
+  var cvT1 = CAREER_VALUES.map(function(v){return avg(rows.map(function(r){return num(r,'T1_Rank_'+v.key);}));});
+  var cvT2 = CAREER_VALUES.map(function(v){return avg(t2r.map(function(r){return num(r,'T2_Rank_'+v.key);}));});
+  var cvT4 = CAREER_VALUES.map(function(v){return avg(t4r.map(function(r){return num(r,'T4_Rank_'+v.key);}));});
+
+  // Barriers
+  var nonOther = BARRIERS.filter(function(b){return b.key!=='Other';});
+  var bAnt = nonOther.map(function(b){
+    return t2r.length ? Math.round(100*t2r.filter(function(r){return Number(r[ci('T2_Barrier_'+b.key)])===1;}).length/t2r.length) : 0;
+  });
+  var bExp = nonOther.map(function(b){
+    return t3r.length ? Math.round(100*t3r.filter(function(r){return Number(r[ci('T3_Barrier_'+b.key)])===1;}).length/t3r.length) : 0;
+  });
+
+  // BARS
+  var barsCols = ['T3_BARS_Intellectual_Rigor','T3_BARS_Prof_Development','T3_BARS_Impact_Meaningfulness'];
+  var barsDist = barsCols.map(function(col){
+    return [1,2,3,4,5].map(function(v){return t3r.filter(function(r){return Number(r[ci(col)])===v;}).length;});
+  });
+
+  return {
+    n: n, cohorts: allCohorts,
+    snapshot: {
+      n: n,
+      recMean: avg(npsVals),
+      careerDirT1: dirPcts(rows,'T1_Career_Direction'),
+      careerDirT4: dirPcts(t4r,'T4_Career_Direction'),
+      placementReady: rdy.length ? Math.round(100*rdy.filter(function(r){return num(r,'T3_Readiness_Retrospective')>=4;}).length/rdy.length) : 0,
+      convT1: t1cv.length ? Math.round(100*t1cv.filter(function(r){return r[ci('T1_Peer_Conv_YN')]==='Yes';}).length/t1cv.length) : 0,
+      convT4: t4cv.length ? Math.round(100*t4cv.filter(function(r){return num(r,'T4_Peer_Conv_Count')>0;}).length/t4cv.length) : 0
+    },
+    selfEfficacy: { items: SE_ITEMS.map(function(s){return s.full;}), t1: seT1, t2: seT2 },
+    commitment: {
+      t1now:  avg(rows.map(function(r){return num(r,'T1_Commitment');})),
+      t2then: avg(t2r.map(function(r){return num(r,'T2_Commitment_Then');})),
+      t2now:  avg(t2r.map(function(r){return num(r,'T2_Commitment_Now');}))
+    },
+    motivation: {
+      t1now:  avg(rows.map(function(r){return num(r,'T1_Motivation_Index');})),
+      t2then: avg(t2r.map(function(r){return num(r,'T2_Motivation_Then_Index');})),
+      t2now:  avg(t2r.map(function(r){return num(r,'T2_Motivation_Now_Index');})),
+      labels: ['External','Introjected','Identified','Integrated','Intrinsic']
+    },
+    careerValues: { names: CAREER_VALUES.map(function(v){return v.name;}), t1:cvT1, t2:cvT2, t4:cvT4 },
+    barriers: { labels: nonOther.map(function(b){return b.full;}), anticipated:bAnt, experienced:bExp },
+    placement: { dims: ['Intellectual Rigor','Professional Development','Impact & Meaningfulness'], dist: barsDist }
+  };
 }
 
 function jsonResponse(obj) {

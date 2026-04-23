@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SMA Fellows Evaluation — Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0d0d0d;--surface:#161616;--surface2:#1e1e1e;
+  --text:#f2ede4;--text-sec:#9e9a91;--accent:#c9622f;
+  --border:#2a2a2a;--success:#4a7c59;--radius:3px;
+}
+body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;font-size:14px;line-height:1.5}
+.page{max-width:740px;margin:0 auto;padding:40px 20px 80px}
+h1{font-family:'Playfair Display',serif;font-size:26px;font-weight:700;margin-bottom:6px}
+.subtitle{color:var(--text-sec);font-size:13px;margin-bottom:28px;line-height:1.6}
+.filter-bar{display:flex;align-items:center;gap:12px;margin-bottom:32px;flex-wrap:wrap}
+.filter-bar label{font-size:12px;color:var(--text-sec);font-weight:600;letter-spacing:.05em;text-transform:uppercase}
+.filter-bar select{background:var(--surface);border:1px solid var(--border);color:var(--text);padding:6px 12px;border-radius:var(--radius);font-size:13px;cursor:pointer}
+.cohort-badge{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:4px 10px;font-size:12px;color:var(--text-sec)}
+.dash-snapshot{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;margin-bottom:40px}
+.snap-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px 16px;text-align:center}
+.snap-num{font-family:'Playfair Display',serif;font-size:28px;font-weight:700;color:var(--accent);line-height:1.2}
+.snap-label{font-size:12px;font-weight:600;color:var(--text);margin-top:6px;line-height:1.4}
+.snap-sub{font-size:11px;color:var(--text-sec);margin-top:4px;line-height:1.4}
+.dash-section{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:24px;margin-bottom:20px}
+.dash-section-title{font-weight:600;font-size:13px;letter-spacing:.05em;text-transform:uppercase;color:var(--text);margin-bottom:8px}
+.dash-section-desc{font-size:13px;color:var(--text-sec);line-height:1.6;margin-bottom:20px}
+.dash-se-legend{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:12px;color:var(--text-sec);margin-bottom:16px}
+.legend-dot{display:inline-block;width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.dash-se-grid{display:grid;grid-template-columns:180px 1fr 48px;gap:6px 12px;align-items:center}
+.dash-row-label{font-size:13px;color:var(--text);line-height:1.4}
+.dash-bars{display:flex;flex-direction:column;gap:4px}
+.dash-bar-group{display:flex;align-items:center;gap:8px}
+.dash-bar-label{font-size:10px;color:var(--text-sec);min-width:28px}
+.dash-bar-track{flex:1;background:var(--border);border-radius:2px;height:10px;overflow:hidden;position:relative}
+.dash-bar-fill{height:100%;border-radius:2px}
+.dash-tick{position:absolute;top:0;bottom:0;width:1px;background:rgba(255,255,255,.18);pointer-events:none}
+.dash-bar-val{font-size:12px;color:var(--text-sec);min-width:28px;text-align:right}
+.dash-delta{font-size:13px;font-weight:600;text-align:right}
+.dash-delta.pos{color:var(--success)}.dash-delta.neg{color:#c07050}
+.commit-bar-wrap{display:flex;align-items:center;gap:12px;margin-bottom:10px}
+.commit-bar-label{font-size:12px;color:var(--text);width:130px;flex-shrink:0;line-height:1.3}
+.commit-bar-sub{font-size:10px;color:var(--text-sec);font-weight:400}
+.commit-narrative{font-size:13px;color:var(--text-sec);line-height:1.65;margin:16px 0 0;padding:12px 14px;background:var(--surface2);border-left:2px solid var(--accent);border-radius:0 var(--radius) var(--radius) 0}
+.commit-narrative em{color:var(--text);font-style:italic}
+.commit-deltas{display:flex;flex-wrap:wrap;gap:12px;margin-top:16px;border-top:1px solid var(--border);padding-top:14px}
+.commit-delta-item{display:flex;align-items:center;gap:8px}
+.commit-delta-val{font-size:16px;font-weight:700;min-width:40px}
+.commit-delta-val.pos{color:var(--success)}.commit-delta-val.neg{color:#c07050}
+.commit-delta-label{font-size:12px;color:var(--text-sec)}
+.dash-motiv-legend{display:flex;justify-content:space-between;font-size:11px;color:var(--text-sec);margin-bottom:14px;font-style:italic;flex-wrap:wrap;gap:4px}
+.barrier-grid{display:flex;flex-direction:column;gap:10px}
+.barrier-row{display:grid;grid-template-columns:160px 1fr 52px;gap:8px;align-items:center}
+.barrier-label{font-size:12px;color:var(--text);line-height:1.4}
+.barrier-bars{display:flex;flex-direction:column;gap:4px}
+.barrier-bar-wrap{display:flex;align-items:center;gap:8px}
+.barrier-pct{font-size:11px;color:var(--text-sec);min-width:30px}
+.barrier-diff{font-size:12px;font-weight:600;text-align:right}
+.placement-row{display:flex;align-items:center;margin-bottom:10px}
+.placement-dim-label{font-size:12px;color:var(--text);min-width:180px;line-height:1.3}
+.career-dir-row{display:flex;align-items:center;gap:12px;margin-bottom:10px}
+.career-dir-tp{font-size:12px;color:var(--text-sec);min-width:160px}
+.career-dir-bars{flex:1}
+@media(max-width:520px){
+  .dash-se-grid{grid-template-columns:1fr}
+  .barrier-row{grid-template-columns:1fr}
+  .placement-dim-label{min-width:120px}
+  .career-dir-tp{min-width:100px}
+}
+</style>
+</head>
+<body>
+<div class="page">
+  <h1>SMA Fellows Evaluation</h1>
+  <p class="subtitle">Program effectiveness dashboard — live data from the evaluation tool. Use the cohort filter to compare years.</p>
+
+  <div class="filter-bar">
+    <label for="cohort-select">Cohort</label>
+    <select id="cohort-select" onchange="location.href='?cohort='+this.value">
+      <option value="all" <?= selected==='all'?'selected':'' ?>>All cohorts</option>
+      <? var cl=JSON.parse(cohortsList); for(var i=0;i<cl.length;i++){var c=cl[i]; ?>
+      <option value="<?= c ?>" <?= selected===c?'selected':'' ?>><?= c ?></option>
+      <? } ?>
+    </select>
+    <span class="cohort-badge" id="n-badge"></span>
+  </div>
+
+  <div id="dashboard"></div>
+</div>
+
+<script>
+const D = <?!= dataJson ?>;
+document.getElementById('n-badge').textContent = D.n + ' fellow' + (D.n!==1?'s':'');
+
+function ticks(n){
+  let h='';
+  for(let i=1;i<n;i++) h+=`<div class="dash-tick" style="left:${(i/n*100).toFixed(1)}%"></div>`;
+  return h;
+}
+
+function motivLabel(v){
+  return (['External','Introjected','Identified','Integrated','Intrinsic'])[Math.min(Math.max(Math.round(v)-1,0),4)]||'Identified';
+}
+
+function motivNarrative(t2then,t2now){
+  const g=t2now-t2then, s=g>=0?'+':'';
+  const msg=g>=1.2?'This is a meaningful internalization shift — fellows moved toward genuine ownership of the mission, which SDT research associates with greater persistence and career follow-through.'
+    :g>=0.5?'This modest shift suggests some internalization occurred during orientation. Fellows show early signs of owning the mission rather than simply responding to external pull.'
+    :'The small corrected shift makes it difficult to attribute meaningful internalization to orientation. Fellows may have arrived with stable motivation, or orientation did not substantially shift their relationship to the mission.';
+  return `Fellows' corrected baseline reflects <em>${motivLabel(t2then)}</em> (T2-Then: ${t2then.toFixed(1)}/5). After orientation they reported <em>${motivLabel(t2now)}</em> (T2-Now: ${t2now.toFixed(1)}/5) — corrected shift of ${s}${g.toFixed(2)} ordinal points after accounting for scale recalibration. ${msg}`;
+}
+
+function renderSnapshot(){
+  const s=D.snapshot, dc=s.careerDirT4.Yes-s.careerDirT1.Yes, ds=dc>=0?'+':'', cc=s.convT4-s.convT1, cs=cc>=0?'+':'';
+  return `<div class="dash-snapshot">
+    <div class="snap-card"><div class="snap-num">${s.n}</div><div class="snap-label">Fellows in Cohort</div></div>
+    <div class="snap-card"><div class="snap-num">${s.recMean.toFixed(1)}<span style="font-size:13px;font-weight:400;color:var(--text-sec)">/10</span></div><div class="snap-label">Avg. Program Recommendation</div><div class="snap-sub">NPS — most recent touchpoint per fellow</div></div>
+    <div class="snap-card"><div class="snap-num">${ds}${dc}%</div><div class="snap-label">High-Impact Career Direction</div><div class="snap-sub">Change in % "Yes" from T1 to T4</div></div>
+    <div class="snap-card"><div class="snap-num">${s.placementReady}%</div><div class="snap-label">Felt Ready for Placement</div><div class="snap-sub">Rated ≥ 4/5 on retrospective readiness · T3</div></div>
+    <div class="snap-card"><div class="snap-num">${s.convT4}%</div><div class="snap-label">Having Career Conversations</div><div class="snap-sub">${cs}${cc}% from T1 (${s.convT1}%) · at T4</div></div>
+  </div>`;
+}
+
+function renderSelfEfficacy(){
+  const {items,t1,t2}=D.selfEfficacy;
+  const rows=items.map((item,i)=>{
+    const d=(t2[i]-t1[i]).toFixed(1),s=d>=0?'+':'';
+    return `<div class="dash-row-label">${item}</div>
+      <div class="dash-bars">
+        <div class="dash-bar-group"><div class="dash-bar-label">T1</div><div class="dash-bar-track"><div class="dash-bar-fill" style="width:${Math.round(t1[i]/7*100)}%;background:var(--text-sec)"></div>${ticks(7)}</div><div class="dash-bar-val">${t1[i].toFixed(1)}</div></div>
+        <div class="dash-bar-group"><div class="dash-bar-label">T2</div><div class="dash-bar-track"><div class="dash-bar-fill" style="width:${Math.round(t2[i]/7*100)}%;background:var(--accent)"></div>${ticks(7)}</div><div class="dash-bar-val">${t2[i].toFixed(1)}</div></div>
+      </div>
+      <div class="dash-delta ${parseFloat(d)>=0?'pos':'neg'}">${s}${d}</div>`;
+  }).join('');
+  return `<div class="dash-section">
+    <h3 class="dash-section-title">Self-Efficacy: Before &amp; After Orientation</h3>
+    <p class="dash-section-desc">Cohort average on 1–7 scale for each confidence item. Measures whether orientation increased fellows' sense of capability to pursue high-impact work.</p>
+    <div class="dash-se-legend"><span class="legend-dot" style="background:var(--text-sec)"></span>Pre-orientation (T1) &nbsp;&nbsp;<span class="legend-dot" style="background:var(--accent)"></span>Post-orientation (T2)</div>
+    <div class="dash-se-grid">${rows}</div>
+  </div>`;
+}
+
+function renderCommitment(){
+  const {t1now,t2then,t2now}=D.commitment,max=7;
+  const nd=(t2now-t1now).toFixed(1),cd=(t2now-t2then).toFixed(1),rs=(t2then-t1now).toFixed(1);
+  function bar(val,color,label,sub){
+    return `<div class="commit-bar-wrap"><div class="commit-bar-label">${label}<br><span class="commit-bar-sub">${sub}</span></div><div class="dash-bar-track" style="flex:1"><div class="dash-bar-fill" style="width:${Math.round(val/max*100)}%;background:${color}"></div>${ticks(7)}</div><div class="dash-bar-val">${val.toFixed(1)}</div></div>`;
+  }
+  function delt(val,label){
+    const v=parseFloat(val),s=v>=0?'+':'',c=v>=0?'pos':'neg';
+    return `<div class="commit-delta-item"><span class="commit-delta-val ${c}">${s}${val}</span><span class="commit-delta-label">${label}</span></div>`;
+  }
+  return `<div class="dash-section">
+    <h3 class="dash-section-title">Commitment to High-Impact Work — With Reference Shift Correction</h3>
+    <p class="dash-section-desc">The corrected gain uses fellows' retrospective T2 rating of their pre-orientation self (T2-Then) as the baseline, accounting for scale recalibration during orientation.</p>
+    ${bar(t1now,'#5a5a5a','T1 — Now','Naïve pre-orientation score')}
+    ${bar(t2then,'#8a7a6a','T2 — Then','Retrospective pre-orientation baseline')}
+    ${bar(t2now,'var(--accent)','T2 — Now','Post-orientation score')}
+    <div class="commit-deltas">
+      ${delt(nd,'Naïve gain (T1-Now → T2-Now)')}
+      ${delt(cd,'Corrected gain (T2-Then → T2-Now)')}
+      ${delt(rs,'Reference shift (scale movement)')}
+    </div>
+  </div>`;
+}
+
+function renderMotivation(){
+  const {t1now,t2then,t2now,labels}=D.motivation,max=5;
+  const nd=(t2now-t1now).toFixed(2),cd=(t2now-t2then).toFixed(2);
+  function mbar(val,color,label,sub){
+    const cat=labels[Math.min(Math.max(Math.round(val)-1,0),4)];
+    return `<div class="commit-bar-wrap"><div class="commit-bar-label">${label}<br><span class="commit-bar-sub">${sub}</span></div><div class="dash-bar-track" style="flex:1"><div class="dash-bar-fill" style="width:${Math.round(val/max*100)}%;background:${color}"></div>${ticks(5)}</div><div class="dash-bar-val">${val.toFixed(1)}<span style="font-size:11px;color:var(--text-sec)"> (~${cat})</span></div></div>`;
+  }
+  function delt(val,label){
+    const v=parseFloat(val),s=v>=0?'+':'',c=v>=0?'pos':'neg';
+    return `<div class="commit-delta-item"><span class="commit-delta-val ${c}">${s}${val}</span><span class="commit-delta-label">${label}</span></div>`;
+  }
+  return `<div class="dash-section">
+    <h3 class="dash-section-title">Motivation Quality — SDT Score With Reference Shift Correction</h3>
+    <p class="dash-section-desc">Fellows select the motivation type that best describes them (External=1 to Intrinsic=5). A rightward shift signals internalization of the mission. Retrospective T2-Then rating corrects for scale recalibration.</p>
+    <div class="dash-motiv-legend"><span>External (1)</span><span>Introjected (2)</span><span>Identified (3)</span><span>Integrated (4)</span><span>Intrinsic (5)</span></div>
+    ${mbar(t1now,'#5a5a5a','T1 — Now','Naïve pre-orientation score')}
+    ${mbar(t2then,'#8a7a6a','T2 — Then','Retrospective pre-orientation baseline')}
+    ${mbar(t2now,'var(--accent)','T2 — Now','Post-orientation score')}
+    <p class="commit-narrative">${motivNarrative(t2then,t2now)}</p>
+    <div class="commit-deltas">
+      ${delt(nd,'Naïve shift (T1-Now → T2-Now)')}
+      ${delt(cd,'Corrected shift (T2-Then → T2-Now)')}
+    </div>
+  </div>`;
+}
+
+function renderCareerValues(){
+  const {names,t1,t2,t4}=D.careerValues;
+  const W=540,H=230,ML=36,MR=12,MT=16,MB=72,cW=W-ML-MR,cH=H-MT-MB,maxY=6;
+  const barColors=['#5a5a5a','#8a6a4a','#c9622f'],barW=11,barGap=2,groupW=cW/names.length;
+  const toPri=r=>7-r;
+  let grid='';
+  for(let v=0;v<=maxY;v++){
+    const y=(MT+cH-(v/maxY)*cH).toFixed(1);
+    grid+=`<line x1="${ML}" y1="${y}" x2="${ML+cW}" y2="${y}" stroke="#2a2a2a" stroke-width="${v===0?1:0.5}"/>`;
+    if(v>0) grid+=`<text x="${ML-6}" y="${y}" text-anchor="end" dominant-baseline="middle" font-size="9" fill="#6e6a61">${v}</text>`;
+  }
+  let bars='';
+  names.forEach((_,i)=>{
+    const cx=ML+i*groupW+groupW/2,blockW=3*barW+2*barGap,bx0=cx-blockW/2;
+    [t1[i],t2[i],t4[i]].forEach((rank,j)=>{
+      const pri=toPri(rank),bh=((pri/maxY)*cH).toFixed(1),bx=(bx0+j*(barW+barGap)).toFixed(1),by=(MT+cH-parseFloat(bh)).toFixed(1);
+      bars+=`<rect x="${bx}" y="${by}" width="${barW}" height="${bh}" fill="${barColors[j]}" rx="1"/>`;
+    });
+  });
+  const shortNames=[['Altruism'],['Prestige'],['Economic','Return'],['Intellectual','Stim.'],['Independence'],['Achievement']];
+  let xLabels='';
+  names.forEach((_,i)=>{
+    const cx=(ML+i*groupW+groupW/2).toFixed(1),baseY=MT+cH+12;
+    (shortNames[i]||[names[i]]).forEach((line,li)=>{xLabels+=`<text x="${cx}" y="${baseY+li*12}" text-anchor="middle" font-size="10" fill="#9e9a91">${line}</text>`;});
+  });
+  const legLabels=['Pre-orientation (T1)','Post-orientation (T2)','Six-month follow-up (T4)'];
+  let legend='',lx=ML;
+  barColors.forEach((c,j)=>{legend+=`<rect x="${lx}" y="${H-14}" width="10" height="10" fill="${c}" rx="1"/><text x="${lx+14}" y="${H-6}" font-size="10" fill="#9e9a91">${legLabels[j]}</text>`;lx+=j===0?148:170;});
+  return `<div class="dash-section">
+    <h3 class="dash-section-title">Career Values Ranking — T1 · T2 · T4</h3>
+    <p class="dash-section-desc">Priority score = 7 − avg. rank, so the most-valued value (rank 1) has the tallest bar. Tracks whether orientation and placement shift what fellows prioritize in a career.</p>
+    <svg viewBox="0 0 ${W} ${H}" width="100%" style="display:block;overflow:visible;font-family:Inter,sans-serif"><line x1="${ML}" y1="${MT}" x2="${ML}" y2="${MT+cH}" stroke="#3a3a3a" stroke-width="1"/>${grid}${bars}${xLabels}${legend}</svg>
+  </div>`;
+}
+
+function renderBarriers(){
+  const {labels,anticipated,experienced}=D.barriers;
+  const rows=labels.map((label,i)=>{
+    const ant=anticipated[i],exp=experienced[i],diff=exp-ant,s=diff>=0?'+':'';
+    const col=Math.abs(diff)>=15?(diff>0?'#c07050':'#4a7c59'):'var(--text-sec)';
+    return `<div class="barrier-row">
+      <div class="barrier-label">${label}</div>
+      <div class="barrier-bars">
+        <div class="barrier-bar-wrap"><div class="dash-bar-track"><div class="dash-bar-fill" style="width:${ant}%;background:#5a5a5a"></div></div><div class="barrier-pct">${ant}%</div></div>
+        <div class="barrier-bar-wrap"><div class="dash-bar-track"><div class="dash-bar-fill" style="width:${exp}%;background:var(--accent)"></div></div><div class="barrier-pct">${exp}%</div></div>
+      </div>
+      <div class="barrier-diff" style="color:${col}">${s}${diff}%</div>
+    </div>`;
+  }).join('');
+  return `<div class="dash-section">
+    <h3 class="dash-section-title">Anticipated vs. Experienced Barriers</h3>
+    <p class="dash-section-desc">% of fellows selecting each barrier at T2 (anticipated) vs T3 (experienced). Gaps ≥ 15pp highlight where orientation over- or under-prepares fellows for what they will actually face.</p>
+    <div class="dash-se-legend"><span class="legend-dot" style="background:#5a5a5a"></span>Anticipated (T2) &nbsp;&nbsp;<span class="legend-dot" style="background:var(--accent)"></span>Experienced (T3) &nbsp;&nbsp;<span style="font-size:11px;color:var(--text-sec)">Highlighted gaps ≥ 15pp</span></div>
+    <div class="barrier-grid">${rows}</div>
+  </div>`;
+}
+
+function renderPlacement(){
+  const {dims,dist}=D.placement;
+  const total=dist[0].reduce((a,b)=>a+b,0)||1;
+  const starColors=['#6b3030','#7a5030','#7a7030','#4a6a50','#3a6a4a'];
+  const rows=dims.map((dim,i)=>{
+    const bars=dist[i].map((count,j)=>`<div title="${j+1}: ${count} fellows" style="flex:${count||0.1};background:${starColors[j]};height:18px;border-radius:1px;margin-right:2px"></div>`).join('');
+    const avg=dist[i].reduce((s,c,j)=>s+c*(j+1),0)/total;
+    return `<div class="placement-row"><div class="placement-dim-label">${dim}</div><div style="display:flex;flex:1;margin:0 12px;border-radius:2px;overflow:hidden">${bars}</div><div style="font-size:12px;color:var(--text-sec);min-width:32px;text-align:right">${avg.toFixed(1)}</div></div>`;
+  }).join('');
+  return `<div class="dash-section">
+    <h3 class="dash-section-title">Placement Quality — BARS Ratings (T3)</h3>
+    <p class="dash-section-desc">Distribution of cohort ratings across three placement quality dimensions. Color runs from low (dark red) to high (green). Average score shown at right.</p>
+    <div class="dash-se-legend">${starColors.map((c,i)=>`<span class="legend-dot" style="background:${c}"></span>${i+1}`).join(' &nbsp;')}</div>
+    <div style="margin-top:16px">${rows}</div>
+  </div>`;
+}
+
+function renderCareerDir(){
+  const {careerDirT1:t1,careerDirT4:t4}=D.snapshot;
+  function dirBar(d,label){
+    return `<div class="career-dir-row"><div class="career-dir-tp">${label}</div><div class="career-dir-bars"><div style="display:flex;height:28px;border-radius:2px;overflow:hidden;width:100%">
+      <div style="flex:${d.Yes||0.1};background:var(--success);display:flex;align-items:center;justify-content:center;font-size:11px;color:#fff;font-weight:600">${d.Yes>=10?d.Yes+'%':''}</div>
+      <div style="flex:${d.Deciding||0.1};background:#5a5a4a;display:flex;align-items:center;justify-content:center;font-size:11px;color:#ddd;font-weight:600;margin:0 2px">${d.Deciding>=15?d.Deciding+'%':''}</div>
+      <div style="flex:${d.No||0.1};background:#5a3030;display:flex;align-items:center;justify-content:center;font-size:11px;color:#ddd;font-weight:600">${d.No>=10?d.No+'%':''}</div>
+    </div></div></div>`;
+  }
+  return `<div class="dash-section">
+    <h3 class="dash-section-title">Career Direction — T1 vs. T4</h3>
+    <p class="dash-section-desc">"Are you currently pursuing a high-impact career as your primary path?" Comparing baseline intent (T1) against six-month outcome (T4) shows whether the program moved fellows toward high-impact paths.</p>
+    <div class="dash-se-legend"><span class="legend-dot" style="background:var(--success)"></span>Yes &nbsp;&nbsp;<span class="legend-dot" style="background:#5a5a4a"></span>Still deciding &nbsp;&nbsp;<span class="legend-dot" style="background:#5a3030"></span>No</div>
+    <div style="margin-top:16px">
+      ${dirBar(t1,'T1 — Pre-orientation')}
+      ${dirBar(t4,'T4 — Six-month follow-up')}
+    </div>
+  </div>`;
+}
+
+document.getElementById('dashboard').innerHTML =
+  renderSnapshot() +
+  renderSelfEfficacy() +
+  renderCommitment() +
+  renderMotivation() +
+  renderCareerValues() +
+  renderBarriers() +
+  renderPlacement() +
+  renderCareerDir();
+</script>
+</body>
+</html>
