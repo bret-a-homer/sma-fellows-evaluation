@@ -133,7 +133,7 @@ This is usually a re-authorization issue. Open the Apps Script editor, click **R
 | Apps Script web app URL | Saved from Part 4 — also visible in Deploy → Manage deployments |
 | Google Sheet | Bookmarked or in SMA Workspace Google Drive |
 | Netlify site URL | Netlify dashboard |
-| Backup files | Google Drive folder named **SMA Eval Backups** — updated automatically every Monday |
+| Backup files | Tabs named **Backup_YYYY-MM-DD** in the Google Sheet — created automatically every Monday, kept for 90 days |
 | Data dictionary | **Data Dictionary** tab in the Google Sheet |
 | Technical contact | *(add name and email here)* |
 

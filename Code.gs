@@ -17,9 +17,10 @@
 // =============================================================================
 
 // ── Config ────────────────────────────────────────────────────────────────────
-const SHEET_NAME        = 'Responses';
-const DICT_SHEET_NAME   = 'Data Dictionary';
-const BACKUP_FOLDER_NAME = 'SMA Eval Backups';
+const SHEET_NAME      = 'Responses';
+const DICT_SHEET_NAME = 'Data Dictionary';
+const BACKUP_PREFIX   = 'Backup_';   // prefix for dated backup tabs
+const BACKUP_DAYS     = 90;          // how many days of backups to keep
 
 // ── Reference data (mirrors frontend constants) ───────────────────────────────
 const MOTIVATION_LABELS = [
@@ -410,41 +411,44 @@ function keepAlive() {
   console.log('SMA Eval keep-alive: ' + new Date().toISOString());
 }
 
-// Runs weekly — exports the Responses sheet to a dated CSV in Google Drive
+// Runs weekly — copies the Responses tab to a dated backup tab in the same
+// spreadsheet. Requires only Sheets access (no Drive permissions needed).
 function weeklyBackup() {
   var ss    = SpreadsheetApp.getActiveSpreadsheet();
   var sheet = ss.getSheetByName(SHEET_NAME);
   if (!sheet) { console.log('Backup skipped — Responses sheet not found.'); return; }
 
-  // Get or create backup folder
-  var folders = DriveApp.getFoldersByName(BACKUP_FOLDER_NAME);
-  var folder  = folders.hasNext() ? folders.next() : DriveApp.createFolder(BACKUP_FOLDER_NAME);
+  var date       = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyy-MM-dd');
+  var backupName = BACKUP_PREFIX + date;
 
-  // Build CSV
-  var rows = sheet.getDataRange().getValues();
-  var csv  = rows.map(function(row) {
-    return row.map(function(cell) {
-      var s = String(cell);
-      return (s.indexOf(',') >= 0 || s.indexOf('"') >= 0 || s.indexOf('\n') >= 0)
-        ? '"' + s.replace(/"/g, '""') + '"'
-        : s;
-    }).join(',');
-  }).join('\n');
-
-  var date     = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyy-MM-dd');
-  var filename = 'SMA_Fellows_Eval_' + date + '.csv';
-  folder.createFile(filename, csv, MimeType.CSV);
-
-  // Prune files older than 90 days
-  var cutoff = new Date();
-  cutoff.setDate(cutoff.getDate() - 90);
-  var files = folder.getFiles();
-  while (files.hasNext()) {
-    var f = files.next();
-    if (f.getDateCreated() < cutoff) f.setTrashed(true);
+  // Skip if today's backup already exists
+  if (ss.getSheetByName(backupName)) {
+    console.log('Backup already exists for today: ' + backupName);
+    return;
   }
 
-  console.log('Backup created: ' + filename);
+  // Copy the Responses tab and rename it
+  var backup = sheet.copyTo(ss);
+  backup.setName(backupName);
+
+  // Move backup tab to the end so it stays out of the way
+  ss.moveActiveSheet(ss.getSheets().length);
+
+  // Remove backup tabs older than BACKUP_DAYS
+  var cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - BACKUP_DAYS);
+  ss.getSheets().forEach(function(s) {
+    var name = s.getName();
+    if (name.indexOf(BACKUP_PREFIX) === 0) {
+      var dateStr   = name.replace(BACKUP_PREFIX, '');
+      var sheetDate = new Date(dateStr);
+      if (!isNaN(sheetDate.getTime()) && sheetDate < cutoff) {
+        ss.deleteSheet(s);
+      }
+    }
+  });
+
+  console.log('Backup tab created: ' + backupName);
 }
 
 // =============================================================================
