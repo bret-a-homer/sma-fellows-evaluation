@@ -1204,6 +1204,16 @@ function renderRespondentPage(tp, a) {
           Required — used to link your responses across touchpoints. Use the same address each time.
         </p>
       </div>
+      ${tp === 't1' ? `
+      <div>
+        <label for="t1-cohort">Program cohort</label>
+        <input type="text" id="t1-cohort"
+          placeholder="e.g. 2025-26"
+          value="${a['t1-cohort'] || ''}" />
+        <p style="color:var(--text-sec); font-size:12px; margin-top:6px; line-height:1.5;">
+          The program year you are participating in — used to group responses across cohorts.
+        </p>
+      </div>` : ''}
     </div>
   `;
 }
@@ -3244,13 +3254,15 @@ async function submitToSheet() {
   const tp = state.touchpoint;
   const a  = state.answers[tp];
 
-  const email = (a[tp + '-respondent-email'] || '').trim().toLowerCase();
-  const name  = (a[tp + '-respondent-name']  || '').trim();
+  const email  = (a[tp + '-respondent-email'] || '').trim().toLowerCase();
+  const name   = (a[tp + '-respondent-name']  || '').trim();
+  const cohort = tp === 't1' ? (a['t1-cohort'] || '').trim() : '';
 
   const payload = {
     touchpoint: tp,
     email,
     name,
+    cohort,
     data: a,
   };
 

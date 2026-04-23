@@ -92,7 +92,7 @@ function getHeaders() {
   const h = [];
 
   // ── Metadata ────────────────────────────────────────────────────────────────
-  h.push('Email', 'Name', 'Link_Status');
+  h.push('Email', 'Name', 'Cohort', 'Link_Status');
   h.push('T1_Submitted', 'T2_Submitted', 'T3_Submitted', 'T4_Submitted');
 
   // ── T1 ──────────────────────────────────────────────────────────────────────
@@ -317,12 +317,22 @@ function ensureHeaders(sheet) {
     sheet.getRange(1, 1, 1, headers.length).setFontWeight('bold');
     return;
   }
-  var existing = sheet.getRange(1, 1, 1, 1).getValue();
-  if (existing === 'Email') return; // Already set up
-  sheet.insertRowBefore(1);
-  sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
-  sheet.setFrozenRows(1);
-  sheet.getRange(1, 1, 1, headers.length).setFontWeight('bold');
+  var lastCol = sheet.getLastColumn();
+  var existing = lastCol > 0 ? sheet.getRange(1, 1, 1, lastCol).getValues()[0] : [];
+  if (existing[0] !== 'Email') {
+    sheet.insertRowBefore(1);
+    sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+    sheet.setFrozenRows(1);
+    sheet.getRange(1, 1, 1, headers.length).setFontWeight('bold');
+    return;
+  }
+  // Append any columns added in later versions (e.g. Cohort)
+  var missing = headers.filter(function(h) { return existing.indexOf(h) === -1; });
+  if (missing.length > 0) {
+    var range = sheet.getRange(1, lastCol + 1, 1, missing.length);
+    range.setValues([missing]);
+    range.setFontWeight('bold');
+  }
 }
 
 // =============================================================================
@@ -357,6 +367,8 @@ function doPost(e) {
       newRow[headers.indexOf('Email')] = email;
       if (payload.name) newRow[headers.indexOf('Name')] = payload.name;
 
+      if (payload.cohort) newRow[headers.indexOf('Cohort')] = payload.cohort;
+
       var tpNum = parseInt(tp.replace('t', ''));
       if (tpNum > 1) {
         newRow[headers.indexOf('Link_Status')] = 'T' + tpNum + '_no_T' + (tpNum - 1);
@@ -376,6 +388,10 @@ function doPost(e) {
 
       existingRow[headers.indexOf('Link_Status')] = getLinkStatus(existingRow, headers, tp);
       if (payload.name) existingRow[headers.indexOf('Name')] = payload.name;
+      var cohortIdx = headers.indexOf('Cohort');
+      if (payload.cohort && cohortIdx !== -1 && !existingRow[cohortIdx]) {
+        existingRow[cohortIdx] = payload.cohort;
+      }
 
       Object.keys(colData).forEach(function(col) {
         var idx = headers.indexOf(col);
@@ -467,6 +483,9 @@ function setup() {
   // Data dictionary
   setupDataDictionary(ss);
 
+  // Derived analysis tabs
+  setupDerivedTabs(ss);
+
   // Triggers
   setupTriggers();
 
@@ -494,6 +513,251 @@ function setupTriggers() {
 }
 
 // =============================================================================
+// DERIVED ANALYSIS TABS
+// Run setupDerivedTabs() any time to create or rebuild these tabs.
+// Safe to re-run — clears and rebuilds without touching Responses data.
+// =============================================================================
+
+function colLetter(n) {
+  var s = '';
+  while (n > 0) {
+    var rem = (n - 1) % 26;
+    s = String.fromCharCode(65 + rem) + s;
+    n = Math.floor((n - 1) / 26);
+  }
+  return s;
+}
+
+function setupDerivedTabs(ss) {
+  if (!ss) ss = SpreadsheetApp.getActiveSpreadsheet();
+  setupCompletionTab(ss);
+  setupQualitativeTab(ss);
+  setupFellowLookupTab(ss);
+  Logger.log('✓ Derived tabs created: Completion, Qualitative Responses, Fellow Lookup');
+}
+
+function setupCompletionTab(ss) {
+  var tabName = 'Completion';
+  var tab = ss.getSheetByName(tabName);
+  if (tab) { tab.clearContents(); tab.clearFormats(); } else { tab = ss.insertSheet(tabName); }
+
+  var h  = getHeaders();
+  var eA  = colLetter(h.indexOf('Email')        + 1);
+  var eB  = colLetter(h.indexOf('Name')         + 1);
+  var eC  = colLetter(h.indexOf('Cohort')       + 1);
+  var eD  = colLetter(h.indexOf('Link_Status')  + 1);
+  var eT1 = colLetter(h.indexOf('T1_Submitted') + 1);
+  var eT2 = colLetter(h.indexOf('T2_Submitted') + 1);
+  var eT3 = colLetter(h.indexOf('T3_Submitted') + 1);
+  var eT4 = colLetter(h.indexOf('T4_Submitted') + 1);
+
+  tab.getRange('A1').setValue('Completion Tracker').setFontSize(14).setFontWeight('bold');
+  tab.getRange('A2').setValue('Auto-refreshes as responses arrive.  Blank submitted date = not yet submitted.');
+
+  tab.getRange('A4:A8').setFontWeight('bold');
+  tab.getRange('A4').setValue('Total fellows');
+  tab.getRange('B4').setFormula('=COUNTA(Responses!' + eA + '2:' + eA + ')');
+
+  tab.getRange('A5').setValue('T1 complete');
+  tab.getRange('B5').setFormula('=COUNTIF(Responses!' + eT1 + '2:' + eT1 + ',"<>")');
+  tab.getRange('C5').setFormula('=IFERROR(TEXT(B5/B4,"0%"),"—")');
+
+  tab.getRange('A6').setValue('T2 complete');
+  tab.getRange('B6').setFormula('=COUNTIF(Responses!' + eT2 + '2:' + eT2 + ',"<>")');
+  tab.getRange('C6').setFormula('=IFERROR(TEXT(B6/B4,"0%"),"—")');
+
+  tab.getRange('A7').setValue('T3 complete');
+  tab.getRange('B7').setFormula('=COUNTIF(Responses!' + eT3 + '2:' + eT3 + ',"<>")');
+  tab.getRange('C7').setFormula('=IFERROR(TEXT(B7/B4,"0%"),"—")');
+
+  tab.getRange('A8').setValue('T4 complete');
+  tab.getRange('B8').setFormula('=COUNTIF(Responses!' + eT4 + '2:' + eT4 + ',"<>")');
+  tab.getRange('C8').setFormula('=IFERROR(TEXT(B8/B4,"0%"),"—")');
+
+  tab.getRange('A10').setValue('Fellow-by-Fellow Status').setFontSize(12).setFontWeight('bold');
+  var hdrRow = tab.getRange('A11:H11');
+  hdrRow.setValues([['Email','Name','Cohort','T1 Submitted','T2 Submitted','T3 Submitted','T4 Submitted','Link Status']]);
+  hdrRow.setFontWeight('bold').setBackground('#f0f0f0');
+  tab.setFrozenRows(11);
+
+  var maxCol = Math.max(h.indexOf('T4_Submitted'), h.indexOf('Link_Status')) + 1;
+  var rangeRef = 'Responses!' + eA + ':' + colLetter(maxCol);
+  var sel = [eA,eB,eC,eT1,eT2,eT3,eT4,eD].join(', ');
+  var lbl = [eA,eB,eC,eT1,eT2,eT3,eT4,eD].map(function(c){return c+" ''";}).join(', ');
+  tab.getRange('A12').setFormula(
+    '=IFERROR(QUERY(' + rangeRef + ',"SELECT ' + sel +
+    ' WHERE ' + eA + " <> '' ORDER BY " + eC + ', ' + eA +
+    ' LABEL ' + lbl + '",0),"No data yet")'
+  );
+
+  tab.setColumnWidth(1, 200);
+  tab.setColumnWidth(2, 140);
+  tab.setColumnWidth(3, 80);
+  tab.setColumnWidths(4, 4, 165);
+  tab.setColumnWidth(8, 160);
+}
+
+function setupQualitativeTab(ss) {
+  var tabName = 'Qualitative Responses';
+  var tab = ss.getSheetByName(tabName);
+  if (tab) { tab.clearContents(); tab.clearFormats(); } else { tab = ss.insertSheet(tabName); }
+
+  var h = getHeaders();
+  var qualFields = [
+    { col: 'T1_Career_Vision',          label: 'T1: Career vision' },
+    { col: 'T1_Orgs_Considering',       label: 'T1: Organizations / roles considering' },
+    { col: 'T2_Career_Vision',          label: 'T2: Career vision (updated)' },
+    { col: 'T2_Thinking_Shifted',       label: 'T2: How thinking has shifted' },
+    { col: 'T2_Impactful_Sessions',     label: 'T2: Most impactful sessions' },
+    { col: 'T2_Career_Capital_Goals',   label: 'T2: Career capital goals' },
+    { col: 'T2_Barrier_Other_Text',     label: 'T2: Barriers — other (free text)' },
+    { col: 'T3_Org_Name',              label: 'T3: Organization name' },
+    { col: 'T3_Role',                  label: 'T3: Role / position' },
+    { col: 'T3_Most_Valuable',         label: 'T3: Most valuable aspect' },
+    { col: 'T3_Suggested_Improvement', label: 'T3: Suggested improvement' },
+    { col: 'T3_Career_Vision',         label: 'T3: Career vision (updated)' },
+    { col: 'T3_Barrier_Detail',        label: 'T3: Barrier — detail' },
+    { col: 'T3_Most_Significant_Conv', label: 'T3: Most significant conversation' },
+    { col: 'T3_Career_Dir_Factors',    label: 'T3: Career direction — factors' },
+    { col: 'T3_Career_Dir_Influences', label: 'T3: Career direction — influences' },
+    { col: 'T4_Org_Name',              label: 'T4: Organization name' },
+    { col: 'T4_Role',                  label: 'T4: Role / position' },
+    { col: 'T4_Most_Valuable',         label: 'T4: Most valuable aspect' },
+    { col: 'T4_Suggested_Improvement', label: 'T4: Suggested improvement' },
+    { col: 'T4_Career_Vision',         label: 'T4: Career vision (updated)' },
+    { col: 'T4_Barrier_Detail',        label: 'T4: Barrier — detail' },
+    { col: 'T4_Most_Significant_Conv', label: 'T4: Most significant conversation' },
+    { col: 'T4_Career_Dir_Factors',    label: 'T4: Career direction — factors' },
+    { col: 'T4_Career_Dir_Influences', label: 'T4: Career direction — influences' },
+  ];
+
+  var eA = colLetter(h.indexOf('Email')  + 1);
+  var eB = colLetter(h.indexOf('Name')   + 1);
+  var eC = colLetter(h.indexOf('Cohort') + 1);
+
+  var fieldCols = qualFields.map(function(f) {
+    var idx = h.indexOf(f.col);
+    return idx >= 0 ? colLetter(idx + 1) : null;
+  });
+
+  var headerVals = ['Email','Name','Cohort'].concat(qualFields.map(function(f){return f.label;}));
+  var hdrRange = tab.getRange(1, 1, 1, headerVals.length);
+  hdrRange.setValues([headerVals]).setFontWeight('bold').setBackground('#f0f0f0').setWrap(true);
+  tab.setRowHeight(1, 60);
+  tab.setFrozenRows(1);
+  tab.setFrozenColumns(3);
+
+  var maxIdx = Math.max.apply(null, qualFields.map(function(f){ return h.indexOf(f.col) + 1; }));
+  var rangeRef = 'Responses!' + eA + ':' + colLetter(maxIdx);
+  var allCols = [eA, eB, eC].concat(fieldCols.filter(function(c){return c;}));
+  var sel = allCols.join(', ');
+  var lbl = allCols.map(function(c){return c+" ''";}).join(', ');
+
+  tab.getRange('A2').setFormula(
+    '=IFERROR(QUERY(' + rangeRef + ',"SELECT ' + sel +
+    ' WHERE ' + eA + " <> '' ORDER BY " + eC + ', ' + eA +
+    ' LABEL ' + lbl + '",0),"No responses yet")'
+  );
+
+  tab.setColumnWidth(1, 180);
+  tab.setColumnWidth(2, 130);
+  tab.setColumnWidth(3, 80);
+  for (var i = 4; i <= headerVals.length; i++) tab.setColumnWidth(i, 220);
+}
+
+function setupFellowLookupTab(ss) {
+  var tabName = 'Fellow Lookup';
+  var tab = ss.getSheetByName(tabName);
+  if (tab) { tab.clearContents(); tab.clearFormats(); } else { tab = ss.insertSheet(tabName); }
+
+  var h = getHeaders();
+  function fml(colName) {
+    var idx = h.indexOf(colName);
+    if (idx < 0) return '';
+    var c = colLetter(idx + 1);
+    return '=IFERROR(INDEX(Responses!' + c + ':' + c + ',MATCH($B$1,Responses!A:A,0)),"")';
+  }
+
+  tab.getRange('A1').setValue('Enter email to look up:').setFontWeight('bold');
+  tab.getRange('B1').setBackground('#fff9c4')
+    .setBorder(true,true,true,true,false,false);
+
+  var row = 3;
+  function section(title) {
+    if (row > 3) row++;
+    var r = tab.getRange(row, 1, 1, 2);
+    r.merge().setValue(title).setFontWeight('bold').setFontSize(11).setBackground('#e8e8e8');
+    row++;
+  }
+  function field(label, colName) {
+    tab.getRange(row, 1).setValue(label);
+    if (colName) tab.getRange(row, 2).setFormula(fml(colName));
+    row++;
+  }
+
+  section('Identity & Status');
+  field('Name',         'Name');
+  field('Cohort',       'Cohort');
+  field('Link Status',  'Link_Status');
+  field('T1 Submitted', 'T1_Submitted');
+  field('T2 Submitted', 'T2_Submitted');
+  field('T3 Submitted', 'T3_Submitted');
+  field('T4 Submitted', 'T4_Submitted');
+
+  section('T1 — Pre-Orientation');
+  field('Career vision',     'T1_Career_Vision');
+  field('Orgs considering',  'T1_Orgs_Considering');
+  field('Commitment (1–7)',  'T1_Commitment');
+  field('Motivation type',   'T1_Motivation_Label');
+  field('Career direction',  'T1_Career_Direction');
+  SE_ITEMS.forEach(function(s) { field('SE — ' + s.full, 'T1_SE_' + s.key); });
+
+  section('T2 — Post-Orientation');
+  field('Career vision',            'T2_Career_Vision');
+  field('How thinking shifted',     'T2_Thinking_Shifted');
+  field('Commitment now (1–7)',     'T2_Commitment_Now');
+  field('Commitment then (1–7)',    'T2_Commitment_Then');
+  field('Motivation now',           'T2_Motivation_Now_Label');
+  field('Motivation then',          'T2_Motivation_Then_Label');
+  field('Most impactful sessions',  'T2_Impactful_Sessions');
+  field('Career capital goals',     'T2_Career_Capital_Goals');
+
+  section('T3 — Mid-Placement');
+  field('Organization',              'T3_Org_Name');
+  field('Role',                      'T3_Role');
+  field('BARS — Intellectual rigor (1–5)',     'T3_BARS_Intellectual_Rigor');
+  field('BARS — Prof. development (1–5)',      'T3_BARS_Prof_Development');
+  field('BARS — Impact & meaning (1–5)',       'T3_BARS_Impact_Meaningfulness');
+  field('Felt ready for placement',  'T3_Readiness_Retrospective');
+  field('NPS (0–10)',                'T3_NPS');
+  field('Most valuable aspect',      'T3_Most_Valuable');
+  field('Suggested improvement',     'T3_Suggested_Improvement');
+  field('Career vision',             'T3_Career_Vision');
+  field('Career direction',          'T3_Career_Direction');
+  field('Most significant conversation', 'T3_Most_Significant_Conv');
+
+  section('T4 — Six-Month Follow-Up');
+  field('Organization',              'T4_Org_Name');
+  field('Role',                      'T4_Role');
+  field('BARS — Intellectual rigor (1–5)',     'T4_BARS_Intellectual_Rigor');
+  field('BARS — Prof. development (1–5)',      'T4_BARS_Prof_Development');
+  field('BARS — Impact & meaning (1–5)',       'T4_BARS_Impact_Meaningfulness');
+  field('Felt ready for placement',  'T4_Readiness_Retrospective');
+  field('NPS (0–10)',                'T4_NPS');
+  field('Most valuable aspect',      'T4_Most_Valuable');
+  field('Suggested improvement',     'T4_Suggested_Improvement');
+  field('Career vision',             'T4_Career_Vision');
+  field('Career direction',          'T4_Career_Direction');
+  field('Career direction factors',  'T4_Career_Dir_Factors');
+  field('Career direction influences','T4_Career_Dir_Influences');
+  field('Most significant conversation', 'T4_Most_Significant_Conv');
+
+  tab.setColumnWidth(1, 230);
+  tab.setColumnWidth(2, 420);
+  tab.setFrozenRows(1);
+}
+
+// =============================================================================
 // DATA DICTIONARY
 // =============================================================================
 function setupDataDictionary(ss) {
@@ -506,6 +770,7 @@ function setupDataDictionary(ss) {
     // Metadata
     ['Email',       'Respondent email — unique linking key across touchpoints (normalized to lowercase)', 'All', 'Text', 'Email format'],
     ['Name',        'Respondent full name (updated at each touchpoint — most recent wins)',                'All', 'Text', 'Free text'],
+    ['Cohort',      'Program cohort identifier entered at T1 (e.g., 2025-26). Groups responses for cross-year analysis.', 'T1', 'Text', 'Free text — e.g. 2025-26'],
     ['Link_Status', 'Data linkage quality flag. Blank = all touchpoints linked cleanly.',                  'System', 'Text',
      'Blank (clean) | T2_no_T1 | T3_no_T2 | T3_no_T1 | T4_no_T3 | T4_no_T2 | T4_no_T1 | Duplicate_overwritten'],
     ['T1_Submitted', 'Timestamp of T1 submission', 'T1', 'DateTime', 'ISO 8601'],
