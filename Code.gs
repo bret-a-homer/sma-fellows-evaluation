@@ -330,7 +330,9 @@ function ensureHeaders(sheet) {
 // =============================================================================
 function doPost(e) {
   try {
-    var payload = JSON.parse(e.postData.contents);
+    var payload = (e.parameter && e.parameter.payload)
+      ? JSON.parse(e.parameter.payload)
+      : JSON.parse(e.postData.contents);
     var ss      = SpreadsheetApp.getActiveSpreadsheet();
 
     var sheet = ss.getSheetByName(SHEET_NAME);

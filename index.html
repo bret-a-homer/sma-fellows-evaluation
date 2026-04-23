@@ -3200,6 +3200,46 @@ function showEmailError() {
 // ─────────────────────────────────────────────
 // SUBMISSION
 // ─────────────────────────────────────────────
+function formPost(url, payload) {
+  // Form submissions bypass CORS and follow GAS redirects correctly.
+  // We target a hidden iframe so the page doesn't navigate.
+  return new Promise(function(resolve) {
+    var iframeName = 'gas_frame_' + Date.now();
+    var iframe = document.createElement('iframe');
+    iframe.name = iframeName;
+    iframe.style.cssText = 'display:none;position:absolute;left:-9999px';
+
+    var form = document.createElement('form');
+    form.method = 'POST';
+    form.action = url;
+    form.target = iframeName;
+    form.style.display = 'none';
+
+    var input = document.createElement('input');
+    input.type = 'hidden';
+    input.name = 'payload';
+    input.value = JSON.stringify(payload);
+    form.appendChild(input);
+
+    document.body.appendChild(iframe);
+    document.body.appendChild(form);
+
+    var done = false;
+    var finish = function() {
+      if (done) return;
+      done = true;
+      iframe.remove();
+      form.remove();
+      resolve();
+    };
+
+    iframe.onload = finish;
+    setTimeout(finish, 10000); // resolve after 10s regardless
+
+    form.submit();
+  });
+}
+
 async function submitToSheet() {
   const tp = state.touchpoint;
   const a  = state.answers[tp];
@@ -3219,23 +3259,9 @@ async function submitToSheet() {
   state.screen      = 'complete';
   render();
 
-  try {
-    // mode: 'no-cors' works around a Google Apps Script redirect that breaks
-    // CORS response reading. The payload is delivered successfully — we just
-    // can't read the confirmation back. The sheet is the source of truth.
-    await fetch(APPS_SCRIPT_URL, {
-      method: 'POST',
-      mode:   'no-cors',
-      body:   JSON.stringify(payload),
-    });
-    state.submitting = false;
-    render();
-  } catch (err) {
-    // Only fires on genuine network failure (offline, DNS error, etc.)
-    state.submitting  = false;
-    state.submitError = 'Could not reach the server (' + err.message + '). Check your internet connection and try again.';
-    render();
-  }
+  await formPost(APPS_SCRIPT_URL, payload);
+  state.submitting = false;
+  render();
 }
 
 // ─────────────────────────────────────────────
