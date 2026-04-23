@@ -513,6 +513,320 @@ function setupTriggers() {
 }
 
 // =============================================================================
+// SAMPLE DATA GENERATOR
+// Run generateSampleData() once to populate a realistic 2024-25 cohort.
+// WARNING: appends rows — clear the Responses sheet first if needed.
+// =============================================================================
+function generateSampleData() {
+  var ss    = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName(SHEET_NAME);
+  if (!sheet) { Logger.log('Run setup() first.'); return; }
+
+  var h = getHeaders();
+  function set(row, col, val) { var i = h.indexOf(col); if (i >= 0) row[i] = val; }
+  function setRanks(row, tp, order) {
+    CAREER_VALUES.forEach(function(v) {
+      var r = order.indexOf(v.key) + 1;
+      set(row, tp + '_Rank_' + v.key, r > 0 ? r : 6);
+    });
+  }
+  function setSE(row, tp, scores) {
+    SE_ITEMS.forEach(function(s, i) { set(row, tp + '_SE_' + s.key, scores[i] || 4); });
+  }
+  function setBarriers(row, tp, keys) {
+    BARRIERS.forEach(function(b) { set(row, tp + '_Barrier_' + b.key, keys.indexOf(b.key) >= 0 ? 1 : 0); });
+  }
+
+  var cohort = '2024-25';
+  var placements = [
+    {org:'GiveWell',                         role:'Research Analyst'},
+    {org:'Open Philanthropy',                role:'Program Associate'},
+    {org:'Centre for Effective Altruism',    role:'Operations Fellow'},
+    {org:'80,000 Hours',                     role:'Research Fellow'},
+    {org:'Animal Charity Evaluators',        role:'Research Analyst'},
+    {org:'Founders Pledge',                  role:'Research Associate'},
+    {org:'Rethink Priorities',               role:'Policy Research Fellow'},
+    {org:'Open Philanthropy',                role:'Biosecurity Fellow'},
+    {org:'GiveWell',                         role:'Analyst'},
+    {org:'Future of Humanity Institute',     role:'Research Intern'},
+    {org:'Longview Philanthropy',            role:'Research Associate'},
+    {org:'Open Philanthropy',                role:'AI Safety Fellow'},
+    {org:'Centre for Effective Altruism',    role:'Community Building Fellow'},
+  ];
+
+  // Columns: name, email, t1Commit, t1Motiv, t1Dir, t2cNow, t2cThen, t2mNow, t2mThen, t4Dir, nps, barsIR, barsPD, barsIM, placIdx
+  var fellows = [
+    ['Emma Chen',       'e.chen@harvard.edu',       6,3,'Yes',           6,5,4,3,'Yes',           9, 4,4,5, 0],
+    ['James Osei',      'j.osei@mit.edu',            4,2,'Still deciding',5,3,3,2,'Yes',           8, 4,3,4, 1],
+    ['Priya Sharma',    'p.sharma@yale.edu',         7,4,'Yes',           7,6,5,4,'Yes',           10,5,5,5, 2],
+    ['Marcus Williams', 'm.williams@columbia.edu',   5,3,'Yes',           6,4,4,3,'Yes',           8, 4,3,4, 3],
+    ['Sofia Rodriguez', 's.rodriguez@brown.edu',     3,1,'Still deciding',5,3,3,2,'Yes',           7, 3,3,4, 4],
+    ['Liam Nakamura',   'l.nakamura@stanford.edu',   6,3,'Yes',           6,5,4,3,'Yes',           9, 5,4,5, 5],
+    ['Aisha Patel',     'a.patel@princeton.edu',     7,4,'Yes',           7,6,5,4,'Yes',           9, 5,5,5, 6],
+    ['Tyler Brooks',    't.brooks@upenn.edu',        3,2,'No',            5,3,3,2,'Still deciding',6, 3,3,3, 7],
+    ['Maya Johnson',    'm.johnson@dartmouth.edu',   6,3,'Yes',           6,5,4,3,'Yes',           8, 4,4,5, 8],
+    ['Noah Schmidt',    'n.schmidt@cornell.edu',     5,2,'Still deciding',5,4,3,2,'Yes',           7, 4,3,4, 9],
+    ['Isabella Torres', 'i.torres@uchicago.edu',     6,4,'Yes',           7,5,5,4,'Yes',           10,5,5,5,10],
+    ['Ethan Kim',       'e.kim@duke.edu',            4,2,'Still deciding',5,3,3,2,'Still deciding',7, 3,3,4,11],
+    ['Ava Thompson',    'a.thompson@vanderbilt.edu', 7,4,'Yes',           7,6,5,4,'Yes',           9, 5,5,5,12],
+    ['Oliver Davis',    'o.davis@northwestern.edu',  5,3,'Still deciding',5,4,3,3,'Still deciding',6, 4,3,4, 0],
+    ['Mia Anderson',    'm.anderson@georgetown.edu', 4,2,'No',            6,3,4,2,'Yes',           8, 4,4,4, 1],
+  ];
+
+  var t1SE = [
+    [5,4,4,4,5],[3,3,3,3,4],[6,6,5,5,6],[4,4,4,4,5],[2,3,3,3,3],
+    [5,5,4,4,5],[6,5,5,5,6],[3,3,3,3,3],[5,4,4,5,5],[4,3,3,4,4],
+    [5,5,5,5,6],[3,4,3,4,4],[6,6,5,5,6],[4,4,4,4,4],[3,3,4,3,4]
+  ];
+
+  var valueOrdersT1 = [
+    ['Altruism','Intellectual_Stimulation','Achievement','Independence','Economic_Return','Prestige'],
+    ['Altruism','Achievement','Intellectual_Stimulation','Independence','Economic_Return','Prestige'],
+    ['Altruism','Intellectual_Stimulation','Independence','Achievement','Prestige','Economic_Return'],
+    ['Altruism','Achievement','Independence','Intellectual_Stimulation','Economic_Return','Prestige'],
+    ['Economic_Return','Altruism','Achievement','Intellectual_Stimulation','Independence','Prestige'],
+    ['Altruism','Intellectual_Stimulation','Achievement','Independence','Prestige','Economic_Return'],
+    ['Altruism','Independence','Intellectual_Stimulation','Achievement','Economic_Return','Prestige'],
+    ['Economic_Return','Prestige','Achievement','Independence','Intellectual_Stimulation','Altruism'],
+    ['Altruism','Achievement','Intellectual_Stimulation','Independence','Prestige','Economic_Return'],
+    ['Intellectual_Stimulation','Altruism','Achievement','Independence','Economic_Return','Prestige'],
+    ['Altruism','Intellectual_Stimulation','Independence','Achievement','Economic_Return','Prestige'],
+    ['Economic_Return','Achievement','Independence','Intellectual_Stimulation','Altruism','Prestige'],
+    ['Altruism','Intellectual_Stimulation','Achievement','Independence','Economic_Return','Prestige'],
+    ['Achievement','Intellectual_Stimulation','Independence','Altruism','Economic_Return','Prestige'],
+    ['Altruism','Economic_Return','Achievement','Intellectual_Stimulation','Independence','Prestige'],
+  ];
+  // T4: Altruism moves to #1, Economic_Return moves toward bottom
+  var valueOrdersT4 = valueOrdersT1.map(function(r) {
+    var c = r.slice();
+    var ai = c.indexOf('Altruism'); if (ai > 0) { c.splice(ai,1); c.unshift('Altruism'); }
+    var ei = c.indexOf('Economic_Return'); if (ei >= 0 && ei < 4) { c.splice(ei,1); c.push('Economic_Return'); }
+    return c;
+  });
+
+  var anticipatedB = [
+    ['Cause_Area_Uncertainty','Skills_Credentials'],
+    ['Financial_Security','Cause_Area_Uncertainty','Skills_Credentials'],
+    ['Skills_Credentials'],
+    ['Cause_Area_Uncertainty','Skills_Credentials','Policy_Landscape'],
+    ['Financial_Security','Family_Peer_Pressure','Cause_Area_Uncertainty'],
+    ['Cause_Area_Uncertainty','Skills_Credentials'],
+    ['Skills_Credentials','Policy_Landscape'],
+    ['Financial_Security','Family_Peer_Pressure','Cause_Area_Uncertainty'],
+    ['Cause_Area_Uncertainty'],
+    ['Financial_Security','Cause_Area_Uncertainty','Skills_Credentials'],
+    ['Skills_Credentials'],
+    ['Financial_Security','Family_Peer_Pressure'],
+    ['Cause_Area_Uncertainty','Skills_Credentials'],
+    ['Financial_Security','Cause_Area_Uncertainty'],
+    ['Financial_Security','Family_Peer_Pressure','Cause_Area_Uncertainty'],
+  ];
+  var experiencedB = [
+    ['Ambiguity','Work_Life_Balance','Managing_Up'],
+    ['Ambiguity','Work_Life_Balance','Org_Culture'],
+    ['Work_Life_Balance','Quality_Work'],
+    ['Ambiguity','Policy_Landscape','Managing_Up'],
+    ['Financial_Security','Ambiguity','Work_Life_Balance'],
+    ['Ambiguity','Senior_Stakeholders'],
+    ['Policy_Landscape','Ambiguity','Work_Life_Balance'],
+    ['Work_Life_Balance','Ambiguity','Managing_Up'],
+    ['Ambiguity','Work_Life_Balance'],
+    ['Ambiguity','Work_Life_Balance','Org_Culture'],
+    ['Quality_Work','Work_Life_Balance'],
+    ['Ambiguity','Work_Life_Balance','Financial_Security'],
+    ['Work_Life_Balance','Ambiguity'],
+    ['Ambiguity','Work_Life_Balance','Managing_Up'],
+    ['Ambiguity','Financial_Security','Work_Life_Balance'],
+  ];
+
+  var careerVisions = [
+    'I want to work at the intersection of policy and research to address global health challenges at scale.',
+    'My goal is to build a career in AI safety research, helping ensure advanced AI systems remain beneficial.',
+    'I see myself leading programs at an EA organization focused on global health and development.',
+    'I want to work on biosecurity policy, helping governments prepare for pandemic risks.',
+    'I am still exploring, but I am drawn to paths that combine analytical rigor with meaningful impact.',
+    'I want to contribute to AI governance and help shape policy for safe and beneficial AI development.',
+    'My vision is to work in grantmaking, directing significant resources toward the most effective interventions.',
+    'I want to pursue a career in finance that allows me to earn and give effectively.',
+    'I see myself as a community builder, helping grow the EA ecosystem and supporting others.',
+    'I want to do research on animal welfare, particularly around improving conditions in factory farming.',
+    'My goal is to work in climate policy, bridging the gap between scientific research and policy action.',
+    'I want to be an entrepreneur working on a solution to a neglected global problem.',
+    'I see myself working in international development, using rigorous evidence to improve program effectiveness.',
+    'I am interested in earning to give while building skills, with a long-term goal in AI safety.',
+    'My vision is to work in public health, particularly on malaria prevention in Sub-Saharan Africa.',
+  ];
+  var orgsConsidering = [
+    'GiveWell, Open Philanthropy, WHO',
+    'OpenAI, DeepMind, Center for Human-Compatible AI',
+    'GiveWell, Against Malaria Foundation, Open Philanthropy',
+    'Johns Hopkins Center for Health Security, Georgetown GHSS',
+    'Still exploring — interested in 80,000 Hours, EA Funds',
+    'Partnership on AI, Centre for the Governance of AI, Open Philanthropy',
+    'Open Philanthropy, Founders Pledge, Longview Philanthropy',
+    'Jane Street, Citadel — planning to earn to give',
+    'Centre for Effective Altruism, EA Infrastructure Fund',
+    'Animal Charity Evaluators, Humane Society, Good Food Institute',
+    'ClimateWorks, Founders Pledge Climate Fund',
+    'Wave, WorldCover, Kenya Red Cross',
+    'GiveDirectly, Innovations for Poverty Action, J-PAL',
+    'Currently in finance — considering transition to direct work',
+    'Partners in Health, MSF, Against Malaria Foundation',
+  ];
+  var mostValuable = [
+    'The exposure to different cause areas and time to think carefully about where I could have the most impact.',
+    'Building relationships with peers who share similar values and career goals.',
+    'The structured curriculum on EA principles and how to evaluate impact rigorously.',
+    'Learning frameworks for thinking about counterfactual impact and career capital.',
+    'The placement itself — seeing how EA principles apply in a real organizational context.',
+    'Guest speakers from leading EA organizations who shared candid insights about their work.',
+    'The orientation sessions on motivation and career values — helped me clarify what I actually care about.',
+    'Networking opportunities and meeting people already working on high-impact problems.',
+    'The self-reflection exercises, especially around motivation type and what drives my career choices.',
+    'Having dedicated time to think seriously about career strategy outside of academic pressures.',
+    'The combination of intellectual rigor in the curriculum and practical placement experience.',
+    'Peer discussions about cause area prioritization — challenged my assumptions in useful ways.',
+    'The mentorship component and access to senior practitioners in the EA space.',
+    'Learning how to evaluate career opportunities from an impact perspective rather than prestige.',
+    'The placement experience — seeing the gap between theory and practice in a real organization.',
+  ];
+  var improvements = [
+    'More time dedicated to exploring specific cause areas before the placement.',
+    'A structured mentorship program would add a lot of value.',
+    'More preparation for the practical challenges of workplace culture.',
+    'Stronger connections between orientation content and the placement experience.',
+    'More diverse placement options across different cause areas.',
+    'Earlier placement matching to allow more time to prepare.',
+    'More alumni engagement — hearing from people 2-3 years out would be valuable.',
+    'Better support for fellows uncertain about cause area prioritization.',
+    'Additional sessions on managing up and navigating organizational dynamics.',
+    'More structured reflection time during the placement phase.',
+    'A peer buddy system to support fellows during placement.',
+    'More concrete resources for career planning after the fellowship ends.',
+    'Clearer guidance on what to do if the placement is not a good fit.',
+    'More opportunities to connect with fellows from different cohorts.',
+    'A session on the transition from academic to professional environments.',
+  ];
+
+  fellows.forEach(function(f, i) {
+    var row = new Array(h.length).fill('');
+    var p = placements[f[14] % placements.length];
+    var t2SE = t1SE[i].map(function(v){ return Math.min(7, v+1); });
+
+    set(row,'Email',   f[1]);
+    set(row,'Name',    f[0]);
+    set(row,'Cohort',  cohort);
+    set(row,'T1_Submitted', new Date('2024-09-15').toISOString());
+    if (i < 13) set(row,'T2_Submitted', new Date('2024-10-20').toISOString());
+    if (i < 12) set(row,'T3_Submitted', new Date('2025-01-15').toISOString());
+    if (i < 11) set(row,'T4_Submitted', new Date('2025-03-20').toISOString());
+
+    // T1
+    set(row,'T1_Career_Vision',    careerVisions[i]);
+    set(row,'T1_Orgs_Considering', orgsConsidering[i]);
+    setRanks(row,'T1', valueOrdersT1[i]);
+    set(row,'T1_Motivation_Index', f[3]);
+    set(row,'T1_Motivation_Label', MOTIVATION_LABELS[f[3]]);
+    set(row,'T1_Commitment',       f[2]);
+    setSE(row,'T1', t1SE[i]);
+    set(row,'T1_Career_Direction', f[4]);
+    set(row,'T1_Peer_Influence',   3 + (i % 4));
+    set(row,'T1_Peer_Conv_YN',     i % 3 === 0 ? 'No' : 'Yes');
+    set(row,'T1_Peer_Conv_Count',  i % 3 === 0 ? 0 : 2 + (i % 4));
+    ['EA_Event','EA_Content','Career_Convo','Applied'].forEach(function(b,bi){
+      set(row,'T1_Behavior_'+b, (i+bi)%3===0 ? 0 : 1);
+    });
+    CAUSE_AREAS.forEach(function(c,ci){
+      var vals = ['Actively engaged','Somewhat familiar','Not familiar'];
+      var v = vals[(ci+i)%3];
+      set(row,'T1_Cause_'+c.key,     v);
+      set(row,'T1_Cause_'+c.key+'_Num', CAUSE_NUM[v]);
+    });
+
+    // T2
+    if (i < 13) {
+      set(row,'T2_Career_Vision',      careerVisions[i]+' — updated after orientation.');
+      set(row,'T2_Thinking_Shifted',   'Orientation sharpened my thinking on cause prioritization and scale. I feel more confident about where to focus.');
+      set(row,'T2_Impactful_Sessions', 'The sessions on cause prioritization and the guest speaker from Open Philanthropy were the highlights.');
+      setRanks(row,'T2', valueOrdersT1[i]);
+      set(row,'T2_Commitment_Now',  f[5]);
+      set(row,'T2_Commitment_Then', f[6]);
+      set(row,'T2_Motivation_Now_Index',  f[7]);
+      set(row,'T2_Motivation_Now_Label',  MOTIVATION_LABELS[f[7]]);
+      set(row,'T2_Motivation_Then_Index', f[8]);
+      set(row,'T2_Motivation_Then_Label', MOTIVATION_LABELS[f[8]]);
+      setSE(row,'T2', t2SE);
+      CAUSE_AREAS.forEach(function(c,ci){
+        var vals = ['Actively engaged','Somewhat familiar','Not familiar'];
+        var v = vals[Math.max(0,(ci+i)%3-1)] || 'Somewhat familiar';
+        set(row,'T2_Cause_'+c.key,     v);
+        set(row,'T2_Cause_'+c.key+'_Num', CAUSE_NUM[v]);
+      });
+      setBarriers(row,'T2', anticipatedB[i]);
+      set(row,'T2_Placement_Readiness',  3+(i%3));
+      set(row,'T2_Career_Capital_Goals', 'Build relationships with practitioners, develop research skills, and clarify which organizations are doing the most effective work.');
+      set(row,'T2_Peer_Influence',       4+(i%3));
+    }
+
+    // T3
+    if (i < 12) {
+      set(row,'T3_Org_Name',  p.org);
+      set(row,'T3_Role',      p.role);
+      set(row,'T3_BARS_Intellectual_Rigor',    f[11]);
+      set(row,'T3_BARS_Prof_Development',      f[12]);
+      set(row,'T3_BARS_Impact_Meaningfulness', f[13]);
+      set(row,'T3_Readiness_Retrospective',    [4,3,5,4,3,4,5,2,4,3,5,3][i] || 4);
+      setBarriers(row,'T3', experiencedB[i]);
+      set(row,'T3_Career_Capital_Delivery', 4+(i%2));
+      set(row,'T3_NPS',                     f[10]);
+      set(row,'T3_Most_Valuable',           mostValuable[i]);
+      set(row,'T3_Suggested_Improvement',   improvements[i]);
+      setRanks(row,'T3', valueOrdersT4[i]);
+      set(row,'T3_Career_Vision',     careerVisions[i]+' — strengthened by the placement.');
+      set(row,'T3_Peer_Conv_Count',   3+(i%4));
+      set(row,'T3_Most_Significant_Conv', 'A conversation with my supervisor about long-term career strategy and the transition from fellowship to full-time work.');
+      set(row,'T3_Role1_Name',   p.role);
+      set(row,'T3_Role1_Status', 'Actively applying');
+      set(row,'T3_Role1_Sector', 'Nonprofit / EA');
+      set(row,'T3_Roles_Count',  1+(i%3));
+      set(row,'T3_Career_Direction',      f[9]);
+      set(row,'T3_Career_Dir_Factors',    'The quality of the people at my placement org and the intellectual rigor of the work.');
+      set(row,'T3_Career_Dir_Influences', 'Conversations with my supervisor and seeing the direct impact of the organization\'s work.');
+    }
+
+    // T4
+    if (i < 11) {
+      set(row,'T4_Org_Name',  p.org);
+      set(row,'T4_Role',      p.role);
+      set(row,'T4_BARS_Intellectual_Rigor',    Math.min(5,f[11]+(i%2)));
+      set(row,'T4_BARS_Prof_Development',      Math.min(5,f[12]+(i%2)));
+      set(row,'T4_BARS_Impact_Meaningfulness', f[13]);
+      set(row,'T4_Readiness_Retrospective',    Math.min(5,([4,3,5,4,3,4,5,2,4,3,5][i]||4)+1));
+      setBarriers(row,'T4', experiencedB[i].slice(0,1));
+      set(row,'T4_Career_Capital_Delivery', Math.min(5,4+(i%2)));
+      set(row,'T4_NPS',                     f[10]);
+      set(row,'T4_Most_Valuable',           mostValuable[i]);
+      set(row,'T4_Suggested_Improvement',   improvements[i]);
+      setRanks(row,'T4', valueOrdersT4[i]);
+      set(row,'T4_Career_Vision',     careerVisions[i]+' — now focused on near-term high-impact work at an EA-aligned organization.');
+      set(row,'T4_Peer_Conv_Count',   4+(i%4));
+      set(row,'T4_Most_Significant_Conv', 'A career strategy session with an 80,000 Hours advisor that helped clarify my comparative advantage and next steps.');
+      set(row,'T4_Role1_Name',   p.role+' (continued)');
+      set(row,'T4_Role1_Status', i%3===0 ? 'Offer accepted' : 'Actively applying');
+      set(row,'T4_Role1_Sector', 'Nonprofit / EA');
+      set(row,'T4_Roles_Count',  2+(i%2));
+      set(row,'T4_Career_Direction',      f[9]);
+      set(row,'T4_Career_Dir_Factors',    'The quality of the organization\'s work, the people I\'d be working with, and the clarity of their theory of change.');
+      set(row,'T4_Career_Dir_Influences', 'My placement experience, conversations with mentors, and clearer thinking about where I can have the most impact.');
+    }
+
+    sheet.appendRow(row);
+  });
+
+  Logger.log('✓ Generated 15 sample fellows for cohort ' + cohort + '. Run setupDerivedTabs() to refresh the analysis tabs.');
+}
+
+// =============================================================================
 // DERIVED ANALYSIS TABS
 // Run setupDerivedTabs() any time to create or rebuild these tabs.
 // Safe to re-run — clears and rebuilds without touching Responses data.
