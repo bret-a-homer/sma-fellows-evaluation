@@ -1907,6 +1907,21 @@ function getFollowUpPages(tp) {
         </div>
       `,
     },
+    // Page 7b – Motivation — follow-up (T4 only — filtered out of T3)
+    {
+      id: tp + 'p7b',
+      html: `
+        <h2 style="margin-bottom: 8px;">Your Motivation — Now</h2>
+        <p style="color:var(--text-sec); font-size:14px; margin-bottom:24px; line-height:1.6;">
+          Read each description carefully. Select the one that most honestly reflects where you are right now.
+        </p>
+        <div class="q-block">
+          <div class="q-label" style="margin-bottom:16px;"><em>Which best describes your pursuit of a high-impact altruistic career?</em></div>
+          ${renderMotivationScale(tp + '-motiv', a, false)}
+          <div class="q-note" style="margin-top:16px;">Same question as before the program began — answer based on how you feel now.</div>
+        </div>
+      `,
+    },
     // Page 7 – Textarea with note
     {
       id: tp + 'p7',
@@ -2005,7 +2020,7 @@ function getFollowUpPages(tp) {
 }
 
 function getT3Pages() {
-  return getFollowUpPages('t3').filter(function(p){ return p.id !== 't3p10' && p.id !== 't3p5x'; });
+  return getFollowUpPages('t3').filter(function(p){ return p.id !== 't3p10' && p.id !== 't3p5x' && p.id !== 't3p7b'; });
 }
 function getT4Pages() {
   // T4 keeps post-placement pages (NPS, values, vision, conversations, career direction)

@@ -146,6 +146,7 @@ function getHeaders() {
     h.push(T + '_Career_Direction', T + '_Career_Dir_Factors', T + '_Career_Dir_Influences');
     if (T === 'T4') {
       for (var j = 1; j <= 3; j++) h.push('T4_Path'+j+'_Desc', 'T4_Path'+j+'_Pct', 'T4_Path'+j+'_Sector');
+      h.push('T4_Motivation_Index', 'T4_Motivation_Label');
     }
   });
 
@@ -310,6 +311,7 @@ function buildColumnData(tp, data, name) {
         cols['T4_Path'+pn+'_Pct']    = data['t4-path'+pn+'-pct']    || '';
         cols['T4_Path'+pn+'_Sector'] = data['t4-path'+pn+'-sector'] || '';
       }
+      motivation('t4-motiv-val', 'T4_Motivation_Index', 'T4_Motivation_Label');
     }
   }
 
@@ -469,7 +471,7 @@ function doGet(e) {
   // dashboard renders the dropdown and an empty state rather than crashing
   if (!data || data.n === 0) {
     var emptySnap={n:0,recMean:0,careerDirT1:{Yes:0,Deciding:0,No:0},careerDirT4:{Yes:0,Deciding:0,No:0},placementReady:0,convT1:0,convT4:0};
-    data = { n: 0, cohorts: cohortsList, snapshot: emptySnap, snapshotHighCF: emptySnap, selfEfficacy:{items:[],t1:[],t2:[]}, commitment:{t1now:0,t2then:0,t2now:0}, motivation:{t1now:0,t2then:0,t2now:0,t1dist:[0,0,0,0,0],t2thenDist:[0,0,0,0,0],t2nowDist:[0,0,0,0,0],labels:['External','Introjected','Identified','Integrated','Intrinsic']}, careerValues:{names:[],t1:[],t2:[],t4:[]}, barriers:{labels:[],anticipated:[],experienced:[]}, placement:{dims:[],dist:[]} };
+    data = { n: 0, cohorts: cohortsList, snapshot: emptySnap, snapshotHighCF: emptySnap, selfEfficacy:{items:[],t1:[],t2:[]}, commitment:{t1now:0,t2then:0,t2now:0}, motivation:{t1now:0,t2then:0,t2now:0,t4now:0,t1dist:[0,0,0,0,0],t2thenDist:[0,0,0,0,0],t2nowDist:[0,0,0,0,0],t4dist:[0,0,0,0,0],labels:['External','Introjected','Identified','Integrated','Intrinsic']}, careerValues:{names:[],t1:[],t2:[],t4:[]}, barriers:{labels:[],anticipated:[],experienced:[]}, placement:{dims:[],dist:[]} };
   }
 
   var tmpl = HtmlService.createTemplateFromFile('dashboard');
@@ -570,7 +572,7 @@ function computeDashboardData(cohortFilter) {
 
   // Motivation distributions — values are 0-indexed (0=External … 5=Fully Intrinsic)
   // Bucket into 5 display bins: 0-4, capping Fully Intrinsic (5) into bin 4
-  var motT1dist=[0,0,0,0,0], motT2thenDist=[0,0,0,0,0], motT2nowDist=[0,0,0,0,0];
+  var motT1dist=[0,0,0,0,0], motT2thenDist=[0,0,0,0,0], motT2nowDist=[0,0,0,0,0], motT4dist=[0,0,0,0,0];
   rows.forEach(function(r){
     var v=num(r,'T1_Motivation_Index');
     if(v!==null){var idx=Math.min(Math.max(Math.round(v),0),4); motT1dist[idx]++;}
@@ -578,6 +580,10 @@ function computeDashboardData(cohortFilter) {
   t2r.forEach(function(r){
     var v=num(r,'T2_Motivation_Then_Index'); if(v!==null){var i2=Math.min(Math.max(Math.round(v),0),4); motT2thenDist[i2]++;}
     var w=num(r,'T2_Motivation_Now_Index');  if(w!==null){var i3=Math.min(Math.max(Math.round(w),0),4); motT2nowDist[i3]++;}
+  });
+  t4r.forEach(function(r){
+    var v=num(r,'T4_Motivation_Index');
+    if(v!==null){var i4=Math.min(Math.max(Math.round(v),0),4); motT4dist[i4]++;}
   });
 
   // High-counterfactual subset
@@ -622,7 +628,8 @@ function computeDashboardData(cohortFilter) {
       t1now:  avg(rows.map(function(r){return num(r,'T1_Motivation_Index');})),
       t2then: avg(t2r.map(function(r){return num(r,'T2_Motivation_Then_Index');})),
       t2now:  avg(t2r.map(function(r){return num(r,'T2_Motivation_Now_Index');})),
-      t1dist: motT1dist, t2thenDist: motT2thenDist, t2nowDist: motT2nowDist,
+      t4now:  avg(t4r.map(function(r){return num(r,'T4_Motivation_Index');})),
+      t1dist: motT1dist, t2thenDist: motT2thenDist, t2nowDist: motT2nowDist, t4dist: motT4dist,
       labels: ['External','Introjected','Identified','Integrated','Intrinsic']
     },
     careerValues: { names: CAREER_VALUES.map(function(v){return v.name;}), t1:cvT1, t2:cvT2, t4:cvT4 },

@@ -224,23 +224,26 @@ function renderCommitment() {
 
 // ─── Motivation — stacked count plots ────────────────────────────────────
 function renderMotivation() {
-  const {t1now,t2then,t2now,labels}=D.motivation;
+  const {t1now,t2then,t2now,t4now,labels}=D.motivation;
   const t1dist  = D.motivation.t1dist     || [0,0,0,0,0];
   const t2tDist = D.motivation.t2thenDist || [0,0,0,0,0];
   const t2nDist = D.motivation.t2nowDist  || [0,0,0,0,0];
+  const t4dist  = D.motivation.t4dist     || [0,0,0,0,0];
   const nd=(t2now-t1now).toFixed(2), cd=(t2now-t2then).toFixed(2);
+  const t4nd=((t4now||0)-t1now).toFixed(2), t4cd=((t4now||0)-t2then).toFixed(2);
 
   const panels=[
     {label:'T1 — Now',  sub:'Pre-orientation',       dist:t1dist,  color:'#6a6a6a'},
     {label:'T2 — Then', sub:'Retrospective baseline', dist:t2tDist, color:'#8a6a4a'},
-    {label:'T2 — Now',  sub:'Post-orientation',       dist:t2nDist, color:'#c9622f'}
+    {label:'T2 — Now',  sub:'Post-orientation',       dist:t2nDist, color:'#c9622f'},
+    {label:'T4 — Now',  sub:'6-month follow-up',      dist:t4dist,  color:'#4a7c59'}
   ];
 
-  const meansArr=[t1now,t2then,t2now];
+  const meansArr=[t1now,t2then,t2now,t4now||0];
   const W=600, ML=92, MR=76, MT=10, MB=36;
   const cW=W-ML-MR, panelH=62, panelGap=14, nP=panels.length;
   const chartH=nP*panelH+(nP-1)*panelGap, totalH=MT+chartH+MB;
-  const allC=[...t1dist,...t2tDist,...t2nDist];
+  const allC=[...t1dist,...t2tDist,...t2nDist,...t4dist];
   const maxC=Math.max(...allC,1);
   const slotW=cW/5, barW=Math.round(slotW*0.52);
 
@@ -331,6 +334,8 @@ function renderMotivation() {
     <div class="commit-deltas">
       ${delt(nd,'Naïve shift (T1-Now → T2-Now)')}
       ${delt(cd,'Corrected shift (T2-Then → T2-Now)')}
+      ${delt(t4nd,'Long-term naïve (T1-Now → T4-Now)')}
+      ${delt(t4cd,'Long-term corrected (T2-Then → T4-Now)')}
     </div>
   </div>`;
 }
