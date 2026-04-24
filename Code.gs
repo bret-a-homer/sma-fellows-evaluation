@@ -62,6 +62,7 @@ const SE_ITEMS = [
   { key: 'Counterfactual',     full: 'Considering counterfactual tradeoffs for different altruistic pursuits' },
   { key: 'Finding_Opps',       full: 'Finding high-impact, altruistic career opportunities' },
   { key: 'Networking',         full: 'Establishing professional contacts to advance a career in high-impact altruism' },
+  { key: 'ITN_Framework',      full: 'Applying the importance, tractability, and neglectedness (ITN) framework to prioritize causes and social impact work' },
 ];
 
 const BEHAVIORAL_ITEMS = [
