@@ -413,15 +413,28 @@ function doPost(e) {
 function doGet(e) {
   var cohort = (e && e.parameter && e.parameter.cohort) ? e.parameter.cohort : 'all';
   var data   = computeDashboardData(cohort);
-  if (!data || data.n === 0) {
+
+  // Always fetch the full cohort list so the dropdown works even when
+  // a filtered cohort returns zero rows
+  var allData     = (cohort !== 'all') ? computeDashboardData('all') : data;
+  var cohortsList = (allData && allData.cohorts) ? allData.cohorts : [];
+
+  if (!allData || allData.n === 0) {
     return HtmlService.createHtmlOutput(
       '<p style="font-family:sans-serif;padding:40px;color:#666">' +
       'No data found. Run <strong>setup()</strong> then <strong>generateSampleData()</strong> in the Apps Script editor.</p>'
     );
   }
+
+  // If the selected cohort has no rows, pass empty-state data so the
+  // dashboard renders the dropdown and an empty state rather than crashing
+  if (!data || data.n === 0) {
+    data = { n: 0, cohorts: cohortsList, snapshot: {n:0,recMean:0,careerDirT1:{Yes:0,Deciding:0,No:0},careerDirT4:{Yes:0,Deciding:0,No:0},placementReady:0,convT1:0,convT4:0}, selfEfficacy:{items:[],t1:[],t2:[]}, commitment:{t1now:0,t2then:0,t2now:0}, motivation:{t1now:0,t2then:0,t2now:0,t1dist:[0,0,0,0,0],t2thenDist:[0,0,0,0,0],t2nowDist:[0,0,0,0,0],labels:['External','Introjected','Identified','Integrated','Intrinsic']}, careerValues:{names:[],t1:[],t2:[],t4:[]}, barriers:{labels:[],anticipated:[],experienced:[]}, placement:{dims:[],dist:[]} };
+  }
+
   var tmpl = HtmlService.createTemplateFromFile('dashboard');
   tmpl.dataJson     = JSON.stringify(data);
-  tmpl.cohortsList  = JSON.stringify(data.cohorts);
+  tmpl.cohortsList  = JSON.stringify(cohortsList);
   tmpl.selected     = cohort;
   return tmpl.evaluate()
     .setTitle('SMA Fellows Evaluation — Dashboard')

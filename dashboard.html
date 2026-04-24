@@ -236,7 +236,8 @@ function renderMotivation() {
     {label:'T2 — Now',  sub:'Post-orientation',       dist:t2nDist, color:'#c9622f'}
   ];
 
-  const W=520, ML=92, MR=10, MT=10, MB=36;
+  const meansArr=[t1now,t2then,t2now];
+  const W=600, ML=92, MR=76, MT=10, MB=36;
   const cW=W-ML-MR, panelH=62, panelGap=14, nP=panels.length;
   const chartH=nP*panelH+(nP-1)*panelGap, totalH=MT+chartH+MB;
   const allC=[...t1dist,...t2tDist,...t2nDist];
@@ -307,6 +308,16 @@ function renderMotivation() {
       font-size="11" fill="#f2ede4" font-weight="500">${panel.label}</text>`;
     svg+=`<text x="${ML-8}" y="${pTop+panelH/2+9}" text-anchor="end" dominant-baseline="middle"
       font-size="9" fill="#6e6a61">${panel.sub}</text>`;
+
+    // Means column (right of chart)
+    const mean=meansArr[pi], delta=mean-t2then, isBase=pi===1;
+    const midY=pTop+panelH/2, colX=W-4;
+    const dStr=isBase?'baseline':(delta>=0?'+':'')+delta.toFixed(2);
+    const dCol=isBase?'#555':delta>0?'#4a7c59':'#c07050';
+    if(pi===0) svg+=`<line x1="${ML+cW+8}" y1="${MT}" x2="${ML+cW+8}" y2="${MT+chartH}" stroke="#2a2a2a" stroke-width="0.5"/>`;
+    svg+=`<text x="${colX}" y="${midY-9}" text-anchor="end" font-size="14" fill="#f2ede4" font-weight="600">${mean.toFixed(2)}</text>`;
+    svg+=`<text x="${colX}" y="${midY+5}" text-anchor="end" font-size="9" fill="#555">mean</text>`;
+    svg+=`<text x="${colX}" y="${midY+18}" text-anchor="end" font-size="10" fill="${dCol}" font-weight="${isBase?400:600}">${dStr}</text>`;
   });
 
   function delt(val,label){
@@ -317,7 +328,6 @@ function renderMotivation() {
     <h3 class="dash-section-title">Motivation Quality — SDT Count Distribution</h3>
     <p class="dash-section-desc">Number of fellows at each motivation level across three timepoints. Dashed line shows the distribution shape. Hover bars or dots for exact counts. A rightward shift signals internalization of the mission.</p>
     <svg viewBox="0 0 ${W} ${totalH}" width="100%" style="display:block;overflow:visible;font-family:Inter,sans-serif">${svg}</svg>
-    <p class="commit-narrative">${motivNarrative(t2then,t2now)}</p>
     <div class="commit-deltas">
       ${delt(nd,'Naïve shift (T1-Now → T2-Now)')}
       ${delt(cd,'Corrected shift (T2-Then → T2-Now)')}
@@ -475,17 +485,23 @@ function renderCareerDir() {
 }
 
 // ─── Mount ────────────────────────────────────────────────────────────────
-document.getElementById('dashboard').innerHTML =
-  renderSnapshot() +
-  renderSelfEfficacy() +
-  renderCommitment() +
-  renderMotivation() +
-  renderCareerValues() +
-  renderBarriers() +
-  renderPlacement() +
-  renderCareerDir();
-
-attachTips();
+if (D.n === 0) {
+  document.getElementById('dashboard').innerHTML =
+    '<div class="dash-section" style="text-align:center;padding:48px 24px">' +
+    '<p style="color:var(--text-sec);font-size:14px">No responses found for this cohort.</p>' +
+    '</div>';
+} else {
+  document.getElementById('dashboard').innerHTML =
+    renderSnapshot() +
+    renderSelfEfficacy() +
+    renderCommitment() +
+    renderMotivation() +
+    renderCareerValues() +
+    renderBarriers() +
+    renderPlacement() +
+    renderCareerDir();
+  attachTips();
+}
 </script>
 </body>
 </html>
