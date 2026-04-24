@@ -804,6 +804,74 @@
     }
     .dyn-remove:hover { border-color: #7a3030; color: #e06060; }
 
+    /* ── Career path rows ── */
+    .career-path-block {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      margin-bottom: 10px;
+    }
+    .path-num-badge {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--accent);
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+    .career-path-block input[type="text"] {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      font-family: 'Inter', sans-serif;
+      font-size: 13px;
+      padding: 9px 12px;
+      outline: none;
+      transition: border-color .18s;
+      width: 100%;
+      margin-bottom: 8px;
+      box-sizing: border-box;
+    }
+    .career-path-block input[type="text"]:focus { border-color: var(--accent); }
+    .path-footer {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .career-path-pct {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      font-family: 'Inter', sans-serif;
+      font-size: 13px;
+      padding: 8px 10px;
+      outline: none;
+      width: 64px;
+      text-align: center;
+    }
+    .career-path-pct:focus { border-color: var(--accent); }
+    .career-path-sector {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text-sec);
+      font-family: 'Inter', sans-serif;
+      font-size: 12px;
+      padding: 8px 28px 8px 10px;
+      outline: none;
+      cursor: pointer;
+      appearance: none;
+      -webkit-appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath fill='%239e9a91' d='M5 6L0 0h10z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 10px center;
+    }
+    .career-path-sector:focus { border-color: var(--accent); }
+
     /* ── Other text input ── */
     .other-input {
       margin-top: 8px;
@@ -969,6 +1037,8 @@ const state = {
 // ─────────────────────────────────────────────
 // DATA
 // ─────────────────────────────────────────────
+const SECTOR_OPTS = ['Finance', 'Technology', 'Consulting', 'Nonprofit / Public Service', 'Academia / Research', 'Health', 'Government, Politics, Law', 'Arts, Entertainment, Sports', 'Engineering', 'Education', 'Entrepreneurship', 'Publishing / Media', 'Other'];
+
 const CAUSE_AREAS = [
   'Global health and development',
   'Animal welfare and alternative proteins',
@@ -1252,6 +1322,19 @@ function getT1Pages() {
             ${renderInternRows(a['t1-internships'] || [])}
           </div>
           <button class="btn btn-ghost btn-sm" id="dyn-add" style="margin-top: 10px;">+ Add internship</button>
+        </div>
+      `,
+    },
+    // Page 0c – Career paths
+    {
+      id: 't1p0c',
+      html: `
+        <h2 style="margin-bottom: 8px;">Post-Graduation Career Paths</h2>
+        <p style="color:var(--text-sec); font-size:14px; margin-bottom:24px; line-height:1.6;">
+          Describe up to three career paths you might realistically pursue after graduation. For each, give a one-sentence description, estimate your likelihood of taking it, and select the most relevant sector. These don't need to sum to 100% — any remaining probability is assumed to go to some other path.
+        </p>
+        <div class="q-block">
+          ${renderCareerPaths('t1', a)}
         </div>
       `,
     },
@@ -1799,6 +1882,19 @@ function getFollowUpPages(tp) {
         </div>
       `,
     },
+    // Page 5x – Career paths (T4 only — filtered out of T3)
+    {
+      id: tp + 'p5x',
+      html: `
+        <h2 style="margin-bottom: 8px;">Post-Graduation Career Paths</h2>
+        <p style="color:var(--text-sec); font-size:14px; margin-bottom:24px; line-height:1.6;">
+          Describe up to three career paths you are now realistically considering after graduation. For each, give a one-sentence description, estimate your current likelihood of taking it, and select the most relevant sector. These don't need to sum to 100%.
+        </p>
+        <div class="q-block">
+          ${renderCareerPaths(tp, a)}
+        </div>
+      `,
+    },
     // Page 6 – Drag-drop ranking
     {
       id: tp + 'p6',
@@ -1909,8 +2005,7 @@ function getFollowUpPages(tp) {
 }
 
 function getT3Pages() {
-  // Roles & Applications page (p10) is T3-only — drop from T3 per user request
-  return getFollowUpPages('t3').filter(function(p){ return p.id !== 't3p10'; });
+  return getFollowUpPages('t3').filter(function(p){ return p.id !== 't3p10' && p.id !== 't3p5x'; });
 }
 function getT4Pages() {
   // T4 keeps post-placement pages (NPS, values, vision, conversations, career direction)
@@ -2745,9 +2840,34 @@ function renderRankList(name, items) {
   `;
 }
 
+// Career path rows — 3 fixed entries with description, % likelihood, sector
+function renderCareerPaths(tp, a) {
+  return [1,2,3].map(n => {
+    const descKey = tp+'-path'+n+'-desc';
+    const pctKey  = tp+'-path'+n+'-pct';
+    const secKey  = tp+'-path'+n+'-sector';
+    return `
+      <div class="career-path-block">
+        <div class="path-num-badge">Path ${n}</div>
+        <input type="text" id="${descKey}"
+          placeholder="One sentence describing this career path…"
+          value="${a[descKey] || ''}" />
+        <div class="path-footer">
+          <input type="number" class="career-path-pct" id="${pctKey}"
+            min="0" max="100" placeholder="0" value="${a[pctKey] || ''}" />
+          <span style="font-size:13px;color:var(--text-sec)">% likelihood</span>
+          <select class="career-path-sector" id="${secKey}">
+            <option value="">Sector</option>
+            ${SECTOR_OPTS.map(o => `<option value="${o}" ${(a[secKey]||'')=== o ? 'selected' : ''}>${o}</option>`).join('')}
+          </select>
+        </div>
+      </div>`;
+  }).join('');
+}
+
 // Internship list rows (role, org, sector)
 function renderInternRows(rows) {
-  const sectorOpts = ['Finance', 'Technology', 'Consulting', 'Nonprofit / Public Service', 'Academia / Research', 'Health', 'Government, Politics, Law', 'Arts, Entertainment, Sports', 'Engineering', 'Education', 'Entrepreneurship', 'Publishing / Media', 'Other'];
+  const sectorOpts = SECTOR_OPTS;
   return rows.map((row, i) => `
     <div class="dyn-row intern-row" data-dyn-index="${i}">
       <input type="text" placeholder="Role title" value="${row.role || ''}" data-field="role" data-idx="${i}" />
@@ -3138,6 +3258,11 @@ function collectPageAnswers() {
   // Collect placement identity and respondent text/email inputs
   document.querySelectorAll('.placement-inputs input[type="text"], .placement-inputs input[type="email"]').forEach(inp => {
     if (inp.id) a[inp.id] = inp.value;
+  });
+
+  // Collect career path blocks (text descriptions and sector selects; number inputs collected above)
+  document.querySelectorAll('.career-path-block input[type="text"], .career-path-block select').forEach(el => {
+    if (el.id) a[el.id] = el.value;
   });
 
   // Collect dynamic rows

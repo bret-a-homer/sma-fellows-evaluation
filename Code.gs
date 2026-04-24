@@ -111,6 +111,7 @@ function getHeaders() {
   SE_ITEMS.forEach(s => h.push('T1_SE_' + s.key));
   h.push('T1_Career_Direction');
   h.push('T1_Prior_Internships', 'T1_Counterfactual');
+  for (var i = 1; i <= 3; i++) h.push('T1_Path'+i+'_Desc', 'T1_Path'+i+'_Pct', 'T1_Path'+i+'_Sector');
 
   // ── T2 ──────────────────────────────────────────────────────────────────────
   h.push('T2_Career_Vision', 'T2_Thinking_Shifted');
@@ -143,6 +144,9 @@ function getHeaders() {
     }
     h.push(T + '_Roles_Count');
     h.push(T + '_Career_Direction', T + '_Career_Dir_Factors', T + '_Career_Dir_Influences');
+    if (T === 'T4') {
+      for (var j = 1; j <= 3; j++) h.push('T4_Path'+j+'_Desc', 'T4_Path'+j+'_Pct', 'T4_Path'+j+'_Sector');
+    }
   });
 
   return h;
@@ -224,6 +228,11 @@ function buildColumnData(tp, data, name) {
     cols['T1_Peer_Conv_Count']  = data['t1-q8-num']    || '';
     selfEfficacy('t1-se', 'T1');
     cols['T1_Career_Direction'] = data['t1-q11']       || '';
+    for (var pn = 1; pn <= 3; pn++) {
+      cols['T1_Path'+pn+'_Desc']   = data['t1-path'+pn+'-desc']   || '';
+      cols['T1_Path'+pn+'_Pct']    = data['t1-path'+pn+'-pct']    || '';
+      cols['T1_Path'+pn+'_Sector'] = data['t1-path'+pn+'-sector'] || '';
+    }
     var internships = (data['t1-internships'] || []).filter(function(r) { return r.role || r.org || r.sector; });
     cols['T1_Prior_Internships'] = JSON.stringify(internships);
     var hcSectors = ['Finance', 'Technology', 'Consulting'];
@@ -295,6 +304,13 @@ function buildColumnData(tp, data, name) {
     cols[T + '_Career_Direction']      = data[tp + '-q11']  || '';
     cols[T + '_Career_Dir_Factors']    = data[tp + '-q12a'] || '';
     cols[T + '_Career_Dir_Influences'] = data[tp + '-q12b'] || '';
+    if (tp === 't4') {
+      for (var pn = 1; pn <= 3; pn++) {
+        cols['T4_Path'+pn+'_Desc']   = data['t4-path'+pn+'-desc']   || '';
+        cols['T4_Path'+pn+'_Pct']    = data['t4-path'+pn+'-pct']    || '';
+        cols['T4_Path'+pn+'_Sector'] = data['t4-path'+pn+'-sector'] || '';
+      }
+    }
   }
 
   return cols;
