@@ -39,6 +39,10 @@ const CAUSE_AREAS = [
   { key: 'Biosecurity',      full: 'Biosecurity and pandemic preparedness' },
   { key: 'Nuclear_Risk',     full: 'Nuclear risk reduction' },
   { key: 'Climate',          full: 'Climate change and energy transition' },
+  { key: 'Food_Transition',  full: 'Food transition and sustainable food systems' },
+  { key: 'Democracy',        full: 'Democracy and political reform' },
+  { key: 'Tax_Fairness',     full: 'Tax fairness and economic redistribution' },
+  { key: 'Abundance',        full: 'Abundance and progress studies' },
 ];
 
 const CAUSE_NUM = { 'Not familiar': 0, 'Somewhat familiar': 1, 'Actively engaged': 2 };
