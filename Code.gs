@@ -515,15 +515,16 @@ function computeDashboardData(cohortFilter) {
     return [1,2,3,4,5].map(function(v){return t3r.filter(function(r){return Number(r[ci(col)])===v;}).length;});
   });
 
-  // Motivation distributions
+  // Motivation distributions — values are 0-indexed (0=External … 5=Fully Intrinsic)
+  // Bucket into 5 display bins: 0-4, capping Fully Intrinsic (5) into bin 4
   var motT1dist=[0,0,0,0,0], motT2thenDist=[0,0,0,0,0], motT2nowDist=[0,0,0,0,0];
   rows.forEach(function(r){
     var v=num(r,'T1_Motivation_Index');
-    if(v!==null){var idx=Math.min(Math.max(Math.round(v)-1,0),4); motT1dist[idx]++;}
+    if(v!==null){var idx=Math.min(Math.max(Math.round(v),0),4); motT1dist[idx]++;}
   });
   t2r.forEach(function(r){
-    var v=num(r,'T2_Motivation_Then_Index'); if(v!==null){var idx=Math.min(Math.max(Math.round(v)-1,0),4); motT2thenDist[idx]++;}
-    var w=num(r,'T2_Motivation_Now_Index');  if(w!==null){var idx=Math.min(Math.max(Math.round(w)-1,0),4); motT2nowDist[idx]++;}
+    var v=num(r,'T2_Motivation_Then_Index'); if(v!==null){var i2=Math.min(Math.max(Math.round(v),0),4); motT2thenDist[i2]++;}
+    var w=num(r,'T2_Motivation_Now_Index');  if(w!==null){var i3=Math.min(Math.max(Math.round(w),0),4); motT2nowDist[i3]++;}
   });
 
   return {
