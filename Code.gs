@@ -149,6 +149,7 @@ function getHeaders() {
       for (var j = 1; j <= 3; j++) h.push('T4_Path'+j+'_Desc', 'T4_Path'+j+'_Pct', 'T4_Path'+j+'_Sector');
       h.push('T4_Motivation_Index', 'T4_Motivation_Label');
       h.push('T4_Theory_Of_Change');
+      h.push('T4_Career_Direction_Then');
     }
   });
 
@@ -314,7 +315,8 @@ function buildColumnData(tp, data, name) {
         cols['T4_Path'+pn+'_Sector'] = data['t4-path'+pn+'-sector'] || '';
       }
       motivation('t4-motiv-val', 'T4_Motivation_Index', 'T4_Motivation_Label');
-      cols['T4_Theory_Of_Change'] = data['t4-toc'] || '';
+      cols['T4_Theory_Of_Change']       = data['t4-toc']        || '';
+      cols['T4_Career_Direction_Then']  = data['t4-q11-then']   || '';
     }
   }
 
@@ -473,7 +475,7 @@ function doGet(e) {
   // If the selected cohort has no rows, pass empty-state data so the
   // dashboard renders the dropdown and an empty state rather than crashing
   if (!data || data.n === 0) {
-    var emptySnap={n:0,recMean:0,careerDirT1:{Yes:0,Deciding:0,No:0},careerDirT4:{Yes:0,Deciding:0,No:0},placementReady:0,convT1:0,convT4:0};
+    var emptySnap={n:0,recMean:0,careerDirT1:{Yes:0,Deciding:0,No:0},careerDirT4:{Yes:0,Deciding:0,No:0},careerDirT4Then:{Yes:0,Deciding:0,No:0},placementReady:0,convT1:0,convT4:0};
     data = { n: 0, cohorts: cohortsList, snapshot: emptySnap, snapshotHighCF: emptySnap, selfEfficacy:{items:[],t1:[],t2:[]}, commitment:{t1now:0,t2then:0,t2now:0}, motivation:{t1now:0,t2then:0,t2now:0,t4now:0,t1dist:[0,0,0,0,0],t2thenDist:[0,0,0,0,0],t2nowDist:[0,0,0,0,0],t4dist:[0,0,0,0,0],labels:['External','Introjected','Identified','Integrated','Intrinsic']}, careerValues:{names:[],t1:[],t2:[],t4:[]}, barriers:{labels:[],anticipated:[],experienced:[]}, placement:{dims:[],dist:[]} };
   }
 
@@ -611,6 +613,7 @@ function computeDashboardData(cohortFilter) {
       recMean: avg(sNps),
       careerDirT1: dirPcts(sRows,'T1_Career_Direction'),
       careerDirT4: dc,
+      careerDirT4Then: dirPcts(sT4r,'T4_Career_Direction_Then'),
       placementReady: sRdy.length ? Math.round(100*sRdy.filter(function(r){return num(r,'T3_Readiness_Retrospective')>=4;}).length/sRdy.length) : 0,
       convT1: sT1cv.length ? Math.round(100*sT1cv.filter(function(r){return r[ci('T1_Peer_Conv_YN')]==='Yes';}).length/sT1cv.length) : 0,
       convT4: sT4cv.length ? Math.round(100*sT4cv.filter(function(r){return num(r,'T4_Peer_Conv_Count')>0;}).length/sT4cv.length) : 0
@@ -781,23 +784,23 @@ function generateSampleData() {
     {org:'Centre for Effective Altruism',    role:'Community Building Fellow'},
   ];
 
-  // Columns: name, email, t1Commit, t1Motiv, t1Dir, t2cNow, t2cThen, t2mNow, t2mThen, t4Dir, nps, barsIR, barsPD, barsIM, placIdx
+  // Columns: name, email, t1Commit, t1Motiv, t1Dir, t2cNow, t2cThen, t2mNow, t2mThen, t4Dir, nps, barsIR, barsPD, barsIM, placIdx, t4Motiv
   var fellows = [
-    ['Emma Chen',       'e.chen@harvard.edu',       6,3,'Yes',           6,5,4,3,'Yes',           9, 4,4,5, 0],
-    ['James Osei',      'j.osei@mit.edu',            4,2,'Still deciding',5,3,3,2,'Yes',           8, 4,3,4, 1],
-    ['Priya Sharma',    'p.sharma@yale.edu',         7,4,'Yes',           7,6,5,4,'Yes',           10,5,5,5, 2],
-    ['Marcus Williams', 'm.williams@columbia.edu',   5,3,'Yes',           6,4,4,3,'Yes',           8, 4,3,4, 3],
-    ['Sofia Rodriguez', 's.rodriguez@brown.edu',     3,1,'Still deciding',5,3,3,2,'Yes',           7, 3,3,4, 4],
-    ['Liam Nakamura',   'l.nakamura@stanford.edu',   6,3,'Yes',           6,5,4,3,'Yes',           9, 5,4,5, 5],
-    ['Aisha Patel',     'a.patel@princeton.edu',     7,4,'Yes',           7,6,5,4,'Yes',           9, 5,5,5, 6],
-    ['Tyler Brooks',    't.brooks@upenn.edu',        3,2,'No',            5,3,3,2,'Still deciding',6, 3,3,3, 7],
-    ['Maya Johnson',    'm.johnson@dartmouth.edu',   6,3,'Yes',           6,5,4,3,'Yes',           8, 4,4,5, 8],
-    ['Noah Schmidt',    'n.schmidt@cornell.edu',     5,2,'Still deciding',5,4,3,2,'Yes',           7, 4,3,4, 9],
-    ['Isabella Torres', 'i.torres@uchicago.edu',     6,4,'Yes',           7,5,5,4,'Yes',           10,5,5,5,10],
-    ['Ethan Kim',       'e.kim@duke.edu',            4,2,'Still deciding',5,3,3,2,'Still deciding',7, 3,3,4,11],
-    ['Ava Thompson',    'a.thompson@vanderbilt.edu', 7,4,'Yes',           7,6,5,4,'Yes',           9, 5,5,5,12],
-    ['Oliver Davis',    'o.davis@northwestern.edu',  5,3,'Still deciding',5,4,3,3,'Still deciding',6, 4,3,4, 0],
-    ['Mia Anderson',    'm.anderson@georgetown.edu', 4,2,'No',            6,3,4,2,'Yes',           8, 4,4,4, 1],
+    ['Emma Chen',       'e.chen@harvard.edu',       6,3,'Yes',           6,5,4,3,'Yes',           9, 4,4,5, 0, 4],
+    ['James Osei',      'j.osei@mit.edu',            4,2,'Still deciding',5,3,3,2,'Yes',           8, 4,3,4, 1, 4],
+    ['Priya Sharma',    'p.sharma@yale.edu',         7,4,'Yes',           7,6,5,4,'Yes',           10,5,5,5, 2, 5],
+    ['Marcus Williams', 'm.williams@columbia.edu',   5,3,'Yes',           6,4,4,3,'Yes',           8, 4,3,4, 3, 4],
+    ['Sofia Rodriguez', 's.rodriguez@brown.edu',     3,1,'Still deciding',5,3,3,2,'Yes',           7, 3,3,4, 4, 3],
+    ['Liam Nakamura',   'l.nakamura@stanford.edu',   6,3,'Yes',           6,5,4,3,'Yes',           9, 5,4,5, 5, 4],
+    ['Aisha Patel',     'a.patel@princeton.edu',     7,4,'Yes',           7,6,5,4,'Yes',           9, 5,5,5, 6, 5],
+    ['Tyler Brooks',    't.brooks@upenn.edu',        3,2,'No',            5,3,3,2,'Still deciding',6, 3,3,3, 7, 3],
+    ['Maya Johnson',    'm.johnson@dartmouth.edu',   6,3,'Yes',           6,5,4,3,'Yes',           8, 4,4,5, 8, 4],
+    ['Noah Schmidt',    'n.schmidt@cornell.edu',     5,2,'Still deciding',5,4,3,2,'Yes',           7, 4,3,4, 9, 3],
+    ['Isabella Torres', 'i.torres@uchicago.edu',     6,4,'Yes',           7,5,5,4,'Yes',           10,5,5,5,10, 5],
+    ['Ethan Kim',       'e.kim@duke.edu',            4,2,'Still deciding',5,3,3,2,'Still deciding',7, 3,3,4,11, 3],
+    ['Ava Thompson',    'a.thompson@vanderbilt.edu', 7,4,'Yes',           7,6,5,4,'Yes',           9, 5,5,5,12, 5],
+    ['Oliver Davis',    'o.davis@northwestern.edu',  5,3,'Still deciding',5,4,3,3,'Still deciding',6, 4,3,4, 0, 3],
+    ['Mia Anderson',    'm.anderson@georgetown.edu', 4,2,'No',            6,3,4,2,'Yes',           8, 4,4,4, 1, 4],
   ];
 
   var t1SE = [
@@ -1048,6 +1051,8 @@ function generateSampleData() {
       set(row,'T4_Career_Direction',      f[9]);
       set(row,'T4_Career_Dir_Factors',    'The quality of the organization\'s work, the people I\'d be working with, and the clarity of their theory of change.');
       set(row,'T4_Career_Dir_Influences', 'My placement experience, conversations with mentors, and clearer thinking about where I can have the most impact.');
+      set(row,'T4_Motivation_Index',  f[15]);
+      set(row,'T4_Motivation_Label',  MOTIVATION_LABELS[f[15]]);
     }
 
     sheet.appendRow(row);
