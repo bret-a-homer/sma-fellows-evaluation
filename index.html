@@ -755,6 +755,9 @@
       align-items: center;
       margin-bottom: 8px;
     }
+    .dyn-row.intern-row {
+      grid-template-columns: 1fr 1fr auto auto;
+    }
     .dyn-row input[type="text"] {
       background: var(--surface);
       border: 1px solid var(--border);
@@ -1205,12 +1208,18 @@ function renderRespondentPage(tp, a) {
       </div>
       ${tp === 't1' ? `
       <div>
-        <label for="t1-cohort">Program cohort</label>
-        <input type="text" id="t1-cohort"
-          placeholder="e.g. 2025-26"
-          value="${a['t1-cohort'] || ''}" />
+        <label for="t1-school">School / university</label>
+        <input type="text" id="t1-school"
+          placeholder="e.g. Harvard Kennedy School"
+          value="${a['t1-school'] || ''}" />
+      </div>
+      <div>
+        <label for="t1-year">Orientation year</label>
+        <input type="text" id="t1-year"
+          placeholder="e.g. 2025"
+          value="${a['t1-year'] || ''}" />
         <p style="color:var(--text-sec); font-size:12px; margin-top:6px; line-height:1.5;">
-          The program year you are participating in — used to group responses across cohorts.
+          The year you completed your program orientation — used to group responses across cohorts.
         </p>
       </div>` : ''}
     </div>
@@ -1225,6 +1234,23 @@ function getT1Pages() {
   return [
     // Page 0 – Respondent identity
     { id: 't1p0', html: renderRespondentPage('t1', a) },
+    // Page 0b – Prior internships
+    {
+      id: 't1p0b',
+      html: `
+        <h2 style="margin-bottom: 8px;">Prior Internships</h2>
+        <p style="color:var(--text-sec); font-size:14px; margin-bottom:24px; line-height:1.6;">
+          List any internships you completed before joining this program. If you haven't had any, you can proceed without adding any.
+        </p>
+        <div class="q-block">
+          <div class="q-label">Prior internship experience</div>
+          <div id="dyn-list-container" data-key="t1-internships" data-render="intern">
+            ${renderInternRows(a['t1-internships'] || [])}
+          </div>
+          <button class="btn btn-ghost btn-sm" id="dyn-add" style="margin-top: 10px;">+ Add internship</button>
+        </div>
+      `,
+    },
     // Page 1 – Career Vision (open-ended, moved to first)
     {
       id: 't1p1',
@@ -2715,6 +2741,22 @@ function renderRankList(name, items) {
   `;
 }
 
+// Internship list rows (role, org, sector)
+function renderInternRows(rows) {
+  const sectorOpts = ['Finance', 'Technology', 'Consulting', 'Nonprofit / Public Service', 'Academia / Research', 'Health', 'Government, Politics, Law', 'Arts, Entertainment, Sports', 'Engineering', 'Education', 'Entrepreneurship', 'Publishing / Media', 'Other'];
+  return rows.map((row, i) => `
+    <div class="dyn-row intern-row" data-dyn-index="${i}">
+      <input type="text" placeholder="Role title" value="${row.role || ''}" data-field="role" data-idx="${i}" />
+      <input type="text" placeholder="Organization name" value="${row.org || ''}" data-field="org" data-idx="${i}" />
+      <select data-field="sector" data-idx="${i}">
+        <option value="">Sector</option>
+        ${sectorOpts.map(o => `<option value="${o}" ${row.sector === o ? 'selected' : ''}>${o}</option>`).join('')}
+      </select>
+      <button class="dyn-remove" data-remove="${i}" title="Remove">&#10005;</button>
+    </div>
+  `).join('');
+}
+
 // Dynamic list builder rows
 function renderDynRows(rows) {
   const statusOpts = ['Applied', 'Offer received', 'Accepted', 'Declined'];
@@ -2863,12 +2905,13 @@ function attachHandlers() {
   if (dynAdd) dynAdd.addEventListener('click', () => {
     const tp = state.touchpoint;
     const a = state.answers[tp];
-    const key = tp + '-q10';
-    if (!a[key]) a[key] = [{ role: '', status: '', sector: '' }];
-    saveDynRows();
-    a[key].push({ role: '', status: '', sector: '' });
     const container = document.getElementById('dyn-list-container');
-    if (container) container.innerHTML = renderDynRows(a[key]);
+    const key = (container && container.dataset.key) ? container.dataset.key : tp + '-q10';
+    const isIntern = container && container.dataset.render === 'intern';
+    if (!a[key]) a[key] = [];
+    saveDynRows();
+    a[key].push(isIntern ? { role: '', org: '', sector: '' } : { role: '', status: '', sector: '' });
+    if (container) container.innerHTML = isIntern ? renderInternRows(a[key]) : renderDynRows(a[key]);
     attachDynHandlers();
   });
 
@@ -2895,13 +2938,14 @@ function attachDynHandlers() {
       const idx = parseInt(btn.dataset.remove);
       const tp = state.touchpoint;
       const a = state.answers[tp];
-      const key = tp + '-q10';
+      const container = document.getElementById('dyn-list-container');
+      const key = (container && container.dataset.key) ? container.dataset.key : tp + '-q10';
+      const isIntern = container && container.dataset.render === 'intern';
       if (!a[key]) return;
       saveDynRows();
-      if (a[key].length > 1) {
+      if (isIntern || a[key].length > 1) {
         a[key].splice(idx, 1);
-        const container = document.getElementById('dyn-list-container');
-        if (container) container.innerHTML = renderDynRows(a[key]);
+        if (container) container.innerHTML = isIntern ? renderInternRows(a[key]) : renderDynRows(a[key]);
         attachDynHandlers();
       }
     });
@@ -2917,17 +2961,15 @@ function attachDynHandlers() {
 
 function saveDynRows() {
   const tp = state.touchpoint;
+  const container = document.getElementById('dyn-list-container');
+  const key = (container && container.dataset.key) ? container.dataset.key : tp + '-q10';
   const rows = [];
   document.querySelectorAll('.dyn-row').forEach(row => {
-    const roleInp = row.querySelector('input[type="text"]');
-    const selects = row.querySelectorAll('select');
-    rows.push({
-      role: roleInp ? roleInp.value : '',
-      status: selects[0] ? selects[0].value : '',
-      sector: selects[1] ? selects[1].value : '',
-    });
+    const obj = {};
+    row.querySelectorAll('[data-field]').forEach(el => { obj[el.dataset.field] = el.value || ''; });
+    rows.push(obj);
   });
-  state.answers[tp][tp + '-q10'] = rows;
+  state.answers[tp][key] = rows;
 }
 
 // ─────────────────────────────────────────────
@@ -3263,7 +3305,9 @@ async function submitToSheet() {
 
   const email  = (a[tp + '-respondent-email'] || '').trim().toLowerCase();
   const name   = (a[tp + '-respondent-name']  || '').trim();
-  const cohort = tp === 't1' ? (a['t1-cohort'] || '').trim() : '';
+  const school = tp === 't1' ? (a['t1-school'] || '').trim() : '';
+  const year   = tp === 't1' ? (a['t1-year']   || '').trim() : '';
+  const cohort = tp === 't1' ? `${school}-${year}` : '';
 
   const payload = {
     touchpoint: tp,

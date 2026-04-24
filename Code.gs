@@ -106,6 +106,7 @@ function getHeaders() {
   h.push('T1_Peer_Influence', 'T1_Peer_Conv_YN', 'T1_Peer_Conv_Count');
   SE_ITEMS.forEach(s => h.push('T1_SE_' + s.key));
   h.push('T1_Career_Direction');
+  h.push('T1_Prior_Internships', 'T1_Counterfactual');
 
   // ── T2 ──────────────────────────────────────────────────────────────────────
   h.push('T2_Career_Vision', 'T2_Thinking_Shifted');
@@ -219,6 +220,24 @@ function buildColumnData(tp, data, name) {
     cols['T1_Peer_Conv_Count']  = data['t1-q8-num']    || '';
     selfEfficacy('t1-se', 'T1');
     cols['T1_Career_Direction'] = data['t1-q11']       || '';
+    var internships = (data['t1-internships'] || []).filter(function(r) { return r.role || r.org || r.sector; });
+    cols['T1_Prior_Internships'] = JSON.stringify(internships);
+    var hcSectors = ['Finance', 'Technology', 'Consulting'];
+    var lcSectors = ['Nonprofit / Public Service'];
+    var hcCount = 0, lcCount = 0;
+    internships.forEach(function(r) {
+      if (hcSectors.indexOf(r.sector) >= 0) hcCount++;
+      else if (lcSectors.indexOf(r.sector) >= 0) lcCount++;
+    });
+    if (internships.length === 0) {
+      cols['T1_Counterfactual'] = 'Mid';
+    } else if (hcCount === internships.length) {
+      cols['T1_Counterfactual'] = 'High';
+    } else if (lcCount > hcCount) {
+      cols['T1_Counterfactual'] = 'Low';
+    } else {
+      cols['T1_Counterfactual'] = 'Mid';
+    }
   }
 
   // ── T2 ────────────────────────────────────────────────────────────────────
@@ -886,6 +905,9 @@ function generateSampleData() {
     set(row,'T1_Commitment',       f[2]);
     setSE(row,'T1', t1SE[i]);
     set(row,'T1_Career_Direction', f[4]);
+    var ctfSample = ['High','Low','Mid','Mid','High','Low','High','Mid','Low','Mid'];
+    set(row,'T1_Counterfactual',   ctfSample[i % ctfSample.length]);
+    set(row,'T1_Prior_Internships','[]');
     set(row,'T1_Peer_Influence',   3 + (i % 4));
     set(row,'T1_Peer_Conv_YN',     i % 3 === 0 ? 'No' : 'Yes');
     set(row,'T1_Peer_Conv_Count',  i % 3 === 0 ? 0 : 2 + (i % 4));
