@@ -1895,6 +1895,20 @@ function getFollowUpPages(tp) {
         </div>
       `,
     },
+    // Page 5y – Theory of change (T4 only — filtered out of T3)
+    {
+      id: tp + 'p5y',
+      html: `
+        <h2 style="margin-bottom: 8px;">Your Theory of Change</h2>
+        <p style="color:var(--text-sec); font-size:14px; margin-bottom:24px; line-height:1.6;">
+          Think about the role or career path you most expect to pursue after graduation.
+        </p>
+        <div class="q-block">
+          <div class="q-label" style="margin-bottom:16px;"><em>In 3–5 sentences, describe your personal theory of change in that role — how do you expect your work to contribute to meaningful impact?</em></div>
+          <textarea id="${tp}-toc" placeholder="Describe the pathway from your work to the impact you hope to have…">${a[tp + '-toc'] || ''}</textarea>
+        </div>
+      `,
+    },
     // Page 6 – Drag-drop ranking
     {
       id: tp + 'p6',
@@ -2020,7 +2034,7 @@ function getFollowUpPages(tp) {
 }
 
 function getT3Pages() {
-  return getFollowUpPages('t3').filter(function(p){ return p.id !== 't3p10' && p.id !== 't3p5x' && p.id !== 't3p7b'; });
+  return getFollowUpPages('t3').filter(function(p){ return p.id !== 't3p10' && p.id !== 't3p5x' && p.id !== 't3p5y' && p.id !== 't3p7b'; });
 }
 function getT4Pages() {
   // T4 keeps post-placement pages (NPS, values, vision, conversations, career direction)

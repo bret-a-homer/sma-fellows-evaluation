@@ -147,6 +147,7 @@ function getHeaders() {
     if (T === 'T4') {
       for (var j = 1; j <= 3; j++) h.push('T4_Path'+j+'_Desc', 'T4_Path'+j+'_Pct', 'T4_Path'+j+'_Sector');
       h.push('T4_Motivation_Index', 'T4_Motivation_Label');
+      h.push('T4_Theory_Of_Change');
     }
   });
 
@@ -312,6 +313,7 @@ function buildColumnData(tp, data, name) {
         cols['T4_Path'+pn+'_Sector'] = data['t4-path'+pn+'-sector'] || '';
       }
       motivation('t4-motiv-val', 'T4_Motivation_Index', 'T4_Motivation_Label');
+      cols['T4_Theory_Of_Change'] = data['t4-toc'] || '';
     }
   }
 
