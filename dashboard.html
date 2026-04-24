@@ -222,67 +222,91 @@ function renderCommitment() {
   </div>`;
 }
 
-// ─── Motivation — ridge plot ───────────────────────────────────────────────
+// ─── Motivation — stacked count plots ────────────────────────────────────
 function renderMotivation() {
   const {t1now,t2then,t2now,labels}=D.motivation;
-  const t1dist   = D.motivation.t1dist    || [0,0,0,0,0];
-  const t2tDist  = D.motivation.t2thenDist || [0,0,0,0,0];
-  const t2nDist  = D.motivation.t2nowDist  || [0,0,0,0,0];
+  const t1dist  = D.motivation.t1dist     || [0,0,0,0,0];
+  const t2tDist = D.motivation.t2thenDist || [0,0,0,0,0];
+  const t2nDist = D.motivation.t2nowDist  || [0,0,0,0,0];
   const nd=(t2now-t1now).toFixed(2), cd=(t2now-t2then).toFixed(2);
 
-  const ridgeRows=[
-    {label:'T1 — Now',   sub:'Pre-orientation',     dist:t1dist,  color:'#6a6a6a', fill:'rgba(106,106,106,0.2)'},
-    {label:'T2 — Then',  sub:'Retrospective baseline',dist:t2tDist,color:'#8a6a4a', fill:'rgba(138,106,74,0.2)'},
-    {label:'T2 — Now',   sub:'Post-orientation',    dist:t2nDist, color:'#c9622f', fill:'rgba(201,98,47,0.2)'}
+  const panels=[
+    {label:'T1 — Now',  sub:'Pre-orientation',       dist:t1dist,  color:'#6a6a6a'},
+    {label:'T2 — Then', sub:'Retrospective baseline', dist:t2tDist, color:'#8a6a4a'},
+    {label:'T2 — Now',  sub:'Post-orientation',       dist:t2nDist, color:'#c9622f'}
   ];
 
-  const W=520,ML=90,MR=10,MT=12,MB=38;
-  const cW=W-ML-MR, rowH=50, gap=18, nR=ridgeRows.length;
-  const chartH=nR*rowH+(nR-1)*gap, totalH=MT+chartH+MB;
+  const W=520, ML=92, MR=10, MT=10, MB=36;
+  const cW=W-ML-MR, panelH=62, panelGap=14, nP=panels.length;
+  const chartH=nP*panelH+(nP-1)*panelGap, totalH=MT+chartH+MB;
   const allC=[...t1dist,...t2tDist,...t2nDist];
   const maxC=Math.max(...allC,1);
-
-  function xFor(i){ return ML+(i/4)*cW; }
+  const slotW=cW/5, barW=Math.round(slotW*0.52);
 
   let svg='';
-  // Axis line
-  svg+=`<line x1="${ML}" y1="${MT+chartH}" x2="${ML+cW}" y2="${MT+chartH}" stroke="#2a2a2a" stroke-width="1"/>`;
-  // X-axis labels
+
+  // X-axis labels once at bottom
   labels.forEach((lab,i)=>{
-    svg+=`<text x="${xFor(i).toFixed(1)}" y="${MT+chartH+18}" text-anchor="middle" font-size="10" fill="#6e6a61">${lab}</text>`;
+    const cx=(ML+(i+0.5)*slotW).toFixed(1);
+    svg+=`<text x="${cx}" y="${MT+chartH+18}" text-anchor="middle" font-size="10" fill="#6e6a61">${lab}</text>`;
   });
-  // Vertical guides at each level
-  for(let i=0;i<5;i++){
-    svg+=`<line x1="${xFor(i).toFixed(1)}" y1="${MT}" x2="${xFor(i).toFixed(1)}" y2="${MT+chartH}" stroke="#1e1e1e" stroke-width="1"/>`;
-  }
 
-  // Rows — render bottom-to-top so top row is drawn last (on top)
-  [...ridgeRows].reverse().forEach((row,ri_rev)=>{
-    const ri=nR-1-ri_rev;
-    const baseY=MT+ri*(rowH+gap)+rowH;
-    const yPts=row.dist.map((c,i)=>(baseY-(c/maxC)*(rowH-8)).toFixed(1));
+  panels.forEach((panel,pi)=>{
+    const pTop=MT+pi*(panelH+panelGap), pBot=pTop+panelH;
 
-    // Filled area
-    const polyPts=[`${xFor(0).toFixed(1)},${baseY}`]
-      .concat(yPts.map((y,i)=>`${xFor(i).toFixed(1)},${y}`))
-      .concat([`${xFor(4).toFixed(1)},${baseY}`]).join(' ');
-    svg+=`<polygon points="${polyPts}" fill="${row.fill}"/>`;
+    // Baseline
+    svg+=`<line x1="${ML}" y1="${pBot}" x2="${ML+cW}" y2="${pBot}" stroke="#2a2a2a" stroke-width="1"/>`;
+    // Y-axis stub
+    svg+=`<line x1="${ML}" y1="${pTop}" x2="${ML}" y2="${pBot}" stroke="#2a2a2a" stroke-width="0.5"/>`;
+    // Max count marker
+    svg+=`<text x="${ML-4}" y="${pTop+4}" text-anchor="end" font-size="9" fill="#555" dominant-baseline="hanging">${maxC}</text>`;
+    svg+=`<line x1="${ML-3}" y1="${pTop}" x2="${ML}" y2="${pTop}" stroke="#555" stroke-width="0.5"/>`;
+    // Zero marker
+    svg+=`<text x="${ML-4}" y="${pBot}" text-anchor="end" font-size="9" fill="#555" dominant-baseline="middle">0</text>`;
 
-    // Line
-    const linePts=yPts.map((y,i)=>`${xFor(i).toFixed(1)},${y}`).join(' ');
-    svg+=`<polyline points="${linePts}" fill="none" stroke="${row.color}" stroke-width="1.5"/>`;
+    // Frequency polygon line points
+    const linePts=[];
 
-    // Dots
-    row.dist.forEach((count,i)=>{
-      const x=xFor(i).toFixed(1), y=yPts[i];
-      svg+=`<circle cx="${x}" cy="${y}" r="5" fill="${row.color}" stroke="#161616" stroke-width="1.5" style="cursor:pointer" data-tip="${row.label}|${labels[i]}: ${count} fellow${count!==1?'s':''}"/>`;
+    panel.dist.forEach((count,i)=>{
+      const cx=ML+(i+0.5)*slotW;
+      const bh=(count/maxC)*panelH;
+      const bx=(cx-barW/2).toFixed(1);
+      const by=(pBot-bh).toFixed(1);
+      linePts.push({x:cx, y:pBot-bh});
+
+      // Bar
+      if(count>0){
+        svg+=`<rect x="${bx}" y="${by}" width="${barW}" height="${bh.toFixed(1)}"
+          fill="${panel.color}" rx="2" opacity="0.8" style="cursor:pointer"
+          data-tip="${panel.label}|${labels[i]}|${count} fellow${count!==1?'s':''} reported this level"/>`;
+        // Count label above bar
+        if(bh>14){
+          svg+=`<text x="${cx.toFixed(1)}" y="${(parseFloat(by)+11).toFixed(1)}"
+            text-anchor="middle" font-size="10" fill="#f2ede4" font-weight="600">${count}</text>`;
+        } else {
+          svg+=`<text x="${cx.toFixed(1)}" y="${(parseFloat(by)-4).toFixed(1)}"
+            text-anchor="middle" font-size="10" fill="${panel.color}" font-weight="600">${count}</text>`;
+        }
+      }
     });
 
-    // Row label (left of chart)
-    svg+=`<text x="${ML-6}" y="${baseY-rowH/2-5}" text-anchor="end" dominant-baseline="middle" font-size="11" fill="#f2ede4" font-weight="500">${row.label}</text>`;
-    svg+=`<text x="${ML-6}" y="${baseY-rowH/2+9}" text-anchor="end" dominant-baseline="middle" font-size="9" fill="#6e6a61">${row.sub}</text>`;
-    // Row baseline
-    svg+=`<line x1="${ML}" y1="${baseY}" x2="${ML+cW}" y2="${baseY}" stroke="#2a2a2a" stroke-width="0.5"/>`;
+    // Frequency polygon connecting bar midpoints
+    const pPts=linePts.map(p=>`${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ');
+    svg+=`<polyline points="${pPts}" fill="none" stroke="${panel.color}" stroke-width="1.5" stroke-dasharray="4,3" opacity="0.7"/>`;
+
+    // Dots at each level (always shown, even count=0)
+    linePts.forEach((pt,i)=>{
+      const count=panel.dist[i];
+      svg+=`<circle cx="${pt.x.toFixed(1)}" cy="${pt.y.toFixed(1)}" r="4.5"
+        fill="${count>0?panel.color:'#2a2a2a'}" stroke="#161616" stroke-width="1.5" style="cursor:pointer"
+        data-tip="${panel.label}|${labels[i]}|${count} fellow${count!==1?'s':''} reported this level"/>`;
+    });
+
+    // Row label left of chart
+    svg+=`<text x="${ML-8}" y="${pTop+panelH/2-5}" text-anchor="end" dominant-baseline="middle"
+      font-size="11" fill="#f2ede4" font-weight="500">${panel.label}</text>`;
+    svg+=`<text x="${ML-8}" y="${pTop+panelH/2+9}" text-anchor="end" dominant-baseline="middle"
+      font-size="9" fill="#6e6a61">${panel.sub}</text>`;
   });
 
   function delt(val,label){
@@ -290,8 +314,8 @@ function renderMotivation() {
     return `<div class="commit-delta-item"><span class="commit-delta-val ${c}">${s}${val}</span><span class="commit-delta-label">${label}</span></div>`;
   }
   return `<div class="dash-section">
-    <h3 class="dash-section-title">Motivation Quality — SDT Distribution</h3>
-    <p class="dash-section-desc">Count of fellows at each motivation level (External → Intrinsic) across three timepoints. Hover any dot to see exact counts. A rightward shift signals internalization of the mission.</p>
+    <h3 class="dash-section-title">Motivation Quality — SDT Count Distribution</h3>
+    <p class="dash-section-desc">Number of fellows at each motivation level across three timepoints. Dashed line shows the distribution shape. Hover bars or dots for exact counts. A rightward shift signals internalization of the mission.</p>
     <svg viewBox="0 0 ${W} ${totalH}" width="100%" style="display:block;overflow:visible;font-family:Inter,sans-serif">${svg}</svg>
     <p class="commit-narrative">${motivNarrative(t2then,t2now)}</p>
     <div class="commit-deltas">
