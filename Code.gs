@@ -448,7 +448,8 @@ function doGet(e) {
   // If the selected cohort has no rows, pass empty-state data so the
   // dashboard renders the dropdown and an empty state rather than crashing
   if (!data || data.n === 0) {
-    data = { n: 0, cohorts: cohortsList, snapshot: {n:0,recMean:0,careerDirT1:{Yes:0,Deciding:0,No:0},careerDirT4:{Yes:0,Deciding:0,No:0},placementReady:0,convT1:0,convT4:0}, selfEfficacy:{items:[],t1:[],t2:[]}, commitment:{t1now:0,t2then:0,t2now:0}, motivation:{t1now:0,t2then:0,t2now:0,t1dist:[0,0,0,0,0],t2thenDist:[0,0,0,0,0],t2nowDist:[0,0,0,0,0],labels:['External','Introjected','Identified','Integrated','Intrinsic']}, careerValues:{names:[],t1:[],t2:[],t4:[]}, barriers:{labels:[],anticipated:[],experienced:[]}, placement:{dims:[],dist:[]} };
+    var emptySnap={n:0,recMean:0,careerDirT1:{Yes:0,Deciding:0,No:0},careerDirT4:{Yes:0,Deciding:0,No:0},placementReady:0,convT1:0,convT4:0};
+    data = { n: 0, cohorts: cohortsList, snapshot: emptySnap, snapshotHighCF: emptySnap, selfEfficacy:{items:[],t1:[],t2:[]}, commitment:{t1now:0,t2then:0,t2now:0}, motivation:{t1now:0,t2then:0,t2now:0,t1dist:[0,0,0,0,0],t2thenDist:[0,0,0,0,0],t2nowDist:[0,0,0,0,0],labels:['External','Introjected','Identified','Integrated','Intrinsic']}, careerValues:{names:[],t1:[],t2:[],t4:[]}, barriers:{labels:[],anticipated:[],experienced:[]}, placement:{dims:[],dist:[]} };
   }
 
   var tmpl = HtmlService.createTemplateFromFile('dashboard');
@@ -559,17 +560,38 @@ function computeDashboardData(cohortFilter) {
     var w=num(r,'T2_Motivation_Now_Index');  if(w!==null){var i3=Math.min(Math.max(Math.round(w),0),4); motT2nowDist[i3]++;}
   });
 
+  // High-counterfactual subset
+  var hcfRows = rows.filter(function(r){ return String(r[ci('T1_Counterfactual')]||'')==='High'; });
+  var hcfEmailSet = {};
+  hcfRows.forEach(function(r){ hcfEmailSet[String(r[ci('Email')]||'').trim().toLowerCase()]=true; });
+  function inHcf(r){ return !!hcfEmailSet[String(r[ci('Email')]||'').trim().toLowerCase()]; }
+  var hcfT2r=t2r.filter(inHcf), hcfT3r=t3r.filter(inHcf), hcfT4r=t4r.filter(inHcf);
+  var hcfNps=[];
+  hcfRows.forEach(function(r){
+    var v=num(r,'T4_NPS')!==null?num(r,'T4_NPS'):num(r,'T3_NPS');
+    if(v!==null) hcfNps.push(v);
+  });
+  var hcfRdy=hcfT3r.filter(function(r){return num(r,'T3_Readiness_Retrospective')!==null;});
+  var hcfT1cv=hcfRows.filter(function(r){return r[ci('T1_Peer_Conv_YN')];});
+  var hcfT4cv=hcfT4r.filter(function(r){return num(r,'T4_Peer_Conv_Count')!==null;});
+
+  function snapObj(sRows, sT2r, sT3r, sT4r, sNps, sRdy, sT1cv, sT4cv) {
+    var dc=sT4r.length?dirPcts(sT4r,'T4_Career_Direction'):{Yes:0,Deciding:0,No:0};
+    return {
+      n: sRows.length,
+      recMean: avg(sNps),
+      careerDirT1: dirPcts(sRows,'T1_Career_Direction'),
+      careerDirT4: dc,
+      placementReady: sRdy.length ? Math.round(100*sRdy.filter(function(r){return num(r,'T3_Readiness_Retrospective')>=4;}).length/sRdy.length) : 0,
+      convT1: sT1cv.length ? Math.round(100*sT1cv.filter(function(r){return r[ci('T1_Peer_Conv_YN')]==='Yes';}).length/sT1cv.length) : 0,
+      convT4: sT4cv.length ? Math.round(100*sT4cv.filter(function(r){return num(r,'T4_Peer_Conv_Count')>0;}).length/sT4cv.length) : 0
+    };
+  }
+
   return {
     n: n, cohorts: allCohorts,
-    snapshot: {
-      n: n,
-      recMean: avg(npsVals),
-      careerDirT1: dirPcts(rows,'T1_Career_Direction'),
-      careerDirT4: dirPcts(t4r,'T4_Career_Direction'),
-      placementReady: rdy.length ? Math.round(100*rdy.filter(function(r){return num(r,'T3_Readiness_Retrospective')>=4;}).length/rdy.length) : 0,
-      convT1: t1cv.length ? Math.round(100*t1cv.filter(function(r){return r[ci('T1_Peer_Conv_YN')]==='Yes';}).length/t1cv.length) : 0,
-      convT4: t4cv.length ? Math.round(100*t4cv.filter(function(r){return num(r,'T4_Peer_Conv_Count')>0;}).length/t4cv.length) : 0
-    },
+    snapshot: snapObj(rows, t2r, t3r, t4r, npsVals, rdy, t1cv, t4cv),
+    snapshotHighCF: snapObj(hcfRows, hcfT2r, hcfT3r, hcfT4r, hcfNps, hcfRdy, hcfT1cv, hcfT4cv),
     selfEfficacy: { items: SE_ITEMS.map(function(s){return s.full;}), t1: seT1, t2: seT2 },
     commitment: {
       t1now:  avg(rows.map(function(r){return num(r,'T1_Commitment');})),

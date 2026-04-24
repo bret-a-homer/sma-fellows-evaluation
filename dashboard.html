@@ -141,15 +141,30 @@ function motivNarrative(t2then,t2now) {
 }
 
 // ─── Snapshot ─────────────────────────────────────────────────────────────
+function snapCards(s, muted) {
+  const dc=s.careerDirT4.Yes-s.careerDirT1.Yes, ds=dc>=0?'+':'', cc=s.convT4-s.convT1, cs=cc>=0?'+':'';
+  const opacity = muted ? 'opacity:.88' : '';
+  return `
+    <div class="snap-card" style="${opacity}"><div class="snap-num">${s.n}</div><div class="snap-label">Fellows in Cohort</div></div>
+    <div class="snap-card" style="${opacity}"><div class="snap-num">${s.recMean.toFixed(1)}<span style="font-size:13px;font-weight:400;color:var(--text-sec)">/10</span></div><div class="snap-label">Avg. Program Recommendation</div><div class="snap-sub">NPS — most recent touchpoint per fellow</div></div>
+    <div class="snap-card" style="${opacity}"><div class="snap-num">${ds}${dc}%</div><div class="snap-label">High-Impact Career Direction</div><div class="snap-sub">Change in % "Yes" from T1 to T4</div></div>
+    <div class="snap-card" style="${opacity}"><div class="snap-num">${s.placementReady}%</div><div class="snap-label">Felt Ready for Placement</div><div class="snap-sub">Rated ≥ 4/5 on retrospective readiness · T3</div></div>
+    <div class="snap-card" style="${opacity}"><div class="snap-num">${s.convT4}%</div><div class="snap-label">Having Career Conversations</div><div class="snap-sub">${cs}${cc}% from T1 (${s.convT1}%) · at T4</div></div>`;
+}
+
 function renderSnapshot() {
-  const s=D.snapshot, dc=s.careerDirT4.Yes-s.careerDirT1.Yes, ds=dc>=0?'+':'', cc=s.convT4-s.convT1, cs=cc>=0?'+':'';
-  return `<div class="dash-snapshot">
-    <div class="snap-card"><div class="snap-num">${s.n}</div><div class="snap-label">Fellows in Cohort</div></div>
-    <div class="snap-card"><div class="snap-num">${s.recMean.toFixed(1)}<span style="font-size:13px;font-weight:400;color:var(--text-sec)">/10</span></div><div class="snap-label">Avg. Program Recommendation</div><div class="snap-sub">NPS — most recent touchpoint per fellow</div></div>
-    <div class="snap-card"><div class="snap-num">${ds}${dc}%</div><div class="snap-label">High-Impact Career Direction</div><div class="snap-sub">Change in % "Yes" from T1 to T4</div></div>
-    <div class="snap-card"><div class="snap-num">${s.placementReady}%</div><div class="snap-label">Felt Ready for Placement</div><div class="snap-sub">Rated ≥ 4/5 on retrospective readiness · T3</div></div>
-    <div class="snap-card"><div class="snap-num">${s.convT4}%</div><div class="snap-label">Having Career Conversations</div><div class="snap-sub">${cs}${cc}% from T1 (${s.convT1}%) · at T4</div></div>
-  </div>`;
+  const hcf = D.snapshotHighCF || {n:0,recMean:0,careerDirT1:{Yes:0,Deciding:0,No:0},careerDirT4:{Yes:0,Deciding:0,No:0},placementReady:0,convT1:0,convT4:0};
+  return `
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+      <span style="font-size:11px;font-weight:600;color:var(--text-sec);letter-spacing:.06em;text-transform:uppercase;white-space:nowrap">All Fellows</span>
+      <div style="flex:1;height:1px;background:var(--border)"></div>
+    </div>
+    <div class="dash-snapshot" style="margin-bottom:16px">${snapCards(D.snapshot, false)}</div>
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+      <span style="font-size:11px;font-weight:600;color:var(--text-sec);letter-spacing:.06em;text-transform:uppercase;white-space:nowrap">High Counterfactual Fellows</span>
+      <div style="flex:1;height:1px;background:var(--border)"></div>
+    </div>
+    <div class="dash-snapshot" style="margin-bottom:40px">${snapCards(hcf, true)}</div>`;
 }
 
 // ─── Self-Efficacy — Cleveland dot chart ──────────────────────────────────
