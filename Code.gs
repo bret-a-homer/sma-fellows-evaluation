@@ -1346,24 +1346,24 @@ function buildAnalyticsTab() {
   // Average non-blank values
   function avgF(col) {
     var r=cRng(col); if(!r) return '"[missing: '+col+']"';
-    return '=IFERROR(IF(B$2="All",AVERAGEIF('+r+',"<>"),AVERAGEIFS('+r+','+chRng+',B$2,'+r+',"<>")),0)';
+    return '=IFERROR(IF(B$4="All",AVERAGEIF('+r+',"<>"),AVERAGEIFS('+r+','+chRng+',B$4,'+r+',"<>")),0)';
   }
   // Count non-blank rows (subtracts header when "All")
   function cntF(col) {
     var r=cRng(col); if(!r) return '"[missing: '+col+']"';
-    return '=IF(B$2="All",MAX(COUNTIF('+r+',"<>")-1,0),COUNTIFS('+chRng+',B$2,'+r+',"<>"))';
+    return '=IF(B$4="All",MAX(COUNTIF('+r+',"<>")-1,0),COUNTIFS('+chRng+',B$4,'+r+',"<>"))';
   }
   // Count rows where col = val
   function cntValF(col, val) {
     var r=cRng(col); if(!r) return '"[missing: '+col+']"';
-    return '=IF(B$2="All",COUNTIF('+r+',"'+val+'"),COUNTIFS('+chRng+',B$2,'+r+',"'+val+'"))';
+    return '=IF(B$4="All",COUNTIF('+r+',"'+val+'"),COUNTIFS('+chRng+',B$4,'+r+',"'+val+'"))';
   }
   // % of non-blank rows where col = val (×100 for display)
   function pctF(col, val) {
     var r=cRng(col); if(!r) return '"[missing: '+col+']"';
-    return '=IFERROR(IF(B$2="All",'+
+    return '=IFERROR(IF(B$4="All",'+
       'COUNTIF('+r+',"'+val+'")/MAX(COUNTIF('+r+',"<>"),1),'+
-      'COUNTIFS('+chRng+',B$2,'+r+',"'+val+'")/MAX(COUNTIFS('+chRng+',B$2,'+r+',"<>"),1))*100,0)';
+      'COUNTIFS('+chRng+',B$4,'+r+',"'+val+'")/MAX(COUNTIFS('+chRng+',B$4,'+r+',"<>"),1))*100,0)';
   }
 
   // ── Sheet setup ───────────────────────────────────────────────────────────
@@ -1463,7 +1463,7 @@ function buildAnalyticsTab() {
   // ════════════════════════════════════════════════════════════════════════
   sectionHead('① SNAPSHOT');
   mRow('Fellows (N)',
-    '=IF(B$2="All",MAX(COUNTIF('+chRng+',"<>")-1,0),COUNTIF('+chRng+',B$2))',
+    '=IF(B$4="All",MAX(COUNTIF('+chRng+',"<>")-1,0),COUNTIF('+chRng+',B$4))',
     '0', 'Total rows in Responses for this cohort');
   mRow('Avg NPS — T3', avgF('T3_NPS'), '0.00', 'Program recommendation, 0–10');
 
@@ -1477,10 +1477,10 @@ function buildAnalyticsTab() {
   var rdyR = cRng('T3_Readiness_Retrospective');
   if (rdyR) {
     var rdyA='COUNTIF('+rdyR+',"Yes")+COUNTIF('+rdyR+',">=4")';
-    var rdyC='COUNTIFS('+chRng+',B$2,'+rdyR+',"Yes")+COUNTIFS('+chRng+',B$2,'+rdyR+',">=4")';
-    var rdyDA='MAX(COUNTIF('+rdyR+',"<>")-1,1)', rdyDC='MAX(COUNTIFS('+chRng+',B$2,'+rdyR+',"<>"),1)';
+    var rdyC='COUNTIFS('+chRng+',B$4,'+rdyR+',"Yes")+COUNTIFS('+chRng+',B$4,'+rdyR+',">=4")';
+    var rdyDA='MAX(COUNTIF('+rdyR+',"<>")-1,1)', rdyDC='MAX(COUNTIFS('+chRng+',B$4,'+rdyR+',"<>"),1)';
     mRow('Placement ready — T3 (%)',
-      '=IFERROR(IF(B$2="All",('+rdyA+')/'+rdyDA+',('+rdyC+')/'+rdyDC+')*100,0)',
+      '=IFERROR(IF(B$4="All",('+rdyA+')/'+rdyDA+',('+rdyC+')/'+rdyDC+')*100,0)',
       '0.0"%"', '"Yes" or numeric ≥ 4 on retrospective readiness');
   }
 
@@ -1490,8 +1490,8 @@ function buildAnalyticsTab() {
   if (t4cvR) {
     var snCV4 = rw;
     mRow('Having career conversations — T4 (%)',
-      '=IFERROR(IF(B$2="All",COUNTIF('+t4cvR+',">=1")/MAX(COUNTIF('+t4cvR+',"<>")-1,1),'+
-      'COUNTIFS('+chRng+',B$2,'+t4cvR+',">=1")/MAX(COUNTIFS('+chRng+',B$2,'+t4cvR+',"<>"),1))*100,0)',
+      '=IFERROR(IF(B$4="All",COUNTIF('+t4cvR+',">=1")/MAX(COUNTIF('+t4cvR+',"<>")-1,1),'+
+      'COUNTIFS('+chRng+',B$4,'+t4cvR+',">=1")/MAX(COUNTIFS('+chRng+',B$4,'+t4cvR+',"<>"),1))*100,0)',
       '0.0"%"', 'T4 peer conversation count ≥ 1');
     dRow('  ↳ Change (pp)', '=B'+snCV4+'-B'+snCV1, '+0.0;-0.0;0.0"%"');
   }
@@ -1596,8 +1596,8 @@ function buildAnalyticsTab() {
     if (b.key==='Other') return;
     var t2r=cRng('T2_Barrier_'+b.key), t3r=cRng('T3_Barrier_'+b.key);
     if (!t2r||!t3r) return;
-    var t2f='=IFERROR(IF(B$2="All",AVERAGEIF('+t2r+',"<>"),AVERAGEIFS('+t2r+','+chRng+',B$2,'+t2r+',"<>"))*100,0)';
-    var t3f='=IFERROR(IF(B$2="All",AVERAGEIF('+t3r+',"<>"),AVERAGEIFS('+t3r+','+chRng+',B$2,'+t3r+',"<>"))*100,0)';
+    var t2f='=IFERROR(IF(B$4="All",AVERAGEIF('+t2r+',"<>"),AVERAGEIFS('+t2r+','+chRng+',B$4,'+t2r+',"<>"))*100,0)';
+    var t3f='=IFERROR(IF(B$4="All",AVERAGEIF('+t3r+',"<>"),AVERAGEIFS('+t3r+','+chRng+',B$4,'+t3r+',"<>"))*100,0)';
     sh.getRange(rw,1).setValue(b.full).setFontColor(SEC);
     sh.getRange(rw,2).setFormula(t2f).setNumberFormat('0.0"%"').setFontColor(TXT);
     sh.getRange(rw,3).setFormula(t3f).setNumberFormat('0.0"%"').setFontColor(TXT);
