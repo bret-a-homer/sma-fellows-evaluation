@@ -1985,12 +1985,12 @@ function getFollowUpPages(tp) {
         </div>
       `,
     },
-    // Page 11 – Branching question
+    // Page 11 – Branching question (T4 adds retrospective then-test)
     {
       id: tp + 'p11',
       html: `
         <h2 style="margin-bottom: 24px;">Career Direction</h2>
-        <div class="q-block">
+        <div class="q-block" style="margin-bottom:${tp === 't4' ? '28px' : '0'}">
           <div class="q-label">Are you currently pursuing a high-impact career as your primary path?</div>
           <div class="check-list" style="gap: 8px;">
             ${['Yes', 'No', 'Still deciding'].map(opt => `
@@ -2002,6 +2002,20 @@ function getFollowUpPages(tp) {
             `).join('')}
           </div>
         </div>
+        ${tp === 't4' ? `
+        <div class="q-block">
+          <div class="q-label">Thinking back to when you started the program, were you pursuing a high-impact career as your primary path at that time?</div>
+          <p style="color:var(--text-sec); font-size:13px; margin-bottom:12px; line-height:1.5;">Try to recall how you actually felt then — not how you feel now.</p>
+          <div class="check-list" style="gap: 8px;">
+            ${['Yes', 'No', 'Still deciding'].map(opt => `
+              <label class="${(a['t4-q11-then'] || '') === opt ? 'checked' : ''}" data-group="t4-q11-then" data-val="${opt}">
+                <input type="radio" name="t4-q11-then" value="${opt}" ${(a['t4-q11-then'] || '') === opt ? 'checked' : ''} style="display:none" />
+                <span class="check-indicator"></span>
+                ${opt}
+              </label>
+            `).join('')}
+          </div>
+        </div>` : ''}
       `,
     },
   ];
@@ -3078,8 +3092,29 @@ function attachHandlers() {
       const tp = state.touchpoint;
       state.answers[tp][tp + '-q11'] = radio.value;
       state.branchChoice = radio.value;
-      // Update label styling
       document.querySelectorAll(`[data-group="${tp}-q11"]`).forEach(lbl => {
+        lbl.classList.toggle('checked', lbl.dataset.val === radio.value);
+      });
+    });
+  });
+
+  // T4 Q11-Then retrospective radio — label styling only (no branching)
+  document.querySelectorAll('input[name="t4-q11-then"]').forEach(radio => {
+    radio.addEventListener('change', () => {
+      state.answers['t4']['t4-q11-then'] = radio.value;
+      document.querySelectorAll('[data-group="t4-q11-then"]').forEach(lbl => {
+        lbl.classList.toggle('checked', lbl.dataset.val === radio.value);
+      });
+    });
+  });
+
+  // T3/T4 Readiness radio (uses check-list style but is radio)
+  document.querySelectorAll('input[name$="-ready"]').forEach(radio => {
+    radio.addEventListener('change', () => {
+      const tp = state.touchpoint;
+      const group = radio.name; // e.g. "t3-ready" or "t4-ready"
+      state.answers[tp][group] = radio.value;
+      document.querySelectorAll(`[data-group="${group}"]`).forEach(lbl => {
         lbl.classList.toggle('checked', lbl.dataset.val === radio.value);
       });
     });
