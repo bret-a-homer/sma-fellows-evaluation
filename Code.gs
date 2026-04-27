@@ -1083,7 +1083,7 @@ function setupDerivedTabs(ss) {
   setupQualitativeTab(ss);
   setupFellowLookupTab(ss);
   buildAnalyticsTab();
-  Logger.log('✓ Derived tabs created: Completion, Qualitative Responses, Fellow Lookup, Analytics, Explore');
+  Logger.log('✓ Derived tabs created: Completion, Qualitative Responses, Fellow Lookup, Analytics');
 }
 
 function setupCompletionTab(ss) {
@@ -1313,7 +1313,7 @@ function setupFellowLookupTab(ss) {
 function onOpen() {
   SpreadsheetApp.getUi()
     .createMenu('SMA Fellows')
-    .addItem('Rebuild Analytics & Explore tabs', 'buildAnalyticsTab')
+    .addItem('Rebuild Analytics tab', 'buildAnalyticsTab')
     .addSeparator()
     .addItem('Rebuild all derived tabs', 'setupDerivedTabs')
     .addItem('Generate sample data',     'generateSampleData')
@@ -1628,51 +1628,7 @@ function buildAnalyticsTab() {
 
   Logger.log('✓ Analytics tab built: '+(rw-1)+' rows');
 
-  // ── Build Explore tab ─────────────────────────────────────────────────────
-  buildExploreTab(ss, lastColLtr, cohortNum);
-
-  try { SpreadsheetApp.getUi().alert('✓ Analytics and Explore tabs rebuilt successfully.'); } catch(e) {}
-}
-
-// =============================================================================
-// EXPLORE TAB  (filtered data view + pivot table instructions)
-// =============================================================================
-function buildExploreTab(ss, lastColLtr, cohortNum) {
-  var sh = ss.getSheetByName('Explore');
-  if (!sh) sh = ss.insertSheet('Explore');
-  else { sh.clearContents(); sh.clearFormats(); }
-  sh.setTabColor('#4a7c59');
-
-  var BG='#161616', BG3='#111111', TXT='#f2ede4', SEC='#9e9a91';
-
-  // Title block
-  sh.getRange(1,1,1,6).merge().setValue('SMA Fellows — Explore')
-    .setFontSize(16).setFontWeight('bold').setFontColor(TXT).setBackground(BG3);
-  sh.getRange(2,1,1,6).merge()
-    .setValue('Shows all Responses rows for the cohort selected in Analytics!B2. ' +
-              'To build custom breakdowns: click any cell in the data below → Insert → Pivot table.')
-    .setFontColor(SEC).setFontSize(11).setFontStyle('italic').setWrap(true).setBackground(BG3);
-  sh.getRange(3,1,1,6).merge()
-    .setValue('Tip: sort or filter this view freely — it re-queries live data every time Analytics!B2 changes.')
-    .setFontColor('#555').setFontSize(10).setFontStyle('italic').setBackground(BG3);
-
-  sh.setFrozenRows(4); // rows 1-3 = title; row 4 onward = QUERY output with its own header
-
-  // Filtered data QUERY — cohort col is hardcoded from build-time index
-  var emailColNum = 1; // Email is always col 1
-  var qAll  = '"SELECT * WHERE Col'+emailColNum+'<>\'\'"';
-  var qFilt = '"SELECT * WHERE Col'+cohortNum+'=\'"&Analytics!B2&"\'"';
-  sh.getRange(4,1).setFormula(
-    '=IFERROR(IF(Analytics!B2="All",'+
-      'QUERY(Responses!A:'+lastColLtr+','+qAll+',1),'+
-      'QUERY(Responses!A:'+lastColLtr+','+qFilt+',1)'+
-    '),"No matching data — check the cohort filter in the Analytics tab")'
-  ).setFontColor(TXT).setFontFamily('Arial');
-
-  sh.getRange(1,1,4,6).setBackground(BG3);
-  sh.setColumnWidth(1,180); sh.setColumnWidth(2,140);
-
-  Logger.log('✓ Explore tab built');
+  try { SpreadsheetApp.getUi().alert('✓ Analytics tab rebuilt successfully.'); } catch(e) {}
 }
 
 // =============================================================================
