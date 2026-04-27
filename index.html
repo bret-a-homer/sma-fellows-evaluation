@@ -1883,19 +1883,6 @@ function getFollowUpPages(tp) {
         </div>
       `,
     },
-    // Page 5x – Career paths (T4 only — filtered out of T3)
-    {
-      id: tp + 'p5x',
-      html: `
-        <h2 style="margin-bottom: 8px;">Post-Graduation Career Paths</h2>
-        <p style="color:var(--text-sec); font-size:14px; margin-bottom:24px; line-height:1.6;">
-          Describe up to three career paths you are now realistically considering after graduation. For each, give a one-sentence description, estimate your current likelihood of taking it, and select the most relevant sector. These don't need to sum to 100%.
-        </p>
-        <div class="q-block">
-          ${renderCareerPaths(tp, a)}
-        </div>
-      `,
-    },
     // Page 5y – Theory of change (T4 only — filtered out of T3)
     {
       id: tp + 'p5y',
@@ -1982,6 +1969,19 @@ function getFollowUpPages(tp) {
             ${renderDynRows(a[tp + '-q10'] || [{ role: '', status: '', sector: '' }])}
           </div>
           <button class="btn btn-ghost btn-sm" id="dyn-add" style="margin-top: 10px;">+ Add another role</button>
+        </div>
+      `,
+    },
+    // Page 5x – Career paths (T4 only — filtered out of T3)
+    {
+      id: tp + 'p5x',
+      html: `
+        <h2 style="margin-bottom: 8px;">Post-Graduation Career Paths</h2>
+        <p style="color:var(--text-sec); font-size:14px; margin-bottom:24px; line-height:1.6;">
+          Describe up to three career paths you are now realistically considering after graduation. For each, give a one-sentence description, estimate your current likelihood of taking it, and select the most relevant sector. These don't need to sum to 100%.
+        </p>
+        <div class="q-block">
+          ${renderCareerPaths(tp, a)}
         </div>
       `,
     },
@@ -2928,7 +2928,7 @@ function renderInternRows(rows) {
 // Dynamic list builder rows
 function renderDynRows(rows) {
   const statusOpts = ['Applied', 'Offer received', 'Accepted', 'Declined'];
-  const sectorOpts = ['High-impact nonprofit/policy', 'Conventional consulting/finance/tech', 'Undecided', 'Other'];
+  const sectorOpts = SECTOR_OPTS;
   return rows.map((row, i) => `
     <div class="dyn-row" data-dyn-index="${i}">
       <input type="text" placeholder="Role / Organization" value="${row.role || ''}" data-field="role" data-idx="${i}" />
