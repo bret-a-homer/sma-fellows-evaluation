@@ -1082,7 +1082,8 @@ function setupDerivedTabs(ss) {
   setupCompletionTab(ss);
   setupQualitativeTab(ss);
   setupFellowLookupTab(ss);
-  Logger.log('✓ Derived tabs created: Completion, Qualitative Responses, Fellow Lookup');
+  buildAnalyticsTab();
+  Logger.log('✓ Derived tabs created: Completion, Qualitative Responses, Fellow Lookup, Analytics, Explore');
 }
 
 function setupCompletionTab(ss) {
@@ -1304,6 +1305,374 @@ function setupFellowLookupTab(ss) {
   tab.setColumnWidth(1, 230);
   tab.setColumnWidth(2, 420);
   tab.setFrozenRows(1);
+}
+
+// =============================================================================
+// MENU
+// =============================================================================
+function onOpen() {
+  SpreadsheetApp.getUi()
+    .createMenu('SMA Fellows')
+    .addItem('Rebuild Analytics & Explore tabs', 'buildAnalyticsTab')
+    .addSeparator()
+    .addItem('Rebuild all derived tabs', 'setupDerivedTabs')
+    .addItem('Generate sample data',     'generateSampleData')
+    .addToUi();
+}
+
+// =============================================================================
+// ANALYTICS TAB  (live Sheets formulas mirroring the dashboard)
+// Run buildAnalyticsTab() from the SMA Fellows menu, or it runs during setup().
+// Safe to re-run — clears and rebuilds; never touches Responses data.
+// =============================================================================
+function buildAnalyticsTab() {
+  var ss        = SpreadsheetApp.getActiveSpreadsheet();
+  var respSheet = ss.getSheetByName(SHEET_NAME);
+  if (!respSheet) { Logger.log('Run setup() first.'); return; }
+
+  // ── Read Responses headers once ──────────────────────────────────────────
+  var lastCol    = respSheet.getLastColumn();
+  var headers    = respSheet.getRange(1, 1, 1, lastCol).getValues()[0];
+  var lastColLtr = colLetter(lastCol);
+
+  function cIdx(name) { return headers.indexOf(name); }
+  function cLtr(name) { var i=cIdx(name); return i<0?null:colLetter(i+1); }
+  function cRng(name) { var l=cLtr(name); return l?'Responses!'+l+':'+l:null; }
+
+  var cohortNum = cIdx('Cohort') + 1;                           // 1-based
+  var chRng     = 'Responses!'+colLetter(cohortNum)+':'+colLetter(cohortNum);
+
+  // ── Formula builders (all respect the cohort dropdown in B2) ─────────────
+  // Average non-blank values
+  function avgF(col) {
+    var r=cRng(col); if(!r) return '"[missing: '+col+']"';
+    return '=IFERROR(IF(B$2="All",AVERAGEIF('+r+',"<>"),AVERAGEIFS('+r+','+chRng+',B$2,'+r+',"<>")),0)';
+  }
+  // Count non-blank rows (subtracts header when "All")
+  function cntF(col) {
+    var r=cRng(col); if(!r) return '"[missing: '+col+']"';
+    return '=IF(B$2="All",MAX(COUNTIF('+r+',"<>")-1,0),COUNTIFS('+chRng+',B$2,'+r+',"<>"))';
+  }
+  // Count rows where col = val
+  function cntValF(col, val) {
+    var r=cRng(col); if(!r) return '"[missing: '+col+']"';
+    return '=IF(B$2="All",COUNTIF('+r+',"'+val+'"),COUNTIFS('+chRng+',B$2,'+r+',"'+val+'"))';
+  }
+  // % of non-blank rows where col = val (×100 for display)
+  function pctF(col, val) {
+    var r=cRng(col); if(!r) return '"[missing: '+col+']"';
+    return '=IFERROR(IF(B$2="All",'+
+      'COUNTIF('+r+',"'+val+'")/MAX(COUNTIF('+r+',"<>"),1),'+
+      'COUNTIFS('+chRng+',B$2,'+r+',"'+val+'")/MAX(COUNTIFS('+chRng+',B$2,'+r+',"<>"),1))*100,0)';
+  }
+
+  // ── Sheet setup ───────────────────────────────────────────────────────────
+  var sh = ss.getSheetByName('Analytics');
+  if (!sh) sh = ss.insertSheet('Analytics');
+  else { sh.clearContents(); sh.clearFormats(); sh.clearConditionalFormatRules(); }
+  sh.setTabColor('#c9622f');
+
+  var rw = 1;
+  var BG='#161616', BG2='#1e1e1e', BG3='#111111', TXT='#f2ede4', SEC='#9e9a91', ACC='#c9622f';
+
+  // ── Writer helpers ────────────────────────────────────────────────────────
+  function sectionHead(title) {
+    sh.getRange(rw,1,1,6).merge()
+      .setValue(title).setFontWeight('bold').setFontSize(11)
+      .setFontColor(TXT).setBackground('#2c1a10');
+    rw++;
+  }
+  function subHead(labels) {
+    labels.forEach(function(l,i){ sh.getRange(rw,i+1).setValue(l).setFontWeight('bold').setFontColor(SEC).setFontSize(10); });
+    sh.getRange(rw,1,1,labels.length).setBackground(BG2);
+    rw++;
+  }
+  // Primary metric row: label | formula | note
+  function mRow(label, formula, fmt, note) {
+    sh.getRange(rw,1).setValue(label).setFontColor(SEC);
+    if (formula) {
+      var c=sh.getRange(rw,2);
+      if (typeof formula==='string'&&formula.startsWith('=')) c.setFormula(formula); else c.setValue(formula);
+      if (fmt) c.setNumberFormat(fmt);
+      c.setFontWeight('bold').setFontColor(TXT);
+    }
+    if (note) sh.getRange(rw,3).setValue(note).setFontColor('#555').setFontSize(10).setFontStyle('italic');
+    rw++;
+  }
+  // Indented delta row (computed from other cells)
+  function dRow(label, formula, fmt, note) {
+    sh.getRange(rw,1).setValue(label).setFontColor('#666').setFontStyle('italic');
+    if (formula) {
+      var c=sh.getRange(rw,2);
+      if (formula.startsWith('=')) c.setFormula(formula); else c.setValue(formula);
+      if (fmt) c.setNumberFormat(fmt);
+      c.setFontColor('#aaa');
+    }
+    if (note) sh.getRange(rw,3).setValue(note).setFontColor('#444').setFontSize(10).setFontStyle('italic');
+    rw++;
+  }
+  // Table row: label in A, formulas in B C D E
+  function tRow(label, formulas, fmt) {
+    sh.getRange(rw,1).setValue(label).setFontColor(SEC);
+    formulas.forEach(function(f,i){
+      if (f===null||f===undefined) return;
+      var gc=sh.getRange(rw,i+2);
+      if (typeof f==='string'&&f.startsWith('=')) gc.setFormula(f); else gc.setValue(f);
+      if (fmt) gc.setNumberFormat(fmt);
+      gc.setFontColor(TXT);
+    });
+    rw++;
+  }
+  function blank() { rw++; }
+
+  // ════════════════════════════════════════════════════════════════════════
+  // TITLE + COHORT FILTER
+  // ════════════════════════════════════════════════════════════════════════
+  sh.getRange(rw,1,1,6).merge().setValue('SMA Fellows Program — Analytics Validation')
+    .setFontSize(16).setFontWeight('bold').setFontColor(TXT).setBackground(BG3);
+  rw++;
+  sh.getRange(rw,1,1,6).merge()
+    .setValue('Live Sheets formulas that mirror the dashboard calculations. Change the cohort dropdown to filter every section below.')
+    .setFontColor(SEC).setFontSize(11).setFontStyle('italic').setWrap(true).setBackground(BG3);
+  rw++;
+  blank();
+
+  // Cohort filter
+  sh.getRange(rw,1).setValue('Cohort filter').setFontWeight('bold').setFontColor(TXT);
+  var filterCell = sh.getRange(rw,2);
+  filterCell.setValue('All').setFontWeight('bold').setFontColor(ACC).setBackground(BG2)
+    .setBorder(true,true,true,true,false,false, ACC, SpreadsheetApp.BorderStyle.SOLID);
+  var cohortVals = ['All'];
+  if (respSheet.getLastRow() > 1) {
+    var rawC = respSheet.getRange(2, cohortNum, respSheet.getLastRow()-1, 1).getValues();
+    rawC.forEach(function(row){ if(row[0]&&cohortVals.indexOf(String(row[0]))<0) cohortVals.push(String(row[0])); });
+  }
+  filterCell.setDataValidation(
+    SpreadsheetApp.newDataValidation().requireValueInList(cohortVals,true).setAllowInvalid(false).build()
+  );
+  sh.getRange(rw,3).setValue('← change to filter all sections below').setFontColor('#555').setFontSize(10).setFontStyle('italic');
+  rw++;
+  sh.getRange(rw,1).setValue('Last rebuilt').setFontColor(SEC).setFontSize(10);
+  sh.getRange(rw,2).setFormula('=TEXT(NOW(),"mmm d, yyyy h:mm am/pm")').setFontColor(SEC).setFontSize(10);
+  rw++;
+  sh.setFrozenRows(rw-1);
+  blank();
+
+  // ════════════════════════════════════════════════════════════════════════
+  // ① SNAPSHOT
+  // ════════════════════════════════════════════════════════════════════════
+  sectionHead('① SNAPSHOT');
+  mRow('Fellows (N)',
+    '=IF(B$2="All",MAX(COUNTIF('+chRng+',"<>")-1,0),COUNTIF('+chRng+',B$2))',
+    '0', 'Total rows in Responses for this cohort');
+  mRow('Avg NPS — T3', avgF('T3_NPS'), '0.00', 'Program recommendation, 0–10');
+
+  var snT1row = rw;
+  mRow('Career direction "Yes" — T1 (%)', pctF('T1_Career_Direction','Yes'), '0.0"%"');
+  var snT4row = rw;
+  mRow('Career direction "Yes" — T4 (%)', pctF('T4_Career_Direction','Yes'), '0.0"%"');
+  dRow('  ↳ Naïve shift (pp)', '=B'+snT4row+'-B'+snT1row, '+0.0;-0.0;0.0"%"', 'T4-Now % minus T1 %');
+
+  // Placement ready: "Yes" (form text) or ≥4 (old numeric sample data)
+  var rdyR = cRng('T3_Readiness_Retrospective');
+  if (rdyR) {
+    var rdyA='COUNTIF('+rdyR+',"Yes")+COUNTIF('+rdyR+',">=4")';
+    var rdyC='COUNTIFS('+chRng+',B$2,'+rdyR+',"Yes")+COUNTIFS('+chRng+',B$2,'+rdyR+',">=4")';
+    var rdyDA='MAX(COUNTIF('+rdyR+',"<>")-1,1)', rdyDC='MAX(COUNTIFS('+chRng+',B$2,'+rdyR+',"<>"),1)';
+    mRow('Placement ready — T3 (%)',
+      '=IFERROR(IF(B$2="All",('+rdyA+')/'+rdyDA+',('+rdyC+')/'+rdyDC+')*100,0)',
+      '0.0"%"', '"Yes" or numeric ≥ 4 on retrospective readiness');
+  }
+
+  var snCV1 = rw;
+  mRow('Having career conversations — T1 (%)', pctF('T1_Peer_Conv_YN','Yes'), '0.0"%"');
+  var t4cvR = cRng('T4_Peer_Conv_Count');
+  if (t4cvR) {
+    var snCV4 = rw;
+    mRow('Having career conversations — T4 (%)',
+      '=IFERROR(IF(B$2="All",COUNTIF('+t4cvR+',">=1")/MAX(COUNTIF('+t4cvR+',"<>")-1,1),'+
+      'COUNTIFS('+chRng+',B$2,'+t4cvR+',">=1")/MAX(COUNTIFS('+chRng+',B$2,'+t4cvR+',"<>"),1))*100,0)',
+      '0.0"%"', 'T4 peer conversation count ≥ 1');
+    dRow('  ↳ Change (pp)', '=B'+snCV4+'-B'+snCV1, '+0.0;-0.0;0.0"%"');
+  }
+  blank();
+
+  // ════════════════════════════════════════════════════════════════════════
+  // ② COMMITMENT
+  // ════════════════════════════════════════════════════════════════════════
+  sectionHead('② COMMITMENT TO HIGH-IMPACT WORK  (1 – 7 scale)');
+  var cT1=rw;  mRow('T1 — Now  (naïve baseline)',       avgF('T1_Commitment'),        '0.00');
+  var cT2t=rw; mRow('T2 — Then  (corrected baseline)', avgF('T2_Commitment_Then'),   '0.00');
+  var cT2n=rw; mRow('T2 — Now  (post-orientation)',    avgF('T2_Commitment_Now'),    '0.00');
+  dRow('  ↳ Naïve gain  (T1 → T2-Now)',          '=B'+cT2n+'-B'+cT1,  '+0.00;-0.00;0.00', 'Dashboard: naïve gain');
+  dRow('  ↳ Corrected gain  (T2-Then → T2-Now)', '=B'+cT2n+'-B'+cT2t, '+0.00;-0.00;0.00', 'Dashboard: corrected gain — key metric');
+  dRow('  ↳ Reference shift  (T2-Then − T1-Now)','=B'+cT2t+'-B'+cT1,  '+0.00;-0.00;0.00', 'Scale recalibration during orientation');
+  blank();
+
+  // ════════════════════════════════════════════════════════════════════════
+  // ③ MOTIVATION QUALITY
+  // ════════════════════════════════════════════════════════════════════════
+  sectionHead('③ MOTIVATION QUALITY  (0 = External … 5 = Intrinsic)');
+  var mT1=rw;  mRow('T1 — Now',                           avgF('T1_Motivation_Index'),         '0.00');
+  var mT2t=rw; mRow('T2 — Then  (corrected baseline)',    avgF('T2_Motivation_Then_Index'),    '0.00');
+  var mT2n=rw; mRow('T2 — Now  (post-orientation)',       avgF('T2_Motivation_Now_Index'),     '0.00');
+  var mT4=rw;  mRow('T4 — Now  (6-month follow-up)',      avgF('T4_Motivation_Index'),         '0.00');
+  dRow('  ↳ Naïve shift  (T1 → T2-Now)',          '=B'+mT2n+'-B'+mT1,  '+0.00;-0.00;0.00');
+  dRow('  ↳ Corrected shift  (T2-Then → T2-Now)', '=B'+mT2n+'-B'+mT2t, '+0.00;-0.00;0.00', 'Key metric');
+  dRow('  ↳ Long-term naïve  (T1 → T4)',          '=B'+mT4 +'-B'+mT1,  '+0.00;-0.00;0.00');
+  dRow('  ↳ Long-term corrected  (T2-Then → T4)', '=B'+mT4 +'-B'+mT2t, '+0.00;-0.00;0.00');
+  blank();
+  subHead(['Motivation Level','T1 — Now','T2 — Then','T2 — Now','T4 — Now']);
+  ['External','Introjected','Identified','Integrated','Intrinsic'].forEach(function(lab,idx){
+    tRow(lab,[cntValF('T1_Motivation_Index',idx),cntValF('T2_Motivation_Then_Index',idx),
+              cntValF('T2_Motivation_Now_Index',idx),cntValF('T4_Motivation_Index',idx)],'0');
+  });
+  blank();
+
+  // ════════════════════════════════════════════════════════════════════════
+  // ④ SELF-EFFICACY
+  // ════════════════════════════════════════════════════════════════════════
+  sectionHead('④ SELF-EFFICACY  (avg across fellows, 1 – 7 scale)');
+  subHead(['Skill Area','T1 Avg','T2 Avg','Δ T1 → T2']);
+  SE_ITEMS.forEach(function(item){
+    var t1f=avgF('T1_SE_'+item.key), t2f=avgF('T2_SE_'+item.key);
+    sh.getRange(rw,1).setValue(item.full).setFontColor(SEC);
+    sh.getRange(rw,2).setFormula(t1f).setNumberFormat('0.00').setFontColor(TXT);
+    sh.getRange(rw,3).setFormula(t2f).setNumberFormat('0.00').setFontColor(TXT);
+    sh.getRange(rw,4).setFormula('=C'+rw+'-B'+rw).setNumberFormat('+0.00;-0.00;0.00').setFontColor(TXT);
+    rw++;
+  });
+  blank();
+
+  // ════════════════════════════════════════════════════════════════════════
+  // ⑤ CAREER VALUES
+  // ════════════════════════════════════════════════════════════════════════
+  sectionHead('⑤ CAREER VALUES  (avg rank: 1 = highest priority)');
+  subHead(['Value','T1 Avg Rank','T2 Avg Rank','T4 Avg Rank','Δ T1 → T4']);
+  CAREER_VALUES.forEach(function(v){
+    var t1f=avgF('T1_Rank_'+v.key),t2f=avgF('T2_Rank_'+v.key),t4f=avgF('T4_Rank_'+v.key);
+    sh.getRange(rw,1).setValue(v.name).setFontColor(SEC);
+    sh.getRange(rw,2).setFormula(t1f).setNumberFormat('0.00').setFontColor(TXT);
+    sh.getRange(rw,3).setFormula(t2f).setNumberFormat('0.00').setFontColor(TXT);
+    sh.getRange(rw,4).setFormula(t4f).setNumberFormat('0.00').setFontColor(TXT);
+    sh.getRange(rw,5).setFormula('=D'+rw+'-B'+rw).setNumberFormat('+0.00;-0.00;0.00').setFontColor(TXT);
+    rw++;
+  });
+  blank();
+
+  // ════════════════════════════════════════════════════════════════════════
+  // ⑥ CAREER DIRECTION
+  // ════════════════════════════════════════════════════════════════════════
+  sectionHead('⑥ CAREER DIRECTION  (% of fellows with data at each timepoint)');
+  subHead(['Timepoint','Yes %','Still Deciding %','No %','N with data']);
+  var cdDefs=[
+    {label:'T1 — Now  (naïve baseline)',          col:'T1_Career_Direction'},
+    {label:'T4 — Then  (retrospective baseline)', col:'T4_Career_Direction_Then'},
+    {label:'T4 — Now',                            col:'T4_Career_Direction'},
+  ];
+  var cdYesRow={};
+  cdDefs.forEach(function(cd){
+    sh.getRange(rw,1).setValue(cd.label).setFontColor(SEC);
+    sh.getRange(rw,2).setFormula(pctF(cd.col,'Yes')).setNumberFormat('0.0"%"').setFontColor(TXT);
+    sh.getRange(rw,3).setFormula(pctF(cd.col,'Still deciding')).setNumberFormat('0.0"%"').setFontColor(TXT);
+    sh.getRange(rw,4).setFormula(pctF(cd.col,'No')).setNumberFormat('0.0"%"').setFontColor(TXT);
+    sh.getRange(rw,5).setFormula(cntF(cd.col)).setNumberFormat('0').setFontColor(TXT);
+    cdYesRow[cd.col]=rw; rw++;
+  });
+  dRow('  ↳ Naïve shift  (T1 → T4-Now, pp)',
+    '=B'+cdYesRow['T4_Career_Direction']+'-B'+cdYesRow['T1_Career_Direction'],
+    '+0.0;-0.0;0.0"%"','Dashboard: naïve shift');
+  dRow('  ↳ Corrected shift  (T4-Then → T4-Now, pp)',
+    '=B'+cdYesRow['T4_Career_Direction']+'-B'+cdYesRow['T4_Career_Direction_Then'],
+    '+0.0;-0.0;0.0"%"','Dashboard: corrected shift');
+  blank();
+
+  // ════════════════════════════════════════════════════════════════════════
+  // ⑦ BARRIERS
+  // ════════════════════════════════════════════════════════════════════════
+  sectionHead('⑦ BARRIERS  (% of fellows selecting each — stored as 0 / 1)');
+  subHead(['Barrier','T2 Anticipated %','T3 Experienced %','Diff (pp)']);
+  BARRIERS.forEach(function(b){
+    if (b.key==='Other') return;
+    var t2r=cRng('T2_Barrier_'+b.key), t3r=cRng('T3_Barrier_'+b.key);
+    if (!t2r||!t3r) return;
+    var t2f='=IFERROR(IF(B$2="All",AVERAGEIF('+t2r+',"<>"),AVERAGEIFS('+t2r+','+chRng+',B$2,'+t2r+',"<>"))*100,0)';
+    var t3f='=IFERROR(IF(B$2="All",AVERAGEIF('+t3r+',"<>"),AVERAGEIFS('+t3r+','+chRng+',B$2,'+t3r+',"<>"))*100,0)';
+    sh.getRange(rw,1).setValue(b.full).setFontColor(SEC);
+    sh.getRange(rw,2).setFormula(t2f).setNumberFormat('0.0"%"').setFontColor(TXT);
+    sh.getRange(rw,3).setFormula(t3f).setNumberFormat('0.0"%"').setFontColor(TXT);
+    sh.getRange(rw,4).setFormula('=C'+rw+'-B'+rw).setNumberFormat('+0.0;-0.0;0.0"%"').setFontColor(TXT);
+    rw++;
+  });
+  blank();
+
+  // ════════════════════════════════════════════════════════════════════════
+  // ⑧ PLACEMENT QUALITY
+  // ════════════════════════════════════════════════════════════════════════
+  sectionHead('⑧ PLACEMENT QUALITY — BARS  (T3, 1 – 5 scale)');
+  subHead(['Dimension','T3 Avg Rating','N rated']);
+  [{label:'Intellectual Rigor',       col:'T3_BARS_Intellectual_Rigor'},
+   {label:'Professional Development', col:'T3_BARS_Prof_Development'},
+   {label:'Impact Meaningfulness',    col:'T3_BARS_Impact_Meaningfulness'}
+  ].forEach(function(d){
+    sh.getRange(rw,1).setValue(d.label).setFontColor(SEC);
+    sh.getRange(rw,2).setFormula(avgF(d.col)).setNumberFormat('0.00').setFontColor(TXT);
+    sh.getRange(rw,3).setFormula(cntF(d.col)).setNumberFormat('0').setFontColor(TXT);
+    rw++;
+  });
+
+  // ── Column widths + background ────────────────────────────────────────────
+  sh.getRange(1,1,rw,6).setBackground(BG).setFontFamily('Arial');
+  sh.setColumnWidth(1,310); sh.setColumnWidth(2,120); sh.setColumnWidth(3,120);
+  sh.setColumnWidth(4,120); sh.setColumnWidth(5,120); sh.setColumnWidth(6,220);
+
+  Logger.log('✓ Analytics tab built: '+(rw-1)+' rows');
+
+  // ── Build Explore tab ─────────────────────────────────────────────────────
+  buildExploreTab(ss, lastColLtr, cohortNum);
+
+  try { SpreadsheetApp.getUi().alert('✓ Analytics and Explore tabs rebuilt successfully.'); } catch(e) {}
+}
+
+// =============================================================================
+// EXPLORE TAB  (filtered data view + pivot table instructions)
+// =============================================================================
+function buildExploreTab(ss, lastColLtr, cohortNum) {
+  var sh = ss.getSheetByName('Explore');
+  if (!sh) sh = ss.insertSheet('Explore');
+  else { sh.clearContents(); sh.clearFormats(); }
+  sh.setTabColor('#4a7c59');
+
+  var BG='#161616', BG3='#111111', TXT='#f2ede4', SEC='#9e9a91';
+
+  // Title block
+  sh.getRange(1,1,1,6).merge().setValue('SMA Fellows — Explore')
+    .setFontSize(16).setFontWeight('bold').setFontColor(TXT).setBackground(BG3);
+  sh.getRange(2,1,1,6).merge()
+    .setValue('Shows all Responses rows for the cohort selected in Analytics!B2. ' +
+              'To build custom breakdowns: click any cell in the data below → Insert → Pivot table.')
+    .setFontColor(SEC).setFontSize(11).setFontStyle('italic').setWrap(true).setBackground(BG3);
+  sh.getRange(3,1,1,6).merge()
+    .setValue('Tip: sort or filter this view freely — it re-queries live data every time Analytics!B2 changes.')
+    .setFontColor('#555').setFontSize(10).setFontStyle('italic').setBackground(BG3);
+
+  sh.setFrozenRows(4); // rows 1-3 = title; row 4 onward = QUERY output with its own header
+
+  // Filtered data QUERY — cohort col is hardcoded from build-time index
+  var emailColNum = 1; // Email is always col 1
+  var qAll  = '"SELECT * WHERE Col'+emailColNum+'<>\'\'"';
+  var qFilt = '"SELECT * WHERE Col'+cohortNum+'=\'"&Analytics!B2&"\'"';
+  sh.getRange(4,1).setFormula(
+    '=IFERROR(IF(Analytics!B2="All",'+
+      'QUERY(Responses!A:'+lastColLtr+','+qAll+',1),'+
+      'QUERY(Responses!A:'+lastColLtr+','+qFilt+',1)'+
+    '),"No matching data — check the cohort filter in the Analytics tab")'
+  ).setFontColor(TXT).setFontFamily('Arial');
+
+  sh.getRange(1,1,4,6).setBackground(BG3);
+  sh.setColumnWidth(1,180); sh.setColumnWidth(2,140);
+
+  Logger.log('✓ Explore tab built');
 }
 
 // =============================================================================
