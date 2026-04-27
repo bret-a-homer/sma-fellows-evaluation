@@ -2052,9 +2052,9 @@ function getT3Pages() {
   return getFollowUpPages('t3').filter(function(p){ return p.id !== 't3p10' && p.id !== 't3p5x' && p.id !== 't3p5y' && p.id !== 't3p7b'; });
 }
 function getT4Pages() {
-  // T4 keeps post-placement pages (NPS, values, vision, conversations, career direction)
-  // Placement-specific pages are T3-only
-  var t3only = ['t4p1','t4p1b','t4p1c','t4p2','t4p2b'];
+  // T4 keeps post-placement pages (values, vision, conversations, career direction)
+  // Placement-specific pages and program-rating pages are T3-only
+  var t3only = ['t4p1','t4p1b','t4p1c','t4p2','t4p2b','t4p3','t4p4'];
   return getFollowUpPages('t4').filter(function(p){ return t3only.indexOf(p.id) === -1; });
 }
 
