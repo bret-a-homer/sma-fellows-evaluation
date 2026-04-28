@@ -595,58 +595,73 @@
     }
 
     /* ── Self-efficacy table ── */
-    .se-table {
-      width: 100%;
-      border-collapse: collapse;
+    .se-legend {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 12px 14px;
+      margin-bottom: 20px;
     }
-    .se-table th {
-      font-size: 10px;
+    .se-legend-row {
+      display: flex;
+      gap: 10px;
+      font-size: 12px;
       color: var(--text-sec);
-      padding: 8px 10px;
-      text-align: center;
-      border-bottom: 1px solid var(--border);
-      vertical-align: bottom;
-      min-width: 88px;
+      line-height: 1.4;
     }
-    .se-table th.se-item-col {
-      text-align: left;
-      min-width: 190px;
-      font-size: 11px;
-      font-weight: 600;
-      letter-spacing: .06em;
-      text-transform: uppercase;
-      color: var(--text-sec);
-    }
-    .se-num {
-      display: block;
-      font-size: 17px;
+    .se-legend-num {
       font-weight: 700;
       color: var(--text);
-      margin-bottom: 5px;
-      line-height: 1;
+      min-width: 14px;
     }
-    .se-anchor-label {
-      display: block;
-      font-size: 10px;
-      line-height: 1.35;
-      color: var(--text-sec);
-    }
-    .se-table td {
-      padding: 13px 10px;
+    .se-stack-item {
+      padding: 14px 0;
       border-bottom: 1px solid var(--border);
-      font-size: 13px;
-      color: var(--text);
-      vertical-align: middle;
     }
-    .se-table td.se-item-cell {
+    .se-stack-item:last-child { border-bottom: none; }
+    .se-stack-label {
+      font-size: 13px;
       font-weight: 500;
       color: var(--text);
-      text-align: left;
-      padding-left: 0;
       line-height: 1.45;
+      margin-bottom: 12px;
     }
-    .se-table tr:last-child td { border-bottom: none; }
-    .se-table tr:hover td { background: rgba(255,255,255,.02); }
+    .se-radio-row {
+      display: flex;
+      gap: 6px;
+    }
+    .se-radio-row label {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      cursor: pointer;
+      flex: 1;
+    }
+    .se-radio-row input[type="radio"] { display: none; }
+    .se-radio-box {
+      width: 100%;
+      min-width: 32px;
+      height: 36px;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-sec);
+      transition: background .15s, border-color .15s, color .15s;
+    }
+    .se-radio-row input:checked + .se-radio-box {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+    .se-radio-row label:hover .se-radio-box { border-color: var(--accent); color: var(--text); }
 
     /* ── Drag-drop ranking ── */
     .rank-list { display: flex; flex-direction: column; gap: 6px; }
@@ -2788,36 +2803,31 @@ function renderMotivationScale(prefix, answers, doShuffle = true) {
 
 // Self-efficacy grid
 function renderSelfEfficacyGrid(prefix, answers) {
-  return `
-    <div style="overflow-x: auto;">
-      <table class="se-table">
-        <thead>
-          <tr>
-            <th class="se-item-col">Skill area</th>
-            ${SELF_EFFICACY_ANCHORS.map(a => `
-              <th>
-                <span class="se-num">${a.n}</span>
-                <span class="se-anchor-label">${a.label}</span>
-              </th>
-            `).join('')}
-          </tr>
-        </thead>
-        <tbody>
-          ${SELF_EFFICACY_ITEMS.map((item, i) => `
-            <tr>
-              <td class="se-item-cell">${item}</td>
-              ${SELF_EFFICACY_ANCHORS.map(anchor => `
-                <td class="cause-radio-cell">
-                  <input type="radio" name="${prefix}-${i}" id="${prefix}-${i}-${anchor.n}" value="${anchor.n}" ${answers[`${prefix}-${i}`] == anchor.n ? 'checked' : ''} />
-                  <label for="${prefix}-${i}-${anchor.n}"></label>
-                </td>
-              `).join('')}
-            </tr>
-          `).join('')}
-        </tbody>
-      </table>
+  const legend = `
+    <div class="se-legend">
+      ${SELF_EFFICACY_ANCHORS.map(a => `
+        <div class="se-legend-row">
+          <span class="se-legend-num">${a.n}</span>
+          <span>${a.label}</span>
+        </div>
+      `).join('')}
+    </div>`;
+
+  const items = SELF_EFFICACY_ITEMS.map((item, i) => `
+    <div class="se-stack-item">
+      <div class="se-stack-label">${item}</div>
+      <div class="se-radio-row">
+        ${SELF_EFFICACY_ANCHORS.map(anchor => `
+          <label>
+            <input type="radio" name="${prefix}-${i}" value="${anchor.n}" ${answers[`${prefix}-${i}`] == anchor.n ? 'checked' : ''} />
+            <span class="se-radio-box">${anchor.n}</span>
+          </label>
+        `).join('')}
+      </div>
     </div>
-  `;
+  `).join('');
+
+  return legend + items;
 }
 
 // Cause area grid
