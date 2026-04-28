@@ -80,18 +80,8 @@ h1{font-family:'Playfair Display',serif;font-size:26px;font-weight:700;margin-bo
 <div id="dash-tip"></div>
 <div class="page">
   <h1>SMA Fellows Evaluation</h1>
-  <p class="subtitle">Program effectiveness dashboard — live data from the evaluation tool. Use the cohort filter to compare years.</p>
-
-  <div class="filter-bar">
-    <label for="cohort-select">Cohort</label>
-    <select id="cohort-select" onchange="location.href='?cohort='+this.value">
-      <option value="all" <?= selected==='all'?'selected':'' ?>>All cohorts</option>
-      <? var cl=JSON.parse(cohortsList); for(var i=0;i<cl.length;i++){var c=cl[i]; ?>
-      <option value="<?= c ?>" <?= selected===c?'selected':'' ?>><?= c ?></option>
-      <? } ?>
-    </select>
-    <span class="cohort-badge" id="n-badge"></span>
-  </div>
+  <p class="subtitle">Program effectiveness dashboard — live data from the evaluation tool.</p>
+  <span class="cohort-badge" id="n-badge"></span>
 
   <div id="dashboard"></div>
 </div>
@@ -144,7 +134,7 @@ function motivNarrative(t2then,t2now) {
 function renderSnapshot() {
   const s=D.snapshot, dc=s.careerDirT4.Yes-s.careerDirT1.Yes, ds=dc>=0?'+':'', cc=s.convT4-s.convT1, cs=cc>=0?'+':'';
   return `<div class="dash-snapshot">
-    <div class="snap-card"><div class="snap-num">${s.n}</div><div class="snap-label">Fellows in Cohort</div></div>
+    <div class="snap-card"><div class="snap-num">${s.n}</div><div class="snap-label">Fellows Total</div></div>
     <div class="snap-card"><div class="snap-num">${s.recMean.toFixed(1)}<span style="font-size:13px;font-weight:400;color:var(--text-sec)">/10</span></div><div class="snap-label">Avg. Program Recommendation</div><div class="snap-sub">NPS — most recent touchpoint per fellow</div></div>
     <div class="snap-card"><div class="snap-num">${ds}${dc}%</div><div class="snap-label">High-Impact Career Direction</div><div class="snap-sub">Change in % "Yes" from T1 to T4</div></div>
     <div class="snap-card"><div class="snap-num">${s.placementReady}%</div><div class="snap-label">Felt Ready for Placement</div><div class="snap-sub">Rated ≥ 4/5 on retrospective readiness · T3</div></div>

@@ -442,8 +442,7 @@ function doPost(e) {
 // Dashboard — served at the web app URL (no parameters = all cohorts)
 function doGet(e) {
   try {
-    var cohort = (e && e.parameter && e.parameter.cohort) ? e.parameter.cohort : 'all';
-    var data   = computeDashboardData(cohort);
+    var data   = computeDashboardData('all');
 
     if (!data) {
       return HtmlService.createHtmlOutput(
@@ -461,8 +460,8 @@ function doGet(e) {
 
     var tmpl = HtmlService.createTemplateFromFile('dashboard');
     tmpl.dataJson     = JSON.stringify(data);
-    tmpl.cohortsList  = JSON.stringify(cohortsList);
-    tmpl.selected     = cohort;
+    tmpl.cohortsList  = JSON.stringify([]);
+    tmpl.selected     = 'all';
     return tmpl.evaluate()
       .setTitle('SMA Fellows Evaluation — Dashboard')
       .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
@@ -475,7 +474,7 @@ function doGet(e) {
       '<pre style="background:#f5f5f5;padding:16px;border-radius:4px;white-space:pre-wrap">' +
       err.message + '\n\n' + (err.stack || '') +
       '</pre>' +
-      '<p style="color:#666;font-size:13px">Cohort parameter: <strong>' + (e && e.parameter && e.parameter.cohort ? e.parameter.cohort : 'all') + '</strong></p>' +
+      '<p style="color:#666;font-size:13px">If this error persists, check the Apps Script execution log for details.</p>' +
       '</div>'
     );
   }
