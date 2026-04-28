@@ -1,5 +1,5 @@
 // =============================================================================
-// SMA Harvard Fellows Program — Evaluation Tool
+// SMA Fellows Program — Evaluation Tool
 // Google Apps Script Backend
 // =============================================================================
 // SETUP INSTRUCTIONS
@@ -97,7 +97,7 @@ function getHeaders() {
   const h = [];
 
   // ── Metadata ────────────────────────────────────────────────────────────────
-  h.push('Email', 'Name', 'Cohort', 'Link_Status');
+  h.push('Email', 'Counterfactual_Value', 'Name', 'Cohort', 'Link_Status');
   h.push('T1_Submitted', 'T2_Submitted', 'T3_Submitted', 'T4_Submitted');
 
   // ── T1 ──────────────────────────────────────────────────────────────────────
@@ -111,7 +111,7 @@ function getHeaders() {
   h.push('T1_Peer_Influence', 'T1_Peer_Conv_YN', 'T1_Peer_Conv_Count');
   SE_ITEMS.forEach(s => h.push('T1_SE_' + s.key));
   h.push('T1_Career_Direction');
-  h.push('T1_Prior_Internships', 'T1_Counterfactual');
+  h.push('T1_Prior_Internships');
   for (var i = 1; i <= 3; i++) h.push('T1_Path'+i+'_Desc', 'T1_Path'+i+'_Pct', 'T1_Path'+i+'_Sector');
 
   // ── T2 ──────────────────────────────────────────────────────────────────────
@@ -239,22 +239,6 @@ function buildColumnData(tp, data, name) {
     }
     var internships = (data['t1-internships'] || []).filter(function(r) { return r.role || r.org || r.sector; });
     cols['T1_Prior_Internships'] = JSON.stringify(internships);
-    var hcSectors = ['Finance', 'Technology', 'Consulting'];
-    var lcSectors = ['Nonprofit / Public Service'];
-    var hcCount = 0, lcCount = 0;
-    internships.forEach(function(r) {
-      if (hcSectors.indexOf(r.sector) >= 0) hcCount++;
-      else if (lcSectors.indexOf(r.sector) >= 0) lcCount++;
-    });
-    if (internships.length === 0) {
-      cols['T1_Counterfactual'] = 'Mid';
-    } else if (hcCount === internships.length) {
-      cols['T1_Counterfactual'] = 'High';
-    } else if (lcCount > hcCount) {
-      cols['T1_Counterfactual'] = 'Low';
-    } else {
-      cols['T1_Counterfactual'] = 'Mid';
-    }
   }
 
   // ── T2 ────────────────────────────────────────────────────────────────────
@@ -460,21 +444,20 @@ function doGet(e) {
   var cohort = (e && e.parameter && e.parameter.cohort) ? e.parameter.cohort : 'all';
   var data   = computeDashboardData(cohort);
 
-  // Always fetch the full cohort list so the dropdown works even when
-  // a filtered cohort returns zero rows
-  var allData     = (cohort !== 'all') ? computeDashboardData('all') : data;
-  var cohortsList = (allData && allData.cohorts) ? allData.cohorts : [];
-
-  if (!allData || allData.n === 0) {
+  // cohorts is computed before the cohort filter is applied, so data.cohorts
+  // always contains the full list regardless of which cohort is selected
+  if (!data) {
     return HtmlService.createHtmlOutput(
       '<p style="font-family:sans-serif;padding:40px;color:#666">' +
       'No data found. Run <strong>setup()</strong> then <strong>generateSampleData()</strong> in the Apps Script editor.</p>'
     );
   }
 
+  var cohortsList = data.cohorts || [];
+
   // If the selected cohort has no rows, pass empty-state data so the
   // dashboard renders the dropdown and an empty state rather than crashing
-  if (!data || data.n === 0) {
+  if (data.n === 0) {
     var emptySnap={n:0,recMean:0,careerDirT1:{Yes:0,Deciding:0,No:0},careerDirT4:{Yes:0,Deciding:0,No:0},careerDirT4Then:{Yes:0,Deciding:0,No:0},placementReady:0,convT1:0,convT4:0};
     data = { n: 0, cohorts: cohortsList, snapshot: emptySnap, snapshotHighCF: emptySnap, selfEfficacy:{items:[],t1:[],t2:[]}, commitment:{t1now:0,t2then:0,t2now:0}, motivation:{t1now:0,t2then:0,t2now:0,t4now:0,t1dist:[0,0,0,0,0],t2thenDist:[0,0,0,0,0],t2nowDist:[0,0,0,0,0],t4dist:[0,0,0,0,0],labels:['External','Introjected','Identified','Integrated','Intrinsic']}, careerValues:{names:[],t1:[],t2:[],t4:[]}, barriers:{labels:[],anticipated:[],experienced:[]}, placement:{dims:[],dist:[]} };
   }
@@ -592,7 +575,7 @@ function computeDashboardData(cohortFilter) {
   });
 
   // High-counterfactual subset
-  var hcfRows = rows.filter(function(r){ return String(r[ci('T1_Counterfactual')]||'')==='High'; });
+  var hcfRows = rows.filter(function(r){ return String(r[ci('Counterfactual_Value')]||'')==='High'; });
   var hcfEmailSet = {};
   hcfRows.forEach(function(r){ hcfEmailSet[String(r[ci('Email')]||'').trim().toLowerCase()]=true; });
   function inHcf(r){ return !!hcfEmailSet[String(r[ci('Email')]||'').trim().toLowerCase()]; }
@@ -961,7 +944,6 @@ function generateSampleData() {
     setSE(row,'T1', t1SE[i]);
     set(row,'T1_Career_Direction', f[4]);
     var ctfSample = ['High','Low','Mid','Mid','High','Low','High','Mid','Low','Mid'];
-    set(row,'T1_Counterfactual',   ctfSample[i % ctfSample.length]);
     set(row,'T1_Prior_Internships','[]');
     set(row,'T1_Peer_Influence',   3 + (i % 4));
     set(row,'T1_Peer_Conv_YN',     i % 3 === 0 ? 'No' : 'Yes');
@@ -1370,56 +1352,50 @@ function buildAnalyticsTab() {
   var sh = ss.getSheetByName('Analytics');
   if (!sh) sh = ss.insertSheet('Analytics');
   else { sh.clearContents(); sh.clearFormats(); sh.clearConditionalFormatRules(); }
-  sh.setTabColor('#c9622f');
+  sh.setTabColor(null);
 
   var rw = 1;
-  var BG='#161616', BG2='#1e1e1e', BG3='#111111', TXT='#f2ede4', SEC='#9e9a91', ACC='#c9622f';
 
   // ── Writer helpers ────────────────────────────────────────────────────────
   function sectionHead(title) {
     sh.getRange(rw,1,1,6).merge()
-      .setValue(title).setFontWeight('bold').setFontSize(11)
-      .setFontColor(TXT).setBackground('#2c1a10');
+      .setValue(title).setFontWeight('bold').setFontSize(11);
     rw++;
   }
   function subHead(labels) {
-    labels.forEach(function(l,i){ sh.getRange(rw,i+1).setValue(l).setFontWeight('bold').setFontColor(SEC).setFontSize(10); });
-    sh.getRange(rw,1,1,labels.length).setBackground(BG2);
+    labels.forEach(function(l,i){ sh.getRange(rw,i+1).setValue(l).setFontWeight('bold'); });
     rw++;
   }
   // Primary metric row: label | formula | note
   function mRow(label, formula, fmt, note) {
-    sh.getRange(rw,1).setValue(label).setFontColor(SEC);
+    sh.getRange(rw,1).setValue(label);
     if (formula) {
       var c=sh.getRange(rw,2);
       if (typeof formula==='string'&&formula.startsWith('=')) c.setFormula(formula); else c.setValue(formula);
       if (fmt) c.setNumberFormat(fmt);
-      c.setFontWeight('bold').setFontColor(TXT);
     }
-    if (note) sh.getRange(rw,3).setValue(note).setFontColor('#555').setFontSize(10).setFontStyle('italic');
+    if (note) sh.getRange(rw,3).setValue(note).setFontStyle('italic');
     rw++;
   }
   // Indented delta row (computed from other cells)
   function dRow(label, formula, fmt, note) {
-    sh.getRange(rw,1).setValue(label).setFontColor('#666').setFontStyle('italic');
+    sh.getRange(rw,1).setValue(label).setFontStyle('italic');
     if (formula) {
       var c=sh.getRange(rw,2);
       if (formula.startsWith('=')) c.setFormula(formula); else c.setValue(formula);
       if (fmt) c.setNumberFormat(fmt);
-      c.setFontColor('#aaa');
     }
-    if (note) sh.getRange(rw,3).setValue(note).setFontColor('#444').setFontSize(10).setFontStyle('italic');
+    if (note) sh.getRange(rw,3).setValue(note).setFontStyle('italic');
     rw++;
   }
   // Table row: label in A, formulas in B C D E
   function tRow(label, formulas, fmt) {
-    sh.getRange(rw,1).setValue(label).setFontColor(SEC);
+    sh.getRange(rw,1).setValue(label);
     formulas.forEach(function(f,i){
       if (f===null||f===undefined) return;
       var gc=sh.getRange(rw,i+2);
       if (typeof f==='string'&&f.startsWith('=')) gc.setFormula(f); else gc.setValue(f);
       if (fmt) gc.setNumberFormat(fmt);
-      gc.setFontColor(TXT);
     });
     rw++;
   }
@@ -1429,31 +1405,38 @@ function buildAnalyticsTab() {
   // TITLE + COHORT FILTER
   // ════════════════════════════════════════════════════════════════════════
   sh.getRange(rw,1,1,6).merge().setValue('SMA Fellows Program — Analytics Validation')
-    .setFontSize(16).setFontWeight('bold').setFontColor(TXT).setBackground(BG3);
+    .setFontSize(16).setFontWeight('bold');
   rw++;
   sh.getRange(rw,1,1,6).merge()
     .setValue('Live Sheets formulas that mirror the dashboard calculations. Change the cohort dropdown to filter every section below.')
-    .setFontColor(SEC).setFontSize(11).setFontStyle('italic').setWrap(true).setBackground(BG3);
+    .setFontSize(11).setFontStyle('italic').setWrap(true);
   rw++;
   blank();
 
-  // Cohort filter
-  sh.getRange(rw,1).setValue('Cohort filter').setFontWeight('bold').setFontColor(TXT);
+  // Cohort filter — dropdown backed by a live helper column so new cohorts
+  // appear automatically without needing to rebuild the Analytics tab.
+  // Helper column Z: Z1 = "All", Z2 onward = UNIQUE(Responses!C:C) excluding header.
+  var helperCol = 26; // column Z
+  var chColLtr  = colLetter(cohortNum);
+  sh.getRange(1, helperCol).setValue('All');
+  // UNIQUE returns a spill; we cap it at 200 rows to give the validation a fixed range.
+  sh.getRange(2, helperCol)
+    .setFormula('=IFERROR(SORT(UNIQUE(FILTER(Responses!'+chColLtr+'2:'+chColLtr+'10000,Responses!'+chColLtr+'2:'+chColLtr+'10000<>""))),"")');
+
+  sh.getRange(rw,1).setValue('Cohort filter').setFontWeight('bold');
   var filterCell = sh.getRange(rw,2);
-  filterCell.setValue('All').setFontWeight('bold').setFontColor(ACC).setBackground(BG2)
-    .setBorder(true,true,true,true,false,false, ACC, SpreadsheetApp.BorderStyle.SOLID);
-  var cohortVals = ['All'];
-  if (respSheet.getLastRow() > 1) {
-    var rawC = respSheet.getRange(2, cohortNum, respSheet.getLastRow()-1, 1).getValues();
-    rawC.forEach(function(row){ if(row[0]&&cohortVals.indexOf(String(row[0]))<0) cohortVals.push(String(row[0])); });
-  }
+  filterCell.setValue('All').setFontWeight('bold');
+  // Point validation at the helper column range (Z1:Z200) so it stays live.
   filterCell.setDataValidation(
-    SpreadsheetApp.newDataValidation().requireValueInList(cohortVals,true).setAllowInvalid(false).build()
+    SpreadsheetApp.newDataValidation()
+      .requireValueInRange(sh.getRange(1, helperCol, 200, 1), true)
+      .setAllowInvalid(false)
+      .build()
   );
-  sh.getRange(rw,3).setValue('← change to filter all sections below').setFontColor('#555').setFontSize(10).setFontStyle('italic');
+  sh.getRange(rw,3).setValue('← change to filter all sections below').setFontStyle('italic');
   rw++;
-  sh.getRange(rw,1).setValue('Last rebuilt').setFontColor(SEC).setFontSize(10);
-  sh.getRange(rw,2).setFormula('=TEXT(NOW(),"mmm d, yyyy h:mm am/pm")').setFontColor(SEC).setFontSize(10);
+  sh.getRange(rw,1).setValue('Last rebuilt');
+  sh.getRange(rw,2).setFormula('=TEXT(NOW(),"mmm d, yyyy h:mm am/pm")');
   rw++;
   sh.setFrozenRows(rw-1);
   blank();
@@ -1536,10 +1519,10 @@ function buildAnalyticsTab() {
   subHead(['Skill Area','T1 Avg','T2 Avg','Δ T1 → T2']);
   SE_ITEMS.forEach(function(item){
     var t1f=avgF('T1_SE_'+item.key), t2f=avgF('T2_SE_'+item.key);
-    sh.getRange(rw,1).setValue(item.full).setFontColor(SEC);
-    sh.getRange(rw,2).setFormula(t1f).setNumberFormat('0.00').setFontColor(TXT);
-    sh.getRange(rw,3).setFormula(t2f).setNumberFormat('0.00').setFontColor(TXT);
-    sh.getRange(rw,4).setFormula('=C'+rw+'-B'+rw).setNumberFormat('+0.00;-0.00;0.00').setFontColor(TXT);
+    sh.getRange(rw,1).setValue(item.full);
+    sh.getRange(rw,2).setFormula(t1f).setNumberFormat('0.00');
+    sh.getRange(rw,3).setFormula(t2f).setNumberFormat('0.00');
+    sh.getRange(rw,4).setFormula('=C'+rw+'-B'+rw).setNumberFormat('+0.00;-0.00;0.00');
     rw++;
   });
   blank();
@@ -1551,11 +1534,11 @@ function buildAnalyticsTab() {
   subHead(['Value','T1 Avg Rank','T2 Avg Rank','T4 Avg Rank','Δ T1 → T4']);
   CAREER_VALUES.forEach(function(v){
     var t1f=avgF('T1_Rank_'+v.key),t2f=avgF('T2_Rank_'+v.key),t4f=avgF('T4_Rank_'+v.key);
-    sh.getRange(rw,1).setValue(v.name).setFontColor(SEC);
-    sh.getRange(rw,2).setFormula(t1f).setNumberFormat('0.00').setFontColor(TXT);
-    sh.getRange(rw,3).setFormula(t2f).setNumberFormat('0.00').setFontColor(TXT);
-    sh.getRange(rw,4).setFormula(t4f).setNumberFormat('0.00').setFontColor(TXT);
-    sh.getRange(rw,5).setFormula('=D'+rw+'-B'+rw).setNumberFormat('+0.00;-0.00;0.00').setFontColor(TXT);
+    sh.getRange(rw,1).setValue(v.name);
+    sh.getRange(rw,2).setFormula(t1f).setNumberFormat('0.00');
+    sh.getRange(rw,3).setFormula(t2f).setNumberFormat('0.00');
+    sh.getRange(rw,4).setFormula(t4f).setNumberFormat('0.00');
+    sh.getRange(rw,5).setFormula('=D'+rw+'-B'+rw).setNumberFormat('+0.00;-0.00;0.00');
     rw++;
   });
   blank();
@@ -1572,11 +1555,11 @@ function buildAnalyticsTab() {
   ];
   var cdYesRow={};
   cdDefs.forEach(function(cd){
-    sh.getRange(rw,1).setValue(cd.label).setFontColor(SEC);
-    sh.getRange(rw,2).setFormula(pctF(cd.col,'Yes')).setNumberFormat('0.0"%"').setFontColor(TXT);
-    sh.getRange(rw,3).setFormula(pctF(cd.col,'Still deciding')).setNumberFormat('0.0"%"').setFontColor(TXT);
-    sh.getRange(rw,4).setFormula(pctF(cd.col,'No')).setNumberFormat('0.0"%"').setFontColor(TXT);
-    sh.getRange(rw,5).setFormula(cntF(cd.col)).setNumberFormat('0').setFontColor(TXT);
+    sh.getRange(rw,1).setValue(cd.label);
+    sh.getRange(rw,2).setFormula(pctF(cd.col,'Yes')).setNumberFormat('0.0"%"');
+    sh.getRange(rw,3).setFormula(pctF(cd.col,'Still deciding')).setNumberFormat('0.0"%"');
+    sh.getRange(rw,4).setFormula(pctF(cd.col,'No')).setNumberFormat('0.0"%"');
+    sh.getRange(rw,5).setFormula(cntF(cd.col)).setNumberFormat('0');
     cdYesRow[cd.col]=rw; rw++;
   });
   dRow('  ↳ Naïve shift  (T1 → T4-Now, pp)',
@@ -1598,10 +1581,10 @@ function buildAnalyticsTab() {
     if (!t2r||!t3r) return;
     var t2f='=IFERROR(IF(B$4="All",AVERAGEIF('+t2r+',"<>"),AVERAGEIFS('+t2r+','+chRng+',B$4,'+t2r+',"<>"))*100,0)';
     var t3f='=IFERROR(IF(B$4="All",AVERAGEIF('+t3r+',"<>"),AVERAGEIFS('+t3r+','+chRng+',B$4,'+t3r+',"<>"))*100,0)';
-    sh.getRange(rw,1).setValue(b.full).setFontColor(SEC);
-    sh.getRange(rw,2).setFormula(t2f).setNumberFormat('0.0"%"').setFontColor(TXT);
-    sh.getRange(rw,3).setFormula(t3f).setNumberFormat('0.0"%"').setFontColor(TXT);
-    sh.getRange(rw,4).setFormula('=C'+rw+'-B'+rw).setNumberFormat('+0.0;-0.0;0.0"%"').setFontColor(TXT);
+    sh.getRange(rw,1).setValue(b.full);
+    sh.getRange(rw,2).setFormula(t2f).setNumberFormat('0.0"%"');
+    sh.getRange(rw,3).setFormula(t3f).setNumberFormat('0.0"%"');
+    sh.getRange(rw,4).setFormula('=C'+rw+'-B'+rw).setNumberFormat('+0.0;-0.0;0.0"%"');
     rw++;
   });
   blank();
@@ -1615,14 +1598,13 @@ function buildAnalyticsTab() {
    {label:'Professional Development', col:'T3_BARS_Prof_Development'},
    {label:'Impact Meaningfulness',    col:'T3_BARS_Impact_Meaningfulness'}
   ].forEach(function(d){
-    sh.getRange(rw,1).setValue(d.label).setFontColor(SEC);
-    sh.getRange(rw,2).setFormula(avgF(d.col)).setNumberFormat('0.00').setFontColor(TXT);
-    sh.getRange(rw,3).setFormula(cntF(d.col)).setNumberFormat('0').setFontColor(TXT);
+    sh.getRange(rw,1).setValue(d.label);
+    sh.getRange(rw,2).setFormula(avgF(d.col)).setNumberFormat('0.00');
+    sh.getRange(rw,3).setFormula(cntF(d.col)).setNumberFormat('0');
     rw++;
   });
 
-  // ── Column widths + background ────────────────────────────────────────────
-  sh.getRange(1,1,rw,6).setBackground(BG).setFontFamily('Arial');
+  // ── Column widths ─────────────────────────────────────────────────────────
   sh.setColumnWidth(1,310); sh.setColumnWidth(2,120); sh.setColumnWidth(3,120);
   sh.setColumnWidth(4,120); sh.setColumnWidth(5,120); sh.setColumnWidth(6,220);
 

@@ -459,11 +459,17 @@ function renderPlacement() {
 
 // ─── Career Direction — fixed-width segments ──────────────────────────────
 function renderCareerDir() {
-  const {careerDirT1:t1d,careerDirT4:t4d}=D.snapshot;
-  function dirBar(d,label){
+  const {careerDirT1:t1d, careerDirT4:t4d, careerDirT4Then:t4dt}=D.snapshot;
+  const t4dtTotal=(t4dt&&(t4dt.Yes+t4dt.Deciding+t4dt.No))||0;
+  const naive=t4d.Yes-t1d.Yes, naiveS=naive>=0?'+':'';
+  const corrected=t4dtTotal>0?t4d.Yes-t4dt.Yes:null;
+  const corrS=corrected!==null&&corrected>=0?'+':'';
+
+  function dirBar(d,label,muted){
     const total=d.Yes+d.Deciding+d.No;
+    const op=muted?'opacity:.75':'';
     if(!total){
-      return `<div class="career-dir-row"><div class="career-dir-tp">${label}</div><div class="career-dir-bars"><div style="height:28px;border-radius:2px;background:#1a1a1a;display:flex;align-items:center;padding:0 10px"><span style="font-size:11px;color:#444">No data yet</span></div></div></div>`;
+      return `<div class="career-dir-row" style="${op}"><div class="career-dir-tp">${label}</div><div class="career-dir-bars"><div style="height:28px;border-radius:2px;background:#1a1a1a;display:flex;align-items:center;padding:0 10px"><span style="font-size:11px;color:#444">No data yet</span></div></div></div>`;
     }
     const cats=[
       {val:d.Yes,     bg:'var(--success)', txt:'Pursuing high-impact career'},
@@ -476,15 +482,26 @@ function renderCareerDir() {
         ${c.val>=10?`<span style="font-size:11px;color:#fff;font-weight:600">${c.val}%</span>`:''}
       </div>`
     ).join('<div style="width:2px;flex-shrink:0"></div>');
-    return `<div class="career-dir-row"><div class="career-dir-tp">${label}</div><div class="career-dir-bars"><div style="display:flex;height:28px;border-radius:2px;overflow:hidden;width:100%">${segs}</div></div></div>`;
+    return `<div class="career-dir-row" style="${op}"><div class="career-dir-tp">${label}</div><div class="career-dir-bars"><div style="display:flex;height:28px;border-radius:2px;overflow:hidden;width:100%">${segs}</div></div></div>`;
   }
+
+  function delt(val,label){
+    const v=parseFloat(val),s=v>=0?'+':'',c=v>=0?'pos':'neg';
+    return `<div class="commit-delta-item"><span class="commit-delta-val ${c}">${s}${val}%</span><span class="commit-delta-label">${label}</span></div>`;
+  }
+
   return `<div class="dash-section">
     <h3 class="dash-section-title">Career Direction — T1 vs. T4</h3>
-    <p class="dash-section-desc">"Are you currently pursuing a high-impact career as your primary path?" Hover segments for detail. T1 = baseline intent, T4 = six-month outcome.</p>
+    <p class="dash-section-desc">"Are you currently pursuing a high-impact career as your primary path?" T4 includes a retrospective then-test to correct for reference-shift bias. Hover segments for detail.</p>
     <div class="dash-se-legend"><span class="legend-dot" style="background:var(--success)"></span>Yes &nbsp;&nbsp;<span class="legend-dot" style="background:#5a5a4a"></span>Still deciding &nbsp;&nbsp;<span class="legend-dot" style="background:#5a3030"></span>No</div>
     <div style="margin-top:16px">
-      ${dirBar(t1d,'T1 — Pre-orientation')}
-      ${dirBar(t4d,'T4 — Six-month follow-up')}
+      ${dirBar(t1d,'T1 — Pre-orientation (naïve baseline)',false)}
+      ${t4dtTotal>0?dirBar(t4dt,'T4 — Then (retrospective baseline)',true):''}
+      ${dirBar(t4d,'T4 — Now',false)}
+    </div>
+    <div class="commit-deltas" style="margin-top:16px">
+      ${delt(naiveS+naive,'Naïve shift (T1 → T4-Now)')}
+      ${corrected!==null?delt(corrS+corrected,'Corrected shift (T4-Then → T4-Now)'):''}
     </div>
   </div>`;
 }

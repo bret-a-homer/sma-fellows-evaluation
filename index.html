@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>SMA Harvard Fellows Program — Evaluation Tool</title>
+  <title>SMA Fellows Program — Evaluation Tool</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
@@ -1136,7 +1136,7 @@ const TOUCHPOINTS = [
     id: 't3',
     tag: 'T3',
     name: 'Post-Internship Check-in',
-    time: '~15–20 min',
+    time: '~15–25 min',
     desc: 'Reflect on your internship placement, career direction, and program impact.',
   },
   {
@@ -1169,7 +1169,7 @@ function renderHome() {
   return `
     <div class="home-eyebrow">School for Moral Ambition</div>
     <h1>School for Moral Ambition</h1>
-    <div class="home-subtitle">Harvard Fellows Program — Evaluation Tool</div>
+    <div class="home-subtitle">Fellows Program — Evaluation Tool</div>
     <hr class="divider" />
     <p>This tool collects structured assessments from fellows at four points throughout the program. Please complete each touchpoint honestly — your responses inform how we improve the program over time.</p>
     <div class="home-actions">
@@ -1557,7 +1557,16 @@ function getT2Pages() {
       id: 't2p3',
       html: `
         <h2 style="margin-bottom: 8px;">Commitment to High-Impact Work</h2>
-        <p style="color:var(--text-sec); font-size:14px; margin-bottom:28px; line-height:1.6;">Answer both questions using the same scale.</p>
+        <p style="color:var(--text-sec); font-size:14px; margin-bottom:16px; line-height:1.6;">Answer both questions using the same scale.</p>
+        <div class="likert-point-labels" style="margin-bottom:24px;">
+          <span>1 — I have no real commitment to this — I'm exploring it out of curiosity or circumstance</span>
+          <span>2 — I have a faint pull toward it, but it's not a serious priority for me right now</span>
+          <span>3 — I'm interested and open to it, but haven't made any meaningful moves in this direction</span>
+          <span>4 — I'm moderately committed — I think about it seriously and have taken some steps, but I'm not set on it</span>
+          <span>5 — I'm fairly committed — this is a meaningful priority and I'm actively working toward it</span>
+          <span>6 — I'm strongly committed — I've made real choices in this direction and intend to continue</span>
+          <span>7 — I'm fully committed — pursuing high-impact work is central to how I'm planning my career</span>
+        </div>
         <div class="q-block" style="margin-bottom:32px;">
           <div class="q-label" style="margin-bottom:6px;">Commitment — Now</div>
           <p style="font-style:italic; color:var(--text-sec); font-size:14px; margin-bottom:16px;">How committed are you right now to pursuing a high-impact career?</p>
