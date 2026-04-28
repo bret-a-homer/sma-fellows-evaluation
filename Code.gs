@@ -441,34 +441,44 @@ function doPost(e) {
 
 // Dashboard — served at the web app URL (no parameters = all cohorts)
 function doGet(e) {
-  var cohort = (e && e.parameter && e.parameter.cohort) ? e.parameter.cohort : 'all';
-  var data   = computeDashboardData(cohort);
+  try {
+    var cohort = (e && e.parameter && e.parameter.cohort) ? e.parameter.cohort : 'all';
+    var data   = computeDashboardData(cohort);
 
-  // cohorts is computed before the cohort filter is applied, so data.cohorts
-  // always contains the full list regardless of which cohort is selected
-  if (!data) {
+    if (!data) {
+      return HtmlService.createHtmlOutput(
+        '<p style="font-family:sans-serif;padding:40px;color:#666">' +
+        'No data found. Run <strong>setup()</strong> then <strong>generateSampleData()</strong> in the Apps Script editor.</p>'
+      );
+    }
+
+    var cohortsList = data.cohorts || [];
+
+    if (data.n === 0) {
+      var emptySnap={n:0,recMean:0,careerDirT1:{Yes:0,Deciding:0,No:0},careerDirT4:{Yes:0,Deciding:0,No:0},careerDirT4Then:{Yes:0,Deciding:0,No:0},placementReady:0,convT1:0,convT4:0};
+      data = { n: 0, cohorts: cohortsList, snapshot: emptySnap, snapshotHighCF: emptySnap, selfEfficacy:{items:[],t1:[],t2:[]}, commitment:{t1now:0,t2then:0,t2now:0}, motivation:{t1now:0,t2then:0,t2now:0,t4now:0,t1dist:[0,0,0,0,0],t2thenDist:[0,0,0,0,0],t2nowDist:[0,0,0,0,0],t4dist:[0,0,0,0,0],labels:['External','Introjected','Identified','Integrated','Intrinsic']}, careerValues:{names:[],t1:[],t2:[],t4:[]}, barriers:{labels:[],anticipated:[],experienced:[]}, placement:{dims:[],dist:[]} };
+    }
+
+    var tmpl = HtmlService.createTemplateFromFile('dashboard');
+    tmpl.dataJson     = JSON.stringify(data);
+    tmpl.cohortsList  = JSON.stringify(cohortsList);
+    tmpl.selected     = cohort;
+    return tmpl.evaluate()
+      .setTitle('SMA Fellows Evaluation — Dashboard')
+      .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+
+  } catch(err) {
     return HtmlService.createHtmlOutput(
-      '<p style="font-family:sans-serif;padding:40px;color:#666">' +
-      'No data found. Run <strong>setup()</strong> then <strong>generateSampleData()</strong> in the Apps Script editor.</p>'
+      '<div style="font-family:sans-serif;padding:40px;max-width:700px">' +
+      '<h2 style="color:#c00">Dashboard error</h2>' +
+      '<p>An error occurred while loading the dashboard. Details below:</p>' +
+      '<pre style="background:#f5f5f5;padding:16px;border-radius:4px;white-space:pre-wrap">' +
+      err.message + '\n\n' + (err.stack || '') +
+      '</pre>' +
+      '<p style="color:#666;font-size:13px">Cohort parameter: <strong>' + (e && e.parameter && e.parameter.cohort ? e.parameter.cohort : 'all') + '</strong></p>' +
+      '</div>'
     );
   }
-
-  var cohortsList = data.cohorts || [];
-
-  // If the selected cohort has no rows, pass empty-state data so the
-  // dashboard renders the dropdown and an empty state rather than crashing
-  if (data.n === 0) {
-    var emptySnap={n:0,recMean:0,careerDirT1:{Yes:0,Deciding:0,No:0},careerDirT4:{Yes:0,Deciding:0,No:0},careerDirT4Then:{Yes:0,Deciding:0,No:0},placementReady:0,convT1:0,convT4:0};
-    data = { n: 0, cohorts: cohortsList, snapshot: emptySnap, snapshotHighCF: emptySnap, selfEfficacy:{items:[],t1:[],t2:[]}, commitment:{t1now:0,t2then:0,t2now:0}, motivation:{t1now:0,t2then:0,t2now:0,t4now:0,t1dist:[0,0,0,0,0],t2thenDist:[0,0,0,0,0],t2nowDist:[0,0,0,0,0],t4dist:[0,0,0,0,0],labels:['External','Introjected','Identified','Integrated','Intrinsic']}, careerValues:{names:[],t1:[],t2:[],t4:[]}, barriers:{labels:[],anticipated:[],experienced:[]}, placement:{dims:[],dist:[]} };
-  }
-
-  var tmpl = HtmlService.createTemplateFromFile('dashboard');
-  tmpl.dataJson     = JSON.stringify(data);
-  tmpl.cohortsList  = JSON.stringify(cohortsList);
-  tmpl.selected     = cohort;
-  return tmpl.evaluate()
-    .setTitle('SMA Fellows Evaluation — Dashboard')
-    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
 }
 
 function computeDashboardData(cohortFilter) {
